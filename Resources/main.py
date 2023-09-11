@@ -14,13 +14,13 @@ import Video_To_Image
 from config import Config_Detection, Config_Log, Config_DefaultPath, Config_Test
 #from GetPressure import Get_Pressure
 
-Raspi_Number = "No1"    # Raspi_Number should be like "No#"
+Raspi_Number = "No5"    # Raspi_Number should be like "No#"
 stop_pressure = False
 result_queue = queue.Queue()
 
 def Capture_Video():
     cnt_max = 1
-    time_per_cnt = 10 * Raspi_Shoot.second
+    time_per_cnt = 3 * Raspi_Shoot.hour
     
     Video_File_Path, start_timestamp = Raspi_Shoot.shoot(Raspi_Number, cnt_max, time_per_cnt)
     result_queue.put((Video_File_Path, start_timestamp))
@@ -159,5 +159,5 @@ def Test_Windows(Raspi_Number):
     return 0
 
 if __name__ == '__main__':
-    #Test_Linux(Raspi_Number)
-    Test_Windows(Raspi_Number)
+    Test_Linux(Raspi_Number)
+    #Test_Windows(Raspi_Number)

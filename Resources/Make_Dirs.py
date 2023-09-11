@@ -1,4 +1,5 @@
 import os
+import logging
 import shutil
 import glob
 import re
@@ -34,7 +35,9 @@ def get_Raspi_Number(video_path):
 			print("Error in Video_To_Image, Raspi Number is None. Wrong Video name")
 			return None
 
-def make_dirs_for_program_Linux():
+def make_dirs_for_program_Linux(logger):
+	current_directory = os.path.dirname(os.path.realpath(__file__))
+	os.chdir(current_directory)
 	default_path = os.getcwd()
 	
 	os.chdir(os.path.expanduser('~'))
@@ -54,7 +57,7 @@ def make_dirs_for_program_Linux():
 	Config_DefaultPath.code_default_path = default_path
 	Config_DefaultPath.folder_default_path = folder_default_path
 
-def make_dirs_for_Elevator_Result_Linux(Raspi_Number):
+def make_dirs_for_Elevator_Result_Linux(Raspi_Number, logger):
 	if Config_DefaultPath.folder_default_path is None:
 		print("Error in Make_Dirs, Elevator_Results Folder Dont Exists!")
 		exit(1)
@@ -106,12 +109,13 @@ def make_dirs_for_Elevator_Result_Linux(Raspi_Number):
 		Config_DefaultPath.video_capture_default_path = video_capture_default_path
 		Config_DefaultPath.config_default_path = config_default_path
 
-def make_files_for_program_Linux(Raspi_Number):
+def make_files_for_program_Linux(Raspi_Number, logger):
+	print("MFFPL {}".format(Config_DefaultPath.config_default_path))
 	if Config_DefaultPath.config_default_path is None:
 		print("Error in Make_Dirs, Config_DefaultPath.config_default_path is None")
-		exit(1)
 
 	else:
+		print("MFFPL_CDP {}".format(Config_DefaultPath.code_default_path))
 		os.chdir(Config_DefaultPath.code_default_path)
 		os.chdir('config')
 
@@ -127,6 +131,8 @@ def make_files_for_program_Linux(Raspi_Number):
 		Config_Detection.Detection_path['yaml_path'] = f"{Config_DefaultPath.config_default_path}/{yaml_name}"
 
 def make_dirs_for_program_Windows():
+	current_directory = os.path.dirname(os.path.realpath(__file__))
+	os.chdir(current_directory)
 	default_path = os.getcwd()
 
 	os.chdir('../..')
@@ -224,12 +230,15 @@ def make_files_for_program_Windows(Raspi_Number):
 		Config_Detection.Detection_path['yaml_path'] = fr"{Config_DefaultPath.config_default_path}\{yaml_name}"
 
 def make_dir_and_files_Linux(Raspi_Number):
+	logger = logging.getLogger()
+	logger.setLevel(logging.DEBUG)
+	
 	if Config_DefaultPath.folder_default_path is None:
-		make_dirs_for_program_Linux()
+		make_dirs_for_program_Linux(logger)
 	else:
 		print("PATH info already exists")
-	make_dirs_for_Elevator_Result_Linux(Raspi_Number)
-	make_files_for_program_Linux(Raspi_Number)
+	make_dirs_for_Elevator_Result_Linux(Raspi_Number, logger)
+	make_files_for_program_Linux(Raspi_Number, logger)
 
 def make_dir_and_files_Windows(Raspi_Number):
 	if Config_DefaultPath.folder_default_path is None:
