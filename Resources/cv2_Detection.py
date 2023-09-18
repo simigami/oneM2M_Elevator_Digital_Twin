@@ -6,9 +6,10 @@ import classid
 import List_Button_On_Floor
 import Calculate_Elevator_Energy
 import Logging
+import Make_Dirs
 
 try:
-    from config import Config_Detection, Config_Elevator_SW, Config_Log, Config_DefaultPath
+    from config_default import Config_Detection, Config_Elevator_SW, Config_Log, Config_DefaultPath
     config_DETECT = Config_Detection
     config_ELEVATOR_SW = Config_Elevator_SW
 
@@ -45,7 +46,7 @@ def make_list(timestamp_str, Root_List, delta):
     
     return Text
 
-def check_differential(timestamp_str, previous, now, root_List):
+def check_differential(timestamp_str, previous, now, root_List, start_timestamp):
     bigger = previous if len(previous) > len(now) else now
     smaller = now if bigger == previous else previous
 
@@ -68,7 +69,7 @@ def check_differential(timestamp_str, previous, now, root_List):
         Text += "Button List has Changed "
         Text += make_list(timestamp_str, root_List, now)
 
-    Logging.log_timelist(Text)
+    Logging.log_timelist(Text, start_timestamp)
 
 def Extract_datetime(img_path):
     if Config_DefaultPath.picture_default_path is None:
@@ -93,6 +94,7 @@ def Detect(img_name):
 
 def Run():
     images_Folder = Sort_image.get_images(Config_Detection.Detection_path['image_folder_path'])
+    start_timestamp = Extract_datetime(images_Folder[0])
 
     root_list = List_Button_On_Floor.TimeList()
     previous_green_button_list = []
@@ -108,16 +110,16 @@ def Run():
 
         now_green_button_list = Detect(img_name)
 
-        frame = Logging.log_green_button(config_DETECT, previous_green_button_list, now_green_button_list)
+        frame = Logging.log_green_button(config_DETECT, previous_green_button_list, now_green_button_list, start_timestamp)
 
         if frame is not None:
             if previous_frame == -1:
                 previous_frame = frame
             if previous_green_button_list != now_green_button_list:
-                check_differential(timestamp_str, previous_green_button_list, now_green_button_list, root_list)
+                check_differential(timestamp_str, previous_green_button_list, now_green_button_list, root_list, start_timestamp)
             else:
                 interval = float((frame-previous_frame)/30)
-                Logging.log_interval(interval)
+                Logging.log_interval(interval, start_timestamp)
                 previous_frame = frame
 
         previous_green_button_list = now_green_button_list

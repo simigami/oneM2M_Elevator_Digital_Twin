@@ -5,13 +5,13 @@ try:
 
 except Exception as e:
     pass
-def log_green_button(config, previous_green_button_list, now_green_button_list):
+def log_green_button(config, previous_green_button_list, now_green_button_list, start_timestamp):
     if Config_DefaultPath.log_default_path is None:
         print("Error in Logging, Log Default Path is None\n")
         exit(1)
 
     else:
-        txt_name = "Log_Condition.txt"
+        txt_name = rf"Log_Condition_{start_timestamp}.txt"
         basename = os.path.basename(config.Detection_path['image_file_path'])
 
         os.chdir(Config_DefaultPath.log_default_path)
@@ -25,26 +25,26 @@ def log_green_button(config, previous_green_button_list, now_green_button_list):
         else:
             return None
 
-def log_interval(interval):
+def log_interval(interval, start_timestamp):
     if Config_DefaultPath.log_default_path is None:
         print("Error in Logging, Log Default Path is None\n")
         exit(1)
 
     else:
         os.chdir(Config_DefaultPath.log_default_path)
-        txt_name = "Log_Floor_Lists.txt"
+        txt_name = rf"Log_Floor_Lists_{start_timestamp}.txt"
         log = "Interval Between Previous Conditional Change is : {}s\n\n".format(interval)
         with open(txt_name, "a") as f:
             f.write(log)
         
-def log_timelist(Text):
+def log_timelist(Text, start_timestamp):
     if Config_DefaultPath.log_default_path is None:
         print("Error in Logging, Log Default Path is None\n")
         exit(1)
     else:
         os.chdir(Config_DefaultPath.log_default_path)
-        txt_name = "Log_Floor_Lists.txt"
-        with open("Log_Floor_Lists.txt", "a") as f:
+        txt_name = rf"Log_Floor_Lists_{start_timestamp}.txt"
+        with open(txt_name, "a") as f:
             f.write(Text)
     
 def log_sensor(Text):

@@ -2,7 +2,7 @@ import cv2
 import yaml
 
 import Detect_Color
-import config
+import config_default
 def get_label_data(label_text_path):
     label_data = []
 
@@ -23,8 +23,8 @@ def get_label_data(label_text_path):
     return label_data
     
 def display_label_info(image, label_text_path):
-    label_config = config.Config_Label()
-    color_config = config.Config_Color()
+    label_config = config_default.Config_Label()
+    color_config = config_default.Config_Color()
 
     label_data = get_label_data(label_text_path)
 

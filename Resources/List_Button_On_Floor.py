@@ -1,5 +1,5 @@
 import datetime
-import config
+import config_default
 
 class TimeList:
     def __init__(self):

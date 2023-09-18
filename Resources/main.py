@@ -1,5 +1,6 @@
 import logging
 import datetime
+import os.path
 import time
 import threading
 import queue
@@ -11,7 +12,7 @@ import cv2_Detection
 import Raspi_Shoot
 import Video_To_Image
 
-from config import Config_Detection, Config_Log, Config_DefaultPath, Config_Test
+from config_default import Config_Detection, Config_Log, Config_DefaultPath, Config_Test
 #from GetPressure import Get_Pressure
 
 Raspi_Number = "No5"    # Raspi_Number should be like "No#"
@@ -99,6 +100,7 @@ def Test_Linux(Raspi_Number):
 
 def Test_Windows(Raspi_Number):
     total_time = 0 
+    Make_Dirs.make_dirs_for_program_Windows()
 
     video_list = Make_Dirs.video_list_from_folder(Config_Test.Video_sample_folder_path_Windows)
     if len(video_list) >= 1:
@@ -107,25 +109,29 @@ def Test_Windows(Raspi_Number):
             start_timestamp = datetime.datetime.strptime(start_timestamp, '%Y%m%d%H%M%S')
             timestamp_str = start_timestamp.strftime("%Y%m%d_%H%M%S")
 
-            Make_Dirs.make_dir_and_files_Windows(Raspi_Number)
-            print("Skip Taking Videos due to Videos Already Found")
+            folder_already_exists = Make_Dirs.check_this_video_path(Raspi_Number, timestamp_str)
+            if not folder_already_exists:
+                Make_Dirs.make_dir_and_files_Windows(Raspi_Number)
+                print("Skip Taking Videos due to Videos Already Found")
 
-            start = time.time()
-            picture_location = fr"{Config_DefaultPath.picture_default_path}\{Raspi_Number}\{timestamp_str}"
-            Video_To_Image.extract_frames(video_path, picture_location, start_timestamp, second=600)
-            end = time.time()
-            print("Interval Extract Frames : {} second".format(end - start))
-            total_time += end - start
+                start = time.time()
+                picture_location = fr"{Config_DefaultPath.picture_default_path}\{Raspi_Number}\{timestamp_str}"
+                Video_To_Image.extract_frames(video_path, picture_location, start_timestamp, second=-1)
+                end = time.time()
+                print("Interval Extract Frames : {} second".format(end - start))
+                total_time += end - start
 
-            start = time.time()
-            Config_Detection.Detection_path['image_folder_path'] = picture_location
-            cv2_Detection.Run()
-            end = time.time()
-            print("Interval Button Detection : {}".format(end - start))
-            total_time += end - start
+                start = time.time()
+                Config_Detection.Detection_path['image_folder_path'] = picture_location
+                cv2_Detection.Run()
+                end = time.time()
+                print("Interval Button Detection : {}".format(end - start))
+                total_time += end - start
 
-            print("Total Time Spent is : {} second".format(total_time))
-
+                print("Total Time Spent is : {} second".format(total_time))
+            else:
+                print("Skip Video {}_{} due to Picture Already Exists".format(Raspi_Number, start_timestamp))
+                continue
     else:
         Make_Dirs.make_dir_and_files_Windows(Raspi_Number)
         #Pic_and_Show.get_sample_and_label()
@@ -159,5 +165,5 @@ def Test_Windows(Raspi_Number):
     return 0
 
 if __name__ == '__main__':
-    Test_Linux(Raspi_Number)
-    #Test_Windows(Raspi_Number)
+    #Test_Linux(Raspi_Number)
+    Test_Windows(Raspi_Number)

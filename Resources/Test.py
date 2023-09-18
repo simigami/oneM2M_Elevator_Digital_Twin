@@ -3,7 +3,7 @@ import time
 import datetime
 import Logging
 
-from config import Config_Log
+from config_default import Config_Log
 
 class Lps25hsensor:
     address = 0x5d
