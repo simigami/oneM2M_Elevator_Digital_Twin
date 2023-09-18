@@ -7,7 +7,7 @@ import View_Label
 import Sort_image
 
 try:
-    from config import Config_Detection, Config_Color, Config_Elevator_SW
+    from config_default import Config_Detection, Config_Color, Config_Elevator_SW
 
 except Exception as e:
     pass

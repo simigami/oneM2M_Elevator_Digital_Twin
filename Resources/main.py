@@ -11,16 +11,16 @@ import cv2_Detection
 import Raspi_Shoot
 import Video_To_Image
 
-from config import Config_Detection, Config_Log, Config_DefaultPath, Config_Test
+from config_default import Config_Detection, Config_Log, Config_DefaultPath, Config_Test
 #from GetPressure import Get_Pressure
 
-Raspi_Number = "No5"    # Raspi_Number should be like "No#"
+Raspi_Number = "No1"    # Raspi_Number should be like "No#"
 stop_pressure = False
 result_queue = queue.Queue()
 
 def Capture_Video():
     cnt_max = 1
-    time_per_cnt = 3 * Raspi_Shoot.hour
+    time_per_cnt = 10 * Raspi_Shoot.second
     
     Video_File_Path, start_timestamp = Raspi_Shoot.shoot(Raspi_Number, cnt_max, time_per_cnt)
     result_queue.put((Video_File_Path, start_timestamp))

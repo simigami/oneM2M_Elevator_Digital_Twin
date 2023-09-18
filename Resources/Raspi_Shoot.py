@@ -3,7 +3,7 @@ import datetime
 import subprocess
 import multiprocessing
 from threading import Thread
-from config import Config_VideoCapture, Config_DefaultPath
+from config_default import Config_VideoCapture, Config_DefaultPath
 
 second = 1000
 minute = 60 * second

@@ -3,7 +3,7 @@ import logging
 import shutil
 import glob
 import re
-from config import Config_DefaultPath, Config_Detection
+from config_default import Config_DefaultPath, Config_Detection
 
 def video_list_from_folder(folder_path):
     if not os.path.exists(folder_path):
@@ -110,12 +110,10 @@ def make_dirs_for_Elevator_Result_Linux(Raspi_Number, logger):
 		Config_DefaultPath.config_default_path = config_default_path
 
 def make_files_for_program_Linux(Raspi_Number, logger):
-	print("MFFPL {}".format(Config_DefaultPath.config_default_path))
 	if Config_DefaultPath.config_default_path is None:
 		print("Error in Make_Dirs, Config_DefaultPath.config_default_path is None")
 
 	else:
-		print("MFFPL_CDP {}".format(Config_DefaultPath.code_default_path))
 		os.chdir(Config_DefaultPath.code_default_path)
 		os.chdir('config')
 

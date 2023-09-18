@@ -2,7 +2,7 @@ import cv2
 import View_Label
 import Video_To_Image
 import Raspi_Shoot
-from config import Config_DefaultPath, Config_Detection
+from config_default import Config_DefaultPath, Config_Detection
 
 def get_sample_and_label():
 	if Config_DefaultPath.sample_default_path is None:

@@ -1,7 +1,7 @@
 import os
 
 try:
-    from config import Config_DefaultPath
+    from config_default import Config_DefaultPath
 
 except Exception as e:
     pass

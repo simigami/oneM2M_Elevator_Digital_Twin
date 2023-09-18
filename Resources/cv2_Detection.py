@@ -8,7 +8,7 @@ import Calculate_Elevator_Energy
 import Logging
 
 try:
-    from config import Config_Detection, Config_Elevator_SW, Config_Log, Config_DefaultPath
+    from config_default import Config_Detection, Config_Elevator_SW, Config_Log, Config_DefaultPath
     config_DETECT = Config_Detection
     config_ELEVATOR_SW = Config_Elevator_SW
 
