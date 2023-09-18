@@ -1,9 +1,10 @@
 import os
 import re
-import config
+import config_default
+import config_elevator
 
 try:
-    from config import Config_Elevator_SW, Config_Elevator_HW, Config_DefaultPath
+    from config_default import Config_Elevator_SW, Config_Elevator_HW, Config_DefaultPath
     config_EH = config.Config_Elevator_HW
     config_ES = config.Config_Elevator_SW
 

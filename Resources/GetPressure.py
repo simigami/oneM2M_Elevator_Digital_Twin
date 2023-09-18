@@ -20,15 +20,18 @@ class Lps25hsensor:
 
     def setup(self):
         try:
-            self.bus.write_i2c_block_data(self.address, 0x00, [])
+            #self.bus.write_i2c_block_data(self.address, 0x00, [])
+            self.bus.write_i2c_block_data(self.address, 0x21, [0x04])
+            self.bus.write_i2c_block_data(self.address, 0x20, [0x00])
+            self.bus.write_i2c_block_data(self.address, 0x21, [0x40])
+            self.bus.write_i2c_block_data(self.address, 0x10, [0x0c])
         except OSError as e:
             print(e)
 
-            time.sleep(0.1)
 
     def read_pressure(self):
         try:
-            self.bus.write_i2c_block_data(self.address, 0x20, [0x90])
+            self.bus.write_i2c_block_data(self.address, 0x20, [0xc4])
         except OSError as e:
             print(e)
 
@@ -66,13 +69,8 @@ class Lps25hsensor:
         blocks = self.bus.read_i2c_block_data(self.address, register, 1)
         return blocks[0]
 
-
-def hPa_to_MPa(hPa):
-    return hPa / 10000
-
-
-def Mpa_to_Altimeter(MPa):
-    P = MPa
+def Mpa_to_Altimeter(hPa):
+    P = hPa / 10000
     P0 = 0.101325
 
     altitude = 44330 * (1 - ((P / P0) ** (1000 / 5255)))
@@ -107,25 +105,30 @@ def Get_Pressure():
     MPa = hPa_to_MPa(hPa)
     alt = Mpa_to_Altimeter(MPa)
     
-    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-
-    Text = "Timestamp is {}\nAltimeter : {}\nTemperature : {}\n\n".format(timestamp, alt, temp)
-    #print("Get Pressure at {}".format(Text))
-    Logging.log_sensor(Text)
+    return alt, temp
+    #Logging.log_sensor(Text)
     
-
+def return_average_alt(num):    # About 200ms per Get_Pressure Function. 
+    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    total_alt = 0
+    total_temp = 0
+    for i in range(num):
+        alt, temp = Get_Pressure()
+        total_alt += round(alt, 3)
+        total_temp += round(temp, 3)
+    
+    total_alt /= num
+    total_temp /= num
+    
+    print("Average Alt is : {}\n".format(round(total_alt,3)))
+    return timestamp, round(total_alt,3), round(total_temp,3)
+    
 if __name__ == '__main__':
-    sensor = Lps25hsensor(1)
-    sensor.setup()
-
-    hPa = sensor.read_pressure()
-    temp = sensor.read_temp()
-
-    MPa = hPa_to_MPa(hPa)
-    alt = Mpa_to_Altimeter(MPa)
+    alt_arr = []
+    for i in range(100):
+        timestamp, total_alt, total_temp = return_average_alt(10)   # 5 is Optimisitc Because [Get_Pressure function ms] * num = 1000ms(1s)
+        alt_arr.append(total_alt)
     
-    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-
-    Text = "Timestamp is {}\nAltimeter : {}\nTemperature : {}\n\n".format(timestamp, alt, temp)
-    #print("Get Pressure at {}".format(timestamp))
-    #print(Text)
+    alt_arr.sort()
+    print("Average Alt: {}m\nLowest Alt : {}\nHighest Alt : {}\nOffset : {}".format(alt_arr[int(len(alt_arr)/2)], alt_arr[0], alt_arr[-1],alt_arr[-1]-alt_arr[0]))
+    
