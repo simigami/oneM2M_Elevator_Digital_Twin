@@ -5,8 +5,8 @@ import config_elevator
 
 try:
     from config_default import Config_Elevator_SW, Config_Elevator_HW, Config_DefaultPath
-    config_EH = config.Config_Elevator_HW
-    config_ES = config.Config_Elevator_SW
+    config_EH = config_default.Config_Elevator_Calculate_Variables
+    config_ES = config_default.Config_Elevator_SW
 
     usage_intensity = config_EH.Usage_Intensity
     default_location = config_ES.Default_Location

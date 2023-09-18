@@ -1,8 +1,8 @@
-import config
+import config_default
 import classid
 
 try:
-    from config import Config_Elevator_HW, Config_Elevator_SW
+    from config_default import Config_Elevator_HW, Config_Elevator_SW
     config_ELEVATOR_HW = Config_Elevator_HW
     config_ELEVATOR_SW = Config_Elevator_SW
 

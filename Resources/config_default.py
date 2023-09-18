@@ -49,6 +49,7 @@ class Config_Label:
     }
 
 class Config_Elevator_Calculate_Variables:
+    usage_intensity = 5
     age_Intensity = {
         'Verylow': 75,
         'Low': 200,

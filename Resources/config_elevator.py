@@ -1,4 +1,5 @@
 class Config_Elevator_Specification:
+<<<<<<< HEAD
 	def __init__(self):
 		self.capacity = None
 		self.seater = None
@@ -26,6 +27,34 @@ class Config_Elevator_Specification:
 
 	def cal_vel(self, VT_variable, t):
 		return (VT_variable[0]*t**2)+(VT_variable[1]*t)+VT_variable[2]
+=======
+	Capacity = None
+	Seater = None
+	Max_Velocity = None
+	Motor_Capacity = None
+	Transformer_Capacity = None
+	ELCB = None
+
+	VT_variable = [0 for i in range(3)]  # each element is (a,b,c) in V = at^2+bt+c
+
+	Travel_Distance = None
+	Velocitiy = None  # m/s
+	Acceleration = None  # m/s2
+	Jerk = None  # m/s3
+	Q = None  # Average car load (ISO-21745(2))
+	S = None  # Percentage of average travel distance	(ISO-21745(2))
+	kl = None  # load factor	(ISO-21745(2))
+	Trip = None  # Daily Trip Count
+	nd = None  # Categorized number of starts per day
+
+	Pid = None  # IDLE mode Wattage(W)
+	Pst = None  # Stanby mode Wattage(W)
+	Rid = None  # IDLE/Standby Time Ratio
+
+	Rst = None  # IDLE/Standby Time Ratio
+	def cal_vel(self, VT_variable, t):
+		self.Velocitiy =  (VT_variable[0]*t**2)+(VT_variable[1]*t)+VT_variable[2]
+>>>>>>> 9d76d2498e4760cbce01d1e67b9cfaa4c8a45458
 
 	def set_VT(self, a, b, c):
 		self.VT_variable[0] = a
@@ -53,10 +82,17 @@ class Config_Elevator_Specification:
 	def Cal_Running_Energy_Per_day(self, nd, S, kl, Erc):
 		return (nd*S*kl*Erc)/2
 
+<<<<<<< HEAD
 	def Cal_Standing_Energy_Per_day(self, nd, tav, Pid, Rid, Pst, Rst):
 		return (24 - (nd / 3600) * tav)(Pid * Rid + Pst * Rst)
 
 	def rated_load(self, Category, Load):
+=======
+		def Cal_Standing_Energy_Per_day(self, nd, tav, Pid, Rid, Pst, Rst):
+			return (24 - (nd / 3600) * tav)(Pid * Rid + Pst * Rst)
+
+	def rated_load(Category, Load):
+>>>>>>> 9d76d2498e4760cbce01d1e67b9cfaa4c8a45458
 		if Category >= 1 and Category <= 3:
 			if Load <= 800:
 				return 7.5
@@ -85,7 +121,11 @@ class Config_Elevator_Specification:
 			else:
 				return 4.5
 
+<<<<<<< HEAD
 	def load_factor(self, Q, cb=0.5, h=0):
+=======
+	def load_factor(Q, cb=0.5, h=0):
+>>>>>>> 9d76d2498e4760cbce01d1e67b9cfaa4c8a45458
 		if (cb == 0.5):
 			return 1 - (Q * 0.0164)
 		elif (cb == 0.4):
@@ -98,6 +138,7 @@ class Config_Elevator_Specification:
 			return 1 + (Q * 0.0187)
 
 class Hyundai_Luxen:
+<<<<<<< HEAD
 	def __init__(self):
 		Luxen = Config_Elevator_Specification()
 		Luxen.Capacity = 1350
@@ -110,3 +151,13 @@ class Hyundai_Luxen:
 
 if __name__ == '__main__':
 	luxen = Hyundai_Luxen()
+=======
+	Luxen = Config_Elevator_Specification()
+	Luxen.Capacity = 1350
+	Luxen.Seater = 20
+	Luxen.Max_Velocity = 2.5
+	Luxen.Motor_Capacity = 24.6
+	Luxen.Transformer_Capacity = 37.0
+	Luxen.ELCB = 75
+	Luxen.set_VT_variable(1.0, 0.5, 1.0)	# This is random variable that satisfies v=2.5 when t=1.0
+>>>>>>> 9d76d2498e4760cbce01d1e67b9cfaa4c8a45458

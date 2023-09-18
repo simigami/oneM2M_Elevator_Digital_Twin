@@ -4,6 +4,27 @@ import shutil
 import glob
 import re
 from config_default import Config_DefaultPath, Config_Detection
+<<<<<<< HEAD
+=======
+
+def check_this_video_path(Raspi_Number, timestamp_str):
+	if not os.path.exists(Config_DefaultPath.folder_default_path):
+		return False
+	else:
+		os.chdir(Config_DefaultPath.folder_default_path)
+		if not os.path.exists('Pictures'):
+			return False
+		else:
+			os.chdir('Pictures')
+			if not os.path.exists(Raspi_Number):
+				return False
+			else:
+				os.chdir(Raspi_Number)
+				if not os.path.exists(timestamp_str):
+					return False
+				else:
+					return True
+>>>>>>> 9d76d2498e4760cbce01d1e67b9cfaa4c8a45458
 
 def video_list_from_folder(folder_path):
     if not os.path.exists(folder_path):
@@ -239,10 +260,6 @@ def make_dir_and_files_Linux(Raspi_Number):
 	make_files_for_program_Linux(Raspi_Number, logger)
 
 def make_dir_and_files_Windows(Raspi_Number):
-	if Config_DefaultPath.folder_default_path is None:
-		make_dirs_for_program_Windows()
-	else:
-		print("PATH info already exists")
 	make_dirs_for_Elevator_Result_Windows(Raspi_Number)
 	make_files_for_program_Windows(Raspi_Number)
 
