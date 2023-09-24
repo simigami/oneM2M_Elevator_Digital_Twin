@@ -1,7 +1,7 @@
 class TEST_PATH:
     Number_of_Elevators = 5
 
-    This_Elevator_Number = 5
+    This_Elevator_Number = 1
     This_Elevator_Number_str = rf""
 
     Default_Timestamp = rf""
