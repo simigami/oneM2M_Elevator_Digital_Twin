@@ -35,6 +35,7 @@ def display_label_info(image, label_text_path):
 
     for label in label_data:
         class_id, x, y, width, height = label
+        print(label)
 
         image_height, image_width, _ = image.shape
         left = int((x-width/2) * image_width)
@@ -71,12 +72,6 @@ def display_label_info(image, label_text_path):
     key = cv2.waitKey(0)
 
 if __name__== '__main__':
-    image_path = r"E:/ML/Elevator Git/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Images_Sample/Elevator_Sample/"
-    yaml_path = r"E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Images_Sample\data.yaml"
-    label_folder_path =  "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Images_Sample\Sample_Annotes\\"
-    base_label_file_path = r"E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Images_Sample\Sample_Annotes\Base.txt"
-
-    sample_img_path = r"E:/ML/Elevator Git/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Images_Sample/Elevator_Sample/frame_1080.jpg"
-    sample_label_path = "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\yolov8\\annotations\\frame_1080.jpg.txt"
-
-    axis_unit = 0.05
+    img = cv2.imread(rf"E:\ML\Elevator Git\Elevator_Results\Pictures\No5\20230912_142324\20230912_142324.jpg")
+    path = rf"E:\ML\Elevator Git\Elevator_Results\Configs\label_No5.txt"
+    display_label_info(img, path)
