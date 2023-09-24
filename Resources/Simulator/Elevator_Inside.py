@@ -14,13 +14,13 @@ except Exception as e:
 
 def read_label_and_draw_rectangle(img, coordinates_of_label, show=0):
     label_path = TEST_PATH.label_windows
+    height, width, _ = img.shape
 
     with open(label_path, 'r') as file:
         annotations = file.readlines()
 
         for annotation in annotations:
             class_id, x_ratio, y_ratio, width_ratio, height_ratio = map(float, annotation.strip().split(' '))
-            height, width, _ = img.shape
 
             left_x = int((x_ratio - width_ratio / 2) * width)
             top_y = int((y_ratio - height_ratio / 2) * height)
@@ -87,9 +87,12 @@ def return_pressed_buttons(id_in_dots):
 
     return result
 
-def write_to_txt(final_id_list, txt_path):
+def write_to_txt(final_id_list, log_folder):
+    os.chdir(log_folder)
+    txt_name = rf"Button_List_{TEST_PATH.Default_Timestamp}.txt"
+
     print("Writing Button List on image {}...".format(final_id_list[0]))
-    with open(txt_path, 'a') as file:
+    with open(txt_name, 'a') as file:
         for elem in final_id_list:
             if elem == final_id_list[-1]:
                 file.write(f"{elem}\n")
@@ -103,7 +106,11 @@ def detect_color(folder_path, show):
     images = [file for file in os.listdir() if file.lower().endswith('.jpg')]
     start = time.time()
 
+    #print(images)
     for image in images:
+        # if image == "2023_0908_125334.jpg":
+        #     show = 1
+
         img = cv2.imread(image)
         read_label_and_draw_rectangle(img, coordinates_of_label, show)
 
@@ -118,7 +125,8 @@ def detect_color(folder_path, show):
         final_id_list.insert(0, image)
 
         if len(flattened_contour) >= TEST_VARIABLES.min_total_dot_when_green:
-            write_to_txt(final_id_list, TEST_PATH.button_list_windows)
+            write_to_txt(final_id_list, TEST_PATH.Logs_Folder_Location_windows)
+            os.chdir(folder_path)
 
         if (show):
             height, width, _ = img.shape

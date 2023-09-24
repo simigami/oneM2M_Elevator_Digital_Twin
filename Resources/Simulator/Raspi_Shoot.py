@@ -28,7 +28,7 @@ def run_Windows(shoot_time):
     vid_width = " --width 1080"
     vid_height = " --height 1920"
     vid_time = f" --framerate 30 -t {shoot_time} -o "
-    timestamp_str = timestamp.strftime("%Y%m%d%H%M%S")
+    timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
     TEST_PATH.Default_Timestamp = timestamp_str
 
     #vid_output = fr"{TEST_PATH.Videos_Folder_Location_windows}\{timestamp_str}\{TEST_PATH.This_Elevator_Number_str}_{timestamp_str}.h264"

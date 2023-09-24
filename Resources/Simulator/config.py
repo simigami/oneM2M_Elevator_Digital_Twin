@@ -1,7 +1,7 @@
 class TEST_PATH:
     Number_of_Elevators = 5
 
-    This_Elevator_Number = 1
+    This_Elevator_Number = 5
     This_Elevator_Number_str = rf""
 
     Default_Timestamp = rf""
@@ -20,6 +20,9 @@ class TEST_PATH:
 
     Videos_Folder_Location_Linux = rf""
     Videos_Folder_Location_windows = rf""
+
+    Videos_Remainder_Folder_Location_Linux = rf""
+    Videos_Remainder_Folder_Location_Windows = rf"E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Videos"
 
     Pictures_Folder_Location_Linux = rf""
     Pictures_Folder_Location_windows = rf""

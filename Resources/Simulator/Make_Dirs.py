@@ -1,57 +1,6 @@
 import os
-import logging
 import shutil
-import glob
-import re
 from config import TEST_PATH
-
-# def check_this_video_path(Raspi_Number, timestamp_str):
-# 	if not os.path.exists(Config_DefaultPath.folder_default_path):
-# 		return False
-# 	else:
-# 		os.chdir(Config_DefaultPath.folder_default_path)
-# 		if not os.path.exists('Pictures'):
-# 			return False
-# 		else:
-# 			os.chdir('Pictures')
-# 			if not os.path.exists(Raspi_Number):
-# 				return False
-# 			else:
-# 				os.chdir(Raspi_Number)
-# 				if not os.path.exists(timestamp_str):
-# 					return False
-# 				else:
-# 					return True
-#
-# def video_list_from_folder(folder_path):
-#     if not os.path.exists(folder_path):
-#         print("Error in Video_To_Image, video folder not found")
-#         exit(1)
-#     else:
-#         target = os.path.join(folder_path, '**/*.h264')
-#         video_list = glob.glob(target, recursive=True)
-#
-#         if video_list is None:
-#             print("Error in Video_To_Image, video list is None")
-#             return None
-#         else:
-#             return video_list
-#
-# def get_Raspi_Number(video_path):
-# 	if not os.path.exists(video_path):
-# 		print("Error in Video_To_Image, video_path not found")
-# 		exit(1)
-# 	else:
-# 		pattern = r"(No\d+)_(\d{14})+\.h264"
-#
-# 		match = re.search(pattern, video_path)
-# 		if match:
-# 			Raspi_Number = match.group(1)
-# 			start_timestamp = match.group(2)
-# 			return Raspi_Number, start_timestamp
-# 		else:
-# 			print("Error in Video_To_Image, Raspi Number is None. Wrong Video name")
-# 			return None
 
 def make_result_specific_folders():
 	dir_name = "Configs"
@@ -70,6 +19,29 @@ def make_result_specific_folders():
 	if not os.path.exists(dir_name):
 		os.mkdir(dir_name)
 
+
+def copy_config_files():
+	current = os.getcwd()
+
+	dir_name = "No" + str(TEST_PATH.This_Elevator_Number)
+
+	os.chdir(TEST_PATH.Installation_Location_windows)
+	os.chdir('../config')
+
+	label_txt_name = fr"label_{TEST_PATH.This_Elevator_Number_str}.txt"
+	yaml_name = "data.yaml"
+	log_sensor_txt_name = "Log_Sensors.txt"
+
+	destination = TEST_PATH.Configs_Folder_Location_windows
+
+	shutil.copy(label_txt_name, destination)
+	shutil.copy(yaml_name, destination)
+	shutil.copy(log_sensor_txt_name, destination)
+
+	TEST_PATH.label_windows = fr"{TEST_PATH.Configs_Folder_Location_windows}/{label_txt_name}"
+	TEST_PATH.yaml_windows = fr"{TEST_PATH.Configs_Folder_Location_windows}/{yaml_name}"
+
+	os.chdir(current)
 
 def make_dirs_for_program(debug=0):
 	Installation_Directory = os.path.dirname(os.path.realpath(__file__))
@@ -105,6 +77,7 @@ def make_dirs_for_program(debug=0):
 
 				dir_name = "Configs"
 				TEST_PATH.Configs_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
+				copy_config_files()
 
 				dir_name = "Videos"
 				TEST_PATH.Videos_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
@@ -115,6 +88,7 @@ def make_dirs_for_program(debug=0):
 				dir_name = "Pictures"
 				TEST_PATH.Pictures_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
 				os.chdir(TEST_PATH.Result_Folder_Location_windows)
+
 	else:
 		TEST_PATH.This_Elevator_Number_str = dir_name
 
@@ -140,15 +114,29 @@ def make_dirs_for_program(debug=0):
 		print(TEST_PATH.Logs_Folder_Location_windows)
 		print(TEST_PATH.Pictures_Folder_Location_windows)
 
+def Reset_Path_Based_On_No(No):
+	if os.path.exists(TEST_PATH.Result_Folder_Location_windows):
+		TEST_PATH.This_Elevator_Number_str = No
+
+		os.chdir(TEST_PATH.Result_Folder_Location_windows)
+		os.chdir(No)
+
+		TEST_PATH.Specific_Result_Folder_Location_windows = os.getcwd()
+
+		dir_name = "Configs"
+		TEST_PATH.Configs_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
+		copy_config_files()
+
+		dir_name = "Videos"
+		TEST_PATH.Videos_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
+
+		dir_name = "Logs"
+		TEST_PATH.Logs_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
+
+		dir_name = "Pictures"
+		TEST_PATH.Pictures_Folder_Location_windows = os.path.join(os.getcwd(), dir_name)
+		os.chdir(TEST_PATH.Result_Folder_Location_windows)
 
 
 if __name__ == '__main__':
-	# Raspi_Number = "No4"
-	# make_dir_and_files_Linux()
-	# make_dir_and_files_Windows(Raspi_Number)
-	#
-	# folder_path = rf"E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Videos"
-	# l = video_list_from_folder(folder_path)
-	# for path in l:
-	# 	get_Raspi_Number(path)
 	make_dirs_for_program()

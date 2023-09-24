@@ -4,8 +4,6 @@ import shutil
 import glob
 import re
 from config_default import Config_DefaultPath, Config_Detection
-<<<<<<< HEAD
-=======
 
 def check_this_video_path(Raspi_Number, timestamp_str):
 	if not os.path.exists(Config_DefaultPath.folder_default_path):
@@ -24,7 +22,6 @@ def check_this_video_path(Raspi_Number, timestamp_str):
 					return False
 				else:
 					return True
->>>>>>> 9d76d2498e4760cbce01d1e67b9cfaa4c8a45458
 
 def video_list_from_folder(folder_path):
     if not os.path.exists(folder_path):
