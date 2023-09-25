@@ -50,7 +50,7 @@ def make_dirs_for_program(debug=0):
 	#os.chdir('../..') This is a real code when test is finished
 	os.chdir('../../../')
 
-	Result_Folder_Location = "Elevator_Results_Test"
+	Result_Folder_Location = "Elevator_Results"
 	if not os.path.exists(Result_Folder_Location):
 		os.mkdir(Result_Folder_Location)
 	

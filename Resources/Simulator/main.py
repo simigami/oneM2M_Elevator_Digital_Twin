@@ -1,7 +1,8 @@
 import datetime
 import os
 import glob
-import Make_Dirs, Raspi_Shoot, Video_To_Image, Elevator_Inside
+import multiprocessing
+import Make_Dirs, Raspi_Shoot, Get_Sensors,Video_To_Image, Elevator_Inside
 from config import TEST_PATH
 
 shoot_time = 10000
@@ -39,11 +40,18 @@ def extract_info_from_filename(filename):
     timestamp = datetime.datetime.strptime(timestamp, '%Y%m%d%H%M%S')
     return identifier, timestamp
 
-if __name__ == '__main__':
+def run():
     Make_Dirs.make_dirs_for_program()
 
     if Linux:
-        Raspi_Shoot.run_Linux(shoot_time)
+        timestamp = datetime.datetime.now().replace(microsecond=0)
+        pool = multiprocessing.Pool(processes=2)
+
+        pool.apply_async(Raspi_Shoot.run_Linux, args=(timestamp, shoot_time))
+        pool.apply_async(Get_Sensors.write_average_alt_per_second, args=(timestamp, shoot_time))
+
+        pool.close()
+        pool.join()
 
         video_path = TEST_PATH.Videos_Folder_Location_windows + rf"/{TEST_PATH.This_Elevator_Number_str}_{TEST_PATH.Default_Timestamp}.h264"
         output_folder = TEST_PATH.Pictures_Folder_Location_windows + rf"/{TEST_PATH.Default_Timestamp}"
@@ -65,14 +73,18 @@ if __name__ == '__main__':
                 video_path = TEST_PATH.Videos_Remainder_Folder_Location_Windows + rf"/{identifier}/{identifier}_{timestamp_str}.h264"
                 picture_folder = TEST_PATH.Pictures_Folder_Location_windows + rf"/{timestamp_str}"
 
-                Video_To_Image.extract_frames_logic(video_path, picture_folder, second=30000)
+                Video_To_Image.extract_frames_logic(video_path, picture_folder, second=-1)
                 Elevator_Inside.detect_color(picture_folder, 0)
 
         else:
-            TEST_PATH.Default_Timestamp = fr"20230912142324"
-            video_path = TEST_PATH.Videos_Folder_Location_windows + rf"/No5_20230912142324.h264"
-            picture_folder = TEST_PATH.Pictures_Folder_Location_windows + rf"/2023_0912_142324"
+            pass
+            # TEST_PATH.Default_Timestamp = fr"20230912142324"
+            # video_path = TEST_PATH.Videos_Folder_Location_windows + rf"/No5_20230912142324.h264"
+            # picture_folder = TEST_PATH.Pictures_Folder_Location_windows + rf"/2023_0912_142324"
+            #
+            # Video_To_Image.extract_frames_logic(video_path, picture_folder, second=500)
+            #
+            # Elevator_Inside.detect_color(picture_folder, 0)
 
-            Video_To_Image.extract_frames_logic(video_path, picture_folder, second=500)
-
-            Elevator_Inside.detect_color(picture_folder, 0)
+if __name__ == '__main__':
+    run()

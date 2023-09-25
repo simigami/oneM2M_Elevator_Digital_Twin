@@ -7,7 +7,6 @@ second = 1000
 minute = 60 * second
 hour = 60 * minute
 day = 24 * hour
-timestamp = datetime.datetime.now().replace(microsecond=0)
 
 def run_commad(command):
     print(command)
@@ -23,12 +22,11 @@ def create_log(message):
     with open(log_file_name, "a") as log_file:
         log_file.write(log_message)
 
-def run_Windows(shoot_time):
+def run_Windows(timestamp_str, shoot_time):
     vid_command = "libcamera-vid"
     vid_width = " --width 1080"
     vid_height = " --height 1920"
     vid_time = f" --framerate 30 -t {shoot_time} -o "
-    timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
     TEST_PATH.Default_Timestamp = timestamp_str
 
     #vid_output = fr"{TEST_PATH.Videos_Folder_Location_windows}\{timestamp_str}\{TEST_PATH.This_Elevator_Number_str}_{timestamp_str}.h264"
@@ -45,14 +43,14 @@ def run_Windows(shoot_time):
     message = "Video End"
     create_log(message)
 
-    return vid_output, timestamp
+    return 1
     
-def run_Linux(shoot_time):
+def run_Linux(timestamp, shoot_time):
     vid_command = "libcamera-vid"
     vid_width = " --width 1080"
     vid_height = " --height 1920"
     vid_time = f" --framerate 30 -t {shoot_time} -o "
-    timestamp_str = timestamp.strftime("%Y%m%d%H%M%S")
+    timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
     TEST_PATH.Default_Timestamp = timestamp_str
 
     #vid_output = fr"{TEST_PATH.Videos_Folder_Location_windows}\{timestamp_str}\{TEST_PATH.This_Elevator_Number_str}_{timestamp_str}.h264"
@@ -69,7 +67,7 @@ def run_Linux(shoot_time):
     message = "Video End"
     create_log(message)
 
-    return vid_output, timestamp
+    return 1
 
 def take_one_picture(picture_path):
     command = f"libcamera-jpeg --width 1080 --height 1920 -o {picture_path}"

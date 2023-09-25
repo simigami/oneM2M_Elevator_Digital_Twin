@@ -14,9 +14,8 @@ def extract_frames_logic(video_path, output_folder, second=-1):
     if second == -1:
         ret, frame = cap.read()
         while ret:
-            timestamp = timestamp + datetime.timedelta(seconds=frame_count/15.0)
-
             if frame_count % 15 == 0:
+                timestamp = timestamp + datetime.timedelta(seconds=1)
                 timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
 
                 # Save the frame as an image
