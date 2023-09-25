@@ -1,11 +1,15 @@
 import os
 import time
 import datetime
+import tailer
 import cv2
 import numpy as np
 
+import Write_Log
+
 try:
     from config import TEST_PATH, TEST_COLOR, TEST_VARIABLES
+    from collections import deque
 
 except Exception as e:
     pass
@@ -93,9 +97,10 @@ def return_pressed_buttons(id_in_dots):
 
     return result
 
-def write_to_txt(final_id_list, log_folder):
+def write_to_txt(final_id_list, log_folder, debug=0):
     os.chdir(log_folder)
     txt_name = rf"Button_List_{TEST_PATH.Default_Timestamp}.txt"
+    #txt_name = rf"Button_List_20230908125554.txt"
 
     print("Writing Button List on image {}...".format(final_id_list[0]))
     with open(txt_name, 'a') as file:
@@ -104,6 +109,37 @@ def write_to_txt(final_id_list, log_folder):
                 file.write(f"{elem}\n")
             else:
                 file.write(f"{elem} ")
+
+    if(debug):
+        with open(txt_name, 'r') as file:
+            last_line = []
+            for _ in range(2):
+                last_line.append(next(file).strip())
+            previous = last_line[0]
+            previous_arr = list(map(str, previous.split(' ')))
+            previous_arr[0] = previous_arr[0][:-4]  # remove .jpg string
+
+            current = last_line[1]
+            current_arr = list(map(str, current.split(' ')))
+
+            if previous_arr[1:] != current_arr[1:]:
+                Write_Log.gather_logs_and_make_final(previous_arr, current_arr)
+
+    else:
+        last_line = tailer.tail(open(txt_name), 2)
+        print(last_line)
+        if len(last_line) == 2: ## If previous log already exists
+            previous = last_line[0]
+            previous_arr = list(map(str, previous.split(' ')))
+
+            current = last_line[1]
+            current_arr = list(map(str, current.split(' ')))
+
+            if previous_arr[1:] != current_arr[1:]:
+                Write_Log.gather_logs_and_make_final(previous_arr, current_arr)
+
+            # print(previous_arr)
+            # print(current_arr)
 
 def detect_color(folder_path, show):
     coordinates_of_label = []
@@ -154,5 +190,9 @@ def detect_color(folder_path, show):
 
 
 if __name__ == '__main__':
-    folder_path = TEST_PATH.sample_image_windows
-    detect_color(folder_path, 0)
+    # folder_path = TEST_PATH.sample_image_windows
+    # detect_color(folder_path, 0)
+    test = [0]
+    test2 = rf"E:\ML\Elevator Git\Elevator_Results\No5\Logs"
+    write_to_txt(test, test2)
+

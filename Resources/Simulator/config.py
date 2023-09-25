@@ -62,3 +62,6 @@ class TEST_VARIABLES:
     min_total_dot_when_green = 20
     min_confidence_rate = 0.1
     class_id = ["Open", "Close", "B5", "B4", "B3", "B2", "B1", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "Panel"]
+
+    Elevator_Alt = [-45, -41.5, -38, -34.5, -31, -28, -22, -18, -15, -12, -9, -6, -3, 0, 3, 6, 9]
+
