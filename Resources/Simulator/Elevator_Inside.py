@@ -86,7 +86,7 @@ def check_contour_dots_with_id(flattened_contour, coordinates_of_label):
     return id_in_dots
 
 def return_pressed_buttons(id_in_dots):
-    print(id_in_dots)
+    #print(id_in_dots)
     
     total = id_in_dots[-1]
     result = []
@@ -116,24 +116,30 @@ def write_to_txt(final_id_list, log_folder, debug=0):
             for _ in range(2):
                 last_line.append(next(file).strip())
             previous = last_line[0]
+            previous.replace('18', '')
             previous_arr = list(map(str, previous.split(' ')))
-            previous_arr[0] = previous_arr[0][:-4]  # remove .jpg string
+            previous_arr[0] = previous_arr[0].replace('.jpg','')  # remove .jpg string
 
             current = last_line[1]
+            current.replace('18', '') # 18 = panel classid
             current_arr = list(map(str, current.split(' ')))
+            current_arr[0] = current_arr[0].replace('.jpg','')
 
             if previous_arr[1:] != current_arr[1:]:
                 Write_Log.gather_logs_and_make_final(previous_arr, current_arr)
 
     else:
         last_line = tailer.tail(open(txt_name), 2)
-        print(last_line)
         if len(last_line) == 2: ## If previous log already exists
             previous = last_line[0]
+            previous.replace('18', '')
             previous_arr = list(map(str, previous.split(' ')))
+            previous_arr[0] = previous_arr[0].replace('.jpg','')  # remove .jpg string
 
             current = last_line[1]
+            current.replace('18', '') # 18 = panel classid
             current_arr = list(map(str, current.split(' ')))
+            current_arr[0] = current_arr[0].replace('.jpg','')
 
             if previous_arr[1:] != current_arr[1:]:
                 Write_Log.gather_logs_and_make_final(previous_arr, current_arr)

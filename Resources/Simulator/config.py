@@ -51,17 +51,18 @@ class TEST_PATH:
     button_list_windows = rf"E:\ML\Elevator Git\Elevator_Results\test.txt"
 
 class TEST_COLOR:
-    lowest_RGB = [130, 185, 60]
-    highest_RGB = [225, 245, 120]
-    
-    #lowest_RGB = [0, 0, 0]
+    #lowest_RGB = [130, 185, 60]
     #highest_RGB = [225, 245, 120]
+    
+    lowest_RGB = [0, 0, 0]
+    highest_RGB = [225, 245, 220]
 
 class TEST_VARIABLES:
     min_circle_area = 1.0
     min_total_dot_when_green = 20
-    min_confidence_rate = 0.1
+    min_confidence_rate = 0.01
     class_id = ["Open", "Close", "B5", "B4", "B3", "B2", "B1", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "Panel"]
 
-    Elevator_Alt = [-45, -41.5, -38, -34.5, -31, -28, -22, -18, -15, -12, -9, -6, -3, 0, 3, 6, 9]
+    #Elevator_Alt = [-45, -41.5, -38, -34.5, -31, -28, -22, -18, -15, -12, -9, -6, -3, 0, 3, 6, 9]
+    Elevator_Alt = [-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, 10, 7, 4, 1]
 

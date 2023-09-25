@@ -11,7 +11,7 @@ def write_to_txt(log_folder, message):
     with open(txt_name, 'a') as file:
             file.write(f"{message}")
 
-def gather_logs_and_make_final(previous_button_list, current_button_list):
+def gather_logs_and_make_final(previous_button_list, current_button_list, debug=0):
     InOut = "In"
 
     if TEST_PATH.os_name == "Linux":
@@ -42,6 +42,9 @@ def gather_logs_and_make_final(previous_button_list, current_button_list):
                 arr = list(map(str, line.split(' ')))
 
         timestamp_str, alt, temp = arr
+        alt = float(alt)
+        temp = float(temp)
+        
         EA = TEST_VARIABLES.Elevator_Alt
 
         lower_floor_cid = 0
@@ -49,22 +52,36 @@ def gather_logs_and_make_final(previous_button_list, current_button_list):
         for i in range(len(EA)-1):
             lower_floor_alt = EA[i]
             higher_floor_alt = EA[i+1]
+            #print(alt)
+            #print(lower_floor_alt)
+            #print(higher_floor_alt)
 
             if lower_floor_alt <= alt <= higher_floor_alt:
                 lower_floor_cid = i+2
                 higher_floor_cid = i+3
+                
+                break
 
         for i in range(len(pbl)):
-            pbl[i] = names[pbl[i]]
+            pbl[i] = names[int(pbl[i])]
         for i in range(len(cbl)):
-            cbl[i] = names[cbl[i]]
+            cbl[i] = names[int(cbl[i])]
 
         lower_floor_name = names[lower_floor_cid]
         higher_floor_name = names[higher_floor_cid]
+        
+        if(debug):
+            print(arr)
+            print(alt)
+            print(temp)
+            print(lower_floor_cid)
+            print(higher_floor_cid)
+            print(lower_floor_alt)
+            print(higher_floor_alt)
 
 
-        condition_message = "TEST"
-        message = rf"Inout: {InOut}\nTimestamp: {current_button_list[0]}\n{condition_message}\nPrevious Button Panel: {pbl}\nCurrent Button Panel: {cbl}\nCurrent Floor: {lower_floor_name} between {higher_floor_name}"
+        condition_message = "Somebody Pressed Button"
+        message = f"Inout: {InOut}\nTimestamp: {current_button_list[0]}\n{condition_message}\nPrevious Button Panel: {pbl}\nCurrent Button Panel: {cbl}\nCurrent Floor: {lower_floor_name} between {higher_floor_name}\n\n"
 
         write_to_txt(TEST_PATH.Logs_Folder_Location_Linux, message)
 
