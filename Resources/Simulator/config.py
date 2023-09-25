@@ -58,6 +58,7 @@ class TEST_COLOR:
     highest_RGB = [225, 245, 220]
 
 class TEST_VARIABLES:
+    total_floors = 17
     min_circle_area = 1.0
     min_total_dot_when_green = 20
     min_confidence_rate = 0.01
@@ -65,4 +66,6 @@ class TEST_VARIABLES:
 
     #Elevator_Alt = [-45, -41.5, -38, -34.5, -31, -28, -22, -18, -15, -12, -9, -6, -3, 0, 3, 6, 9]
     Elevator_Alt = [-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, 10, 7, 4, 1]
+    Number_Of_Trips_To_Floor = []
+    Number_Of_Trips_To_Floor_Of_Each_Floor = []
 

@@ -5,7 +5,7 @@ import tailer
 import cv2
 import numpy as np
 
-import Write_Log
+import Write_Log, Behavior_Pattern
 
 try:
     from config import TEST_PATH, TEST_COLOR, TEST_VARIABLES
@@ -97,7 +97,7 @@ def return_pressed_buttons(id_in_dots):
 
     return result
 
-def write_to_txt(final_id_list, log_folder, debug=0):
+def write_to_txt(final_id_list, log_folder, debug=1):
     os.chdir(log_folder)
     txt_name = rf"Button_List_{TEST_PATH.Default_Timestamp}.txt"
     #txt_name = rf"Button_List_20230908125554.txt"

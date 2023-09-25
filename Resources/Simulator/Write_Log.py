@@ -1,5 +1,7 @@
 import os
 import yaml
+import Behavior_Pattern
+
 from config import TEST_PATH, TEST_VARIABLES
 # This function is in charge of gathering each small logs from other and make a final log for Customers
 
@@ -62,6 +64,8 @@ def gather_logs_and_make_final(previous_button_list, current_button_list, debug=
                 
                 break
 
+        Behavior_Pattern.add_total_trip(pbl, cbl, lower_floor_cid, higher_floor_cid, names)
+
         for i in range(len(pbl)):
             pbl[i] = names[int(pbl[i])]
         for i in range(len(cbl)):
@@ -85,7 +89,16 @@ def gather_logs_and_make_final(previous_button_list, current_button_list, debug=
 
         write_to_txt(TEST_PATH.Logs_Folder_Location_Linux, message)
 
+
     else:
         log_from_elevator_inside = TEST_PATH.Logs_Folder_Location_windows
 
 
+if __name__ == '__main__':
+    pbl = [18, 16, 9]
+    cbl = [15, 9]
+
+    result = [x for x in cbl if x not in pbl]
+    # result = list(set(pbl + cbl))
+    # result.sort()
+    print(result)
