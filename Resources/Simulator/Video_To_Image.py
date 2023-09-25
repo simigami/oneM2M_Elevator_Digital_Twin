@@ -4,7 +4,9 @@ import cv2
 from config import TEST_PATH
 
 def extract_frames_logic(video_path, output_folder, second=-1):
-    timestamp = datetime.datetime.strptime(TEST_PATH.Default_Timestamp, "%Y%m%d%H%M%S")
+    timestamp = datetime.datetime.strptime(TEST_PATH.Default_Timestamp, "%Y_%m%d_%H%M%S")
+    timestamp = timestamp - datetime.timedelta(seconds=1) # timestamp correction with sensors
+    
     cap = cv2.VideoCapture(video_path)
     frame_count = 0
 
@@ -14,7 +16,7 @@ def extract_frames_logic(video_path, output_folder, second=-1):
     if second == -1:
         ret, frame = cap.read()
         while ret:
-            if frame_count % 15 == 0:
+            if frame_count % 30 == 0:
                 timestamp = timestamp + datetime.timedelta(seconds=1)
                 timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
 
@@ -35,10 +37,10 @@ def extract_frames_logic(video_path, output_folder, second=-1):
 
             if not ret:
                 break
-            timestamp = timestamp + datetime.timedelta(seconds=frame_count/15.0)
+            timestamp = timestamp + datetime.timedelta(seconds=frame_count/30.0)
             count = count + 1
 
-            if frame_count % 15 == 0:
+            if frame_count % 30 == 0:
                 timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
 
                 # Save the frame as an image

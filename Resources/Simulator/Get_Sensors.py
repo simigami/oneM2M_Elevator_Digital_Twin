@@ -5,11 +5,12 @@ import smbus2
 
 from config import TEST_PATH
 
-def write_to_txt(config_folder, message):
-    os.chdir(TEST_PATH.Configs_Folder_Location_windows)
+def write_to_txt(log_folder, message):
+    os.chdir(log_folder)
     txt_name = rf"Sensor_{TEST_PATH.Default_Timestamp}.txt"
 
     with open(txt_name, 'a') as file:
+        #print(message)
         file.write(f"{message}\n")
 
 class Lps25hsensor:
@@ -115,7 +116,8 @@ def Get_Pressure():
 def write_average_alt_per_second(timestamp, shoot_time):  # About 200ms per Get_Pressure Function.
     total_alt = 0
     total_temp = 0
-    for i in range(shoot_time):
+    
+    for i in range(shoot_time+1):
         for j in range(5):  # 200ms per Get_Pressure function, so 1sec = 5times
             alt, temp = Get_Pressure()
             total_alt += round(alt, 3)
@@ -129,9 +131,15 @@ def write_average_alt_per_second(timestamp, shoot_time):  # About 200ms per Get_
 
         timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
         message = rf"{timestamp_str} {total_alt} {total_temp}"
+        
+        if i != 0:
+            if TEST_PATH.os_name == "Linux":
+                write_to_txt(TEST_PATH.Logs_Folder_Location_Linux, message)
+                timestamp = timestamp + datetime.timedelta(seconds=1)
 
-    write_to_txt(TEST_PATH.Configs_Folder_Location_windows, message)
-    timestamp = timestamp + datetime.timedelta(seconds=1)
+            else:
+                write_to_txt(TEST_PATH.Logs_Folder_Location_windows, message)
+                timestamp = timestamp + datetime.timedelta(seconds=1)
 
 if __name__ == '__main__':
     write_average_alt_per_second(100)

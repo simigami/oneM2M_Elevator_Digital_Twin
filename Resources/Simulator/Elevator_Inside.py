@@ -13,7 +13,11 @@ except Exception as e:
 # This py is in charge of detect green dots in given image folder path and write final button list in txt
 
 def read_label_and_draw_rectangle(img, coordinates_of_label, show=0):
-    label_path = TEST_PATH.label_windows
+    if TEST_PATH.os_name == "Linux":
+        label_path = TEST_PATH.label_linux
+    else:
+        label_path = TEST_PATH.label_windows
+        
     height, width, _ = img.shape
 
     with open(label_path, 'r') as file:
@@ -78,6 +82,8 @@ def check_contour_dots_with_id(flattened_contour, coordinates_of_label):
     return id_in_dots
 
 def return_pressed_buttons(id_in_dots):
+    print(id_in_dots)
+    
     total = id_in_dots[-1]
     result = []
     if total >= TEST_VARIABLES.min_total_dot_when_green:
@@ -104,6 +110,7 @@ def detect_color(folder_path, show):
 
     os.chdir(folder_path)
     images = [file for file in os.listdir() if file.lower().endswith('.jpg')]
+    images.sort()
     start = time.time()
 
     #print(images)
@@ -122,11 +129,18 @@ def detect_color(folder_path, show):
         id_in_dots = check_contour_dots_with_id(flattened_contour, coordinates_of_label)
 
         final_id_list = return_pressed_buttons(id_in_dots)
-        final_id_list.insert(0, image)
+        if len(final_id_list) != 0:
+            final_id_list.insert(0, image)
 
-        if len(flattened_contour) >= TEST_VARIABLES.min_total_dot_when_green:
-            write_to_txt(final_id_list, TEST_PATH.Logs_Folder_Location_windows)
-            os.chdir(folder_path)
+            if len(flattened_contour) >= TEST_VARIABLES.min_total_dot_when_green:
+                if TEST_PATH.os_name == "Linux":
+                    write_to_txt(final_id_list, TEST_PATH.Logs_Folder_Location_Linux)
+                    os.chdir(folder_path)
+                else:
+                    write_to_txt(final_id_list, TEST_PATH.Logs_Folder_Location_windows)
+                    os.chdir(folder_path)
+        else:
+            continue
 
         if (show):
             height, width, _ = img.shape

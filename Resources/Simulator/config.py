@@ -1,7 +1,9 @@
 class TEST_PATH:
+    os_name = ""
+    
     Number_of_Elevators = 5
 
-    This_Elevator_Number = 5
+    This_Elevator_Number = 1
     This_Elevator_Number_str = rf""
 
     Default_Timestamp = rf""
@@ -40,7 +42,7 @@ class TEST_PATH:
     yaml_windows = rf"E:\ML\Elevator Git\Elevator_Results\Configs\data.yaml"
 
     label_linux = rf""
-    label_windows = rf"E:\ML\Elevator Git\Elevator_Results\Configs\label_No5.txt"
+    label_windows = rf""
 
     image_folder_linux = rf""
     image_folder_windows = rf""
@@ -51,6 +53,9 @@ class TEST_PATH:
 class TEST_COLOR:
     lowest_RGB = [130, 185, 60]
     highest_RGB = [225, 245, 120]
+    
+    #lowest_RGB = [0, 0, 0]
+    #highest_RGB = [225, 245, 120]
 
 class TEST_VARIABLES:
     min_circle_area = 1.0
