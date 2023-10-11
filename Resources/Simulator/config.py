@@ -58,14 +58,32 @@ class TEST_COLOR:
     highest_RGB = [225, 245, 220]
 
 class TEST_VARIABLES:
+    underground_floors = 5
+    underground_alts = [-55, -51.5, -48, -44.5, -41]
+    ground_floors = 12
+    ground_alts = [-38, -32, -28, -25, -22, -19, -16, -13, 10, 7, 4, 1]
     total_floors = 17
+    total_height = 0
+    short_cycle_height = 0
     min_circle_area = 1.0
     min_total_dot_when_green = 20
     min_confidence_rate = 0.01
     class_id = ["Open", "Close", "B5", "B4", "B3", "B2", "B1", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "Panel"]
 
     #Elevator_Alt = [-45, -41.5, -38, -34.5, -31, -28, -22, -18, -15, -12, -9, -6, -3, 0, 3, 6, 9]
-    Elevator_Alt = [-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, 10, 7, 4, 1]
     Number_Of_Trips_To_Floor = []
     Number_Of_Trips_To_Floor_Of_Each_Floor = []
 
+class TEST_ELEVATOR:
+    Luxen_capacity = 1350
+    Luxen_Seater = 20
+    Luxen_Max_Velocity = 2.5
+    Luxen_Motor_Capacity = 24.6
+    Luxen_Transformer_Capacity = 37.0
+    Luxen_ELCB = 75
+
+    Luxen_ref_cycle_energy = 170  # This Value is important
+    Luxen_short_cycle_energy = 120
+
+    Luxen_short_cycle_distance = 31
+    Luxen_door_open_close_time = 6.0
