@@ -2,9 +2,9 @@ import copy
 import datetime
 import math
 import sys
+import json
 
-import Calculation2
-
+import Calculation
 from config import TEST_VARIABLES, TEST_ELEVATOR
 
 second = 1
@@ -37,11 +37,30 @@ class LinkedList:
         pointer = self.head
         while pointer is not None:
             pointer.pattern.print_var()
+            if pointer.energy is not None:
+                pointer.energy.print_energy()
+            self.parse_node_to_json(pointer)
             pointer = pointer.next
+
+    def parse_node_to_json(self, pointer):
+        json_list_data = {
+            'default_info' : pointer.pattern.parse_data_instance.data,
+            'trip_path' : pointer.pattern.trip_path,
+            'floor_to_floor_metrix' : pointer.pattern.floor_dict,
+            'trip_count' : pointer.pattern.trip_count,
+            'trip_distance' : pointer.pattern.trip_distance,
+            'total_distance' : pointer.pattern.total_distance
+        }
+        json_list = json.dumps(json_list_data)
+
+        path = rf"E:\ML\Elevator Git\Elevator_Results\temp.json"
+        with open(path, "w") as json_file:
+            json.dump(json_list_data, json_file, indent=4)
 
 class Node:
     def __init__(self):
         self.pattern = None
+        self.energy = None
         self.timestamp = None
         self.next = None
         self.prev = None
@@ -50,11 +69,13 @@ class Node:
         self.pattern = pattern
         self.timestamp = timestamp
 
-
+    def set_energy(self, energy):
+        self.energy = energy
 
 class patt:
     def __init__(self):
         self.parse_data_instance = parse_data()
+        self.on_time = 0
         self.trip_path = []
         self.trip_count = 0
         self.trip_direction = None  # True = Up, False = Down
@@ -67,6 +88,8 @@ class patt:
         self.what_is_new = None
         self.latest_stop = None
 
+    def set_on_time(self, value):
+        self.on_time = value
 
     def reset_trip_path(self):
         self.trip_path = []
@@ -99,11 +122,13 @@ class patt:
         print(self.total_distance)
 
     def print_var(self):
-        print(self.parse_data_instance.data)
-        self.print_floor_dict_all()
-        self.print_trip_count()
-        self.print_trip_distance()
-        self.print_total_distance()
+        print("default info : {}\ntrip path : {}\nfloor to floor metrix : {}\ntrip count : {}\ntrip distance : {}\ntotal distance : {}\n".format(
+        self.parse_data_instance.data,
+        self.trip_path,
+        self.floor_dict,
+        self.trip_count,
+        self.trip_distance,
+        self.total_distance))
 
 class parse_data:
     def __init__(self):
@@ -159,7 +184,7 @@ def parse_button_list(pattern):
         if elem[0] == 'B':
             button_int = int(elem[1]) * -1
         elif elem[0] == 'C' or elem[0] == 'O':
-            continue
+            button_int = 0
         else:
             button_int = int(elem)
         pbl_int.append(button_int)
@@ -168,7 +193,7 @@ def parse_button_list(pattern):
         if elem[0] == 'B':
             button_int = int(elem[1]) * -1
         elif elem[0] == 'C' or elem[0] == 'O':
-            continue
+            button_int = 0
         else:
             button_int = int(elem)
         cbl_int.append(button_int)
@@ -185,6 +210,9 @@ def parse_button_list(pattern):
     floor_int = round(floor_int / 2, 1)
     what_is_done = list(set(pbl_int) - set(cbl_int))
     what_is_new = list(set(cbl_int) - set(pbl_int))
+
+    # print(what_is_done)
+    # print(what_is_new)
 
     pattern.floor_int = floor_int
     pattern.what_is_done = what_is_done
@@ -219,16 +247,18 @@ def refresh_trip_path(pattern):
 
             if len(what_is_done) != 0:
                 for elem in what_is_done:
-                    #print("Stop at {}, Start From {}\n".format(elem, pattern.latest_stop))
-                    pattern = calculate_trip_distance(pattern, pattern.latest_stop, elem)
+                    if elem != 0:   # if floor is not Closed or Open = 0
+                        #print("Stop at {}, Start From {}\n".format(elem, pattern.latest_stop))
+                        pattern = calculate_trip_distance(pattern, pattern.latest_stop, elem)
 
-                    pattern.pop_trip_path(elem)
-                    pattern.trip_count += 1
-                    pattern.latest_stop = elem
+                        pattern.pop_trip_path(elem)
+                        pattern.trip_count += 1
+                        pattern.latest_stop = elem
 
             if len(what_is_new) != 0:
                 for elem in what_is_new:
-                    pattern.add_trip_path(elem)
+                    if elem != 0:  # if floor is not Closed or Open = 0
+                        pattern.add_trip_path(elem)
 
             if len(pattern.trip_path) == 0:
                 pattern.trip_direction = None
@@ -264,7 +294,8 @@ def add_where_to_where(pattern):
     if len(pattern.what_is_new) != 0:
         current_floor = str(math.floor(pattern.floor_int))
         for elem in what_is_new:
-            pattern.floor_dict[current_floor][elem] += 1
+            if elem != 'Close' and elem != 'Open':
+                pattern.floor_dict[current_floor][elem] += 1
 
     return pattern
 
@@ -275,15 +306,16 @@ def check_interval_passed(LL, interval):
 
     head_time = LL.head.timestamp
     end_time = LL.last.timestamp
+    on_time = end_time - head_time
 
     if head_time != end_time:
         day_bar_interval = round(datetime.timedelta(days=1) / (end_time-head_time))
 
         #print(end_time-head_time)
         #if (end_time-head_time) >= datetime.timedelta(hours=v_hour, minutes=v_minute, seconds=v_second):
-        temp = Calculation2.Config_Elevator_Specification()
+        temp = Calculation.Config_Elevator_Specification()
 
-        temp2 = Calculation2.values()
+        temp2 = Calculation.values()
         temp2.set_cb(0.5)
         temp2.set_h(1)
         temp2.set_max_load(TEST_ELEVATOR.Luxen_capacity)
@@ -296,52 +328,71 @@ def check_interval_passed(LL, interval):
         temp2.set_short_cycle_distance(TEST_ELEVATOR.Luxen_short_cycle_distance)
 
         temp.set_values(temp2)
-        temp.get_energy()
+        temp.get_energy()   # Calculate Energy Consumption
 
-        temp.print_energy()
-        print(end_time - head_time)
+        node = Calculation.energy_node()
+        node.set_vaule(temp)
 
-def parse_log_to_data(file_name, LL):
+        LL.last.energy = node
+        LL.last.pattern.set_on_time(on_time)
+
+        #temp.print_energy()
+        #print(end_time - head_time)
+
+def parse_log_to_log_array(file_name):
     with open(file_name, 'r') as f:
         log = f.read()
 
     paragraphs = log.strip().split('\n\n')
     pattern = patt()
-    parsed_logs = []
 
+    arr = []
     for paragraph in paragraphs:
-        lines = paragraph.strip().split('\n')
-        if len(lines) == 6:
-            for i in range(len(lines)):
-                if i != 2:
-                    value = lines[i].split(': ')
-                    pattern.parse_data_instance.data[value[0]] = value[1]
-                else:
-                    key, value = 'Operation', lines[i]
-                    pattern.parse_data_instance.data[key] = value
+        arr.append(paragraph)
 
-            pattern.parse_data_instance.data['Previous Button Panel'] = eval(pattern.parse_data_instance.data['Previous Button Panel'])
-            pattern.parse_data_instance.data['Current Button Panel'] = eval(pattern.parse_data_instance.data['Current Button Panel'])
-            floor_list = pattern.parse_data_instance.data['Current Floor'].split(' between ')
-            pattern.parse_data_instance.data['Current Floor'] = [floor_list[0], floor_list[1]]
+    return arr
 
-            pattern = parse_button_list(pattern)
-            pattern = add_where_to_where(pattern)
-            pattern = refresh_trip_path(pattern)
+def parse_log_array_to_node(elem, LL, pattern):
+    #pattern = patt()
+    lines = elem.strip().split('\n')
 
-            pattern_copy = copy.deepcopy(pattern)
-            temp = Node()
-            temp.set_pattern(pattern_copy, datetime.datetime.strptime(pattern_copy.parse_data_instance.data['Timestamp'], '%Y_%m%d_%H%M%S'))
+    if len(lines) == 6:
+        for i in range(len(lines)):
+            #print(lines[i])
+            if i != 2:
+                value = lines[i].split(': ')
+                pattern.parse_data_instance.data[value[0]] = value[1]
+            else:
+                key, value = 'Operation', lines[i]
+                pattern.parse_data_instance.data[key] = value
 
-            #temp.pattern.print_var()
-            LL.add_node(temp)
+        pattern.parse_data_instance.data['Previous Button Panel'] = eval(
+            pattern.parse_data_instance.data['Previous Button Panel'])
+        pattern.parse_data_instance.data['Current Button Panel'] = eval(
+            pattern.parse_data_instance.data['Current Button Panel'])
+        floor_list = pattern.parse_data_instance.data['Current Floor'].split(' between ')
+        pattern.parse_data_instance.data['Current Floor'] = [floor_list[0], floor_list[1]]
 
-            flag = check_interval_passed(LL, 1*minute)
+        pattern = parse_button_list(pattern)
+        pattern = add_where_to_where(pattern)
+        pattern = refresh_trip_path(pattern)
 
-        else:
-            print("Error in lines, log attribute does not match")
+        pattern_copy = copy.deepcopy(pattern)
 
-    return LL
+        temp = Node()
+        temp.set_pattern(pattern_copy, datetime.datetime.strptime(pattern_copy.parse_data_instance.data['Timestamp'],
+                                                                  '%Y_%m%d_%H%M%S'))
+        #temp.pattern.print_var()
+
+        LL.add_node(temp)
+        check_interval_passed(LL, 1 * minute)
+
+        return LL
+
+    else:
+        print("Error in lines, log attribute does not match")
+
+        return None
 
 def init():
     TEST_VARIABLES.total_height = abs(TEST_VARIABLES.ground_alts[-1] - TEST_VARIABLES.underground_alts[0])
@@ -354,7 +405,5 @@ if __name__ == '__main__':
     LL = init()
 
     path = rf"E:\ML\Elevator Git\Elevator_Results\temp.txt"
-    LL = parse_log_to_data(path, LL)
-    #LL.print_all_node()
-
-    print(sys.getsizeof(LL))
+    LL = parse_log_to_log_array(path)
+    LL.print_all_node()

@@ -1,43 +1,49 @@
 import simpy
+import datetime
 
-class Customer(object):
-    def __init__(self, env, number):
+import Behavior_Pattern
+
+class Building(object):
+    def __init__(self, env, arr, number_of_elevators):
         self.env = env
-        self.number = number
+        self.arr = arr
+        self.proc = env.process(self.get_behavior_pattern(arr, env))
+        self.elevator = simpy.Resource(env, capacity=number_of_elevators)
+        self.LL = Behavior_Pattern.init()
+        self.pattern = Behavior_Pattern.patt()
 
-        self.action = env.process(self.customer_generate())
+    def get_behavior_pattern(self, arr, env):
+        for elem in arr:
+            now = datetime.datetime.now()
 
-    def customer_generate(self):
-        for i in range(self.number):
-            name = 'Customer-{}'.format(str(i))
-            arrive = self.env.now
+            print("Start Analysing at {}".format(env.now))
+            #print(elem)
+            self.LL = Behavior_Pattern.parse_log_array_to_node(elem, self.LL, self.pattern)
 
-            print("{} arrive at {}".format(name, arrive))
+            end = datetime.datetime.now()
 
-            self.env.process(self.order_coffee(name, staff))
+            i_now = int(now.timestamp())
+            i_end = int(end.timestamp())
+            # print(i_now)
+            # print(i_end)
+            delta = i_end - i_now
 
-            interval_time = 10
-            yield self.env.timeout(interval_time)
+            yield env.timeout(delta)
+            print("End Analysing at {}".format(env.now))
 
-    def order_coffee(self, name, staff):
-        with staff.request() as req:
-            yield req
+        yield env.process(self.print_LL())
 
-            ordering_duration = 30
-            yield self.env.timeout(ordering_duration)
-            print("{} ordered at {}".format(name, self.env.now))
+    def print_LL(self):
+        self.LL.print_all_node()
+        yield env.timeout(1)
 
-        yield self.env.process(self.wait_for_coffee(name))
-
-    def wait_for_coffee(self, name):
-        waiting_duration = 30
-        yield (self.env.timeout(waiting_duration))
-
-        print("{} wait at {}".format(name, self.env.now))
 
 if __name__ == '__main__':
+    noe = 1
     env = simpy.Environment()
-    staff = simpy.Resource(env, capacity=2)
-    customer = Customer(env, 10)
+    path = rf"E:\ML\Elevator Git\Elevator_Results\temp.txt"
+    arr = Behavior_Pattern.parse_log_to_log_array(path)
 
+    cls = Building(env, arr, noe)
     env.run()
+    #LL.print_all_node()

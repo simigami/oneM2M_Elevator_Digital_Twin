@@ -73,11 +73,35 @@ def run_Linux(timestamp, shoot_time):
 
     return 1
 
-def take_one_picture(picture_path):
-    command = f"libcamera-jpeg --width 1080 --height 1920 -o {picture_path}"
+def make_folder(timestamp_str):
+    output_folder = fr"{TEST_PATH.Pictures_Folder_Location_Linux}/{timestamp_str}"
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    return output_folder
+
+def take_one_picture(folder_path, timestamp_str):
+    vid_command = "libcamera-jpeg"
+    vid_width = "  --width 1080"
+    vid_height = " --height 1920"
+    vid_time = f" --nopreview -t1"
+
+    vid_output = fr" -o {folder_path}/{TEST_PATH.This_Elevator_Number_str}_{timestamp_str}.jpg"
+
+    command = vid_command + vid_width + vid_height + vid_time + vid_output
     os.system(command)
-    
-    return picture_path
+
+def take_n_picture(N):
+    timestamp = datetime.datetime.now()
+    timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
+    folder_path = make_folder(timestamp_str)
+
+    now = timestamp
+    for i in range(N):
+        now_str = now.strftime("%Y_%m%d_%H%M%S")
+        take_one_picture(folder_path, now_str)
+        now = now + datetime.timedelta(seconds=1)
 
 if __name__ == '__main__':
     pass
