@@ -6,6 +6,11 @@ import multiprocessing
 import Make_Dirs, Raspi_Shoot, Get_Sensors,Video_To_Image, Elevator_Inside
 from config import TEST_PATH
 
+shoot_time_second = 1
+shoot_time_minute = shoot_time_second * 60
+shoot_time_hour = shoot_time_minute * 60
+shoot_time_day = shoot_time_hour * 24
+
 shoot_time_ms = 10000
 shoot_tims_s = shoot_time_ms // 1000
 Linux = 0
@@ -47,6 +52,7 @@ def run():
     TEST_PATH.os_name = os_name
 
     if TEST_PATH.os_name == "Linux":
+        shoot_time = shoot_time_second * 10
         Make_Dirs.make_dirs_for_program(debug=0)
         
         timestamp = datetime.datetime.now().replace(microsecond=0)
@@ -56,8 +62,8 @@ def run():
         picture_folder = TEST_PATH.Pictures_Folder_Location_Linux + rf"/{timestamp_str}"                
         pool = multiprocessing.Pool(processes=2)
 
-        pool.apply_async(Raspi_Shoot.take_n_picture, args=(picture_folder, 5))
-        pool.apply_async(Get_Sensors.write_average_alt_per_second, args=(TEST_PATH.Default_Timestamp, shoot_tims_s))
+        pool.apply_async(Raspi_Shoot.take_n_picture, args=(picture_folder, shoot_time))
+        pool.apply_async(Get_Sensors.write_average_alt_per_second, args=(TEST_PATH.Default_Timestamp, shoot_time))
 
         pool.close()
         pool.join()
