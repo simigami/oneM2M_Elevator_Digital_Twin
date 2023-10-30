@@ -67,6 +67,8 @@ def detect_contours(img, lowest_color_to_detect, highest_color_to_detect, show=0
     return flattened_contour, hierarchy
 
 def check_contour_dots_with_id(flattened_contour, coordinates_of_label):
+    start = time.time()
+    
     id_in_dots = [0 for i in range(coordinates_of_label[-1][0])]
     id_in_dots.append(len(flattened_contour)) # len(flatten_contour) == total dot count
     _, panel_left_x, panel_right_x, panel_top_y, panel_bottom_y = coordinates_of_label[-1]
@@ -82,6 +84,9 @@ def check_contour_dots_with_id(flattened_contour, coordinates_of_label):
                 if (left_x <= x <= right_x) and (top_y <= y <= bottom_y):
                     id_in_dots[class_id-1] += 1
                     break
+    
+    end = time.time()
+    print(f"{end - start:.5f} sec")
 
     return id_in_dots
 
@@ -157,8 +162,7 @@ def detect_color(folder_path, show):
 
     #print(images)
     for image in images:
-        # if image == "2023_0908_125334.jpg":
-        #     show = 1
+        #show=1
 
         img = cv2.imread(image)
         read_label_and_draw_rectangle(img, coordinates_of_label, show)

@@ -50,23 +50,18 @@ def run():
         Make_Dirs.make_dirs_for_program(debug=0)
         
         timestamp = datetime.datetime.now().replace(microsecond=0)
-        timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
-        TEST_PATH.Default_Timestamp = timestamp_str
+        TEST_PATH.Default_Timestamp = timestamp
+        timestamp_str = TEST_PATH.Default_Timestamp.strftime("%Y_%m%d_%H%M%S")
         
+        picture_folder = TEST_PATH.Pictures_Folder_Location_Linux + rf"/{timestamp_str}"                
         pool = multiprocessing.Pool(processes=2)
 
-        pool.apply_async(Raspi_Shoot.run_Linux, args=(timestamp, shoot_time_ms))
-        time.sleep(2) # It takes approximayely 2 seconds to actually start libcamera_vid
-        
-        pool.apply_async(Get_Sensors.write_average_alt_per_second, args=(timestamp, shoot_tims_s))
+        pool.apply_async(Raspi_Shoot.take_n_picture, args=(picture_folder, 5))
+        pool.apply_async(Get_Sensors.write_average_alt_per_second, args=(TEST_PATH.Default_Timestamp, shoot_tims_s))
 
         pool.close()
         pool.join()
-
-        video_path = TEST_PATH.Videos_Folder_Location_Linux + rf"/{TEST_PATH.This_Elevator_Number_str}_{TEST_PATH.Default_Timestamp}.h264"
-        picture_folder = TEST_PATH.Pictures_Folder_Location_Linux + rf"/{TEST_PATH.Default_Timestamp}"
         
-        Video_To_Image.extract_frames_logic(video_path, picture_folder, second=-1)
         Elevator_Inside.detect_color(picture_folder, 0)
 
 
