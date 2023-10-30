@@ -139,6 +139,7 @@ class parse_data:
             'Previous Button Panel': '',
             'Current Button Panel' : '',
             'Current Floor' : [0, 0],
+            'Elevator Number' : 0,
             'Altimeter' : 0
         }
 
@@ -356,7 +357,7 @@ def parse_log_array_to_node(elem, LL, pattern):
     #pattern = patt()
     lines = elem.strip().split('\n')
 
-    if len(lines) == 6:
+    if len(lines) == 7:
         for i in range(len(lines)):
             #print(lines[i])
             if i != 2:

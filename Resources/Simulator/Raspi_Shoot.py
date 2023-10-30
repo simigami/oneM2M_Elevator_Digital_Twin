@@ -38,9 +38,7 @@ def run_Windows(timestamp_str, shoot_time):
     message = "Video Start"
     create_log(message)
 
-    thr = Thread(target=run_commad, args=(command,))
-    thr.start()
-    thr.join()
+    os.system(command)
 
     message = "Video End"
     create_log(message)
