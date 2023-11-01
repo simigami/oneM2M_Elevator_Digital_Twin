@@ -62,6 +62,7 @@ class TEST_VARIABLES:
     underground_alts = [-55, -51.5, -48, -44.5, -41]
     ground_floors = 12
     ground_alts = [-38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1]
+    alts = [-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1]
     total_floors = 17
     total_height = 0
     short_cycle_height = 0

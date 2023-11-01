@@ -59,10 +59,20 @@ class Node:
     def __init__(self, data):
         self.data = data
         self.next = None
+        self.prev = None
+
+    def get_inout(self):
+        return self.data.get_inout()
+
+    def get_floor(self):
+        return self.data.out_floor
 
 class LinkedList:
     def __init__(self):
         self.head = None
+        self.pointer_out = None
+        self.pointer_in = None
+        self.pointer_all = None
 
     def append(self, data):
         new_node = Node(data)
@@ -73,6 +83,7 @@ class LinkedList:
             while temp.next:
                 temp = temp.next
             temp.next = new_node
+            new_node.prev = temp
 
     def display(self):
         temp = self.head
@@ -81,6 +92,53 @@ class LinkedList:
                 temp.data.display()
 
             temp = temp.next
+
+    def get_out_log(self):
+        if self.pointer_out is None:
+            if self.head is not None:
+                self.pointer_out = self.head
+            else:
+                return None
+        else:
+            self.pointer_out = self.pointer_out.next
+
+        while self.pointer_out is not None:
+            inout = self.pointer_out.data.get_inout()
+            if inout is False:
+                break
+            else:
+                self.pointer_out = self.pointer_out.next
+
+        if self.pointer_out is None:
+            return None
+
+        elif self.pointer_out.data is not None:
+            return self.pointer_out.data
+
+        else:
+            return None
+
+    def get_in_log(self):
+        if self.pointer_in is None:
+            if self.head is not None:
+                self.pointer_in = self.head
+            else:
+                return None
+        else:
+            self.pointer_in = self.pointer_in.next
+
+        while self.pointer_in is not None:
+            inout = self.pointer_in.data.get_inout()
+            if inout is True:
+                break
+            else:
+                self.pointer_in  = self.pointer_in.next
+
+        if self.pointer_in.data is not None:
+            return self.pointer_in.data
+        else:
+            return None
+
 
 class ElevatorLog:
     def __init__(self, inout, timestamp):
@@ -108,6 +166,18 @@ class OutElevatorLog(ElevatorLog):
         print(f"Out Floor ({type(self.out_floor)}): {self.out_floor}")
         print(f"Out Number ({type(self.out_number)}): {self.out_number}")
         print(f"Out Direction ({type(self.out_direction)}): {'Up' if self.out_direction else 'Down'}\n")
+
+    def get_inout(self):
+        return self.inout
+
+    def get_out_floor(self):
+        return self.out_floor
+
+    def get_timestamp(self):
+        return self.timestamp
+
+    def get_direction(self):
+        return self.out_direction
 
 class InElevatorLog(ElevatorLog):
     def __init__(self, inout, timestamp, action, prev_button, curr_button, curr_floor, elevator_number):
@@ -145,48 +215,58 @@ class InElevatorLog(ElevatorLog):
         print(f"Current Floor ({type(self.in_current_floor)}): {' between '.join(self.in_current_floor)}")
         print(f"Elevator Number ({type(self.in_elevator_number)}): {self.in_elevator_number}\n")
 
-# Usage example:
-with open(r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt', 'r') as file:
-    log_lines = file.read().split('\n\n')
+    def get_inout(self):
+        return self.inout
 
-in_log_list = LinkedList()
-out_log_list = LinkedList()
-all_log_list = LinkedList()
+def run(log_path):
+    # Usage example:
+    with open(log_path, 'r') as file:
+        log_lines = file.read().split('\n\n')
 
-for log_text in log_lines:
-    #print(log_text)
+    in_log_list = LinkedList()
+    out_log_list = LinkedList()
+    all_log_list = LinkedList()
 
-    log_parts = log_text.split('\n')
-    inout = log_parts[0].split(': ')[1]
-    timestamp = log_parts[1].split(': ')[1]
-    action = log_parts[2]
+    for log_text in log_lines:
+        # print(log_text)
 
-    if inout == 'In':
-        prev_button = log_parts[3].split(': ')[1]
-        curr_button = log_parts[4].split(': ')[1]
-        curr_floor = log_parts[5].split(': ')[1]
-        elevator_number = log_parts[6].split(': ')[1]
+        log_parts = log_text.split('\n')
+        inout = log_parts[0].split(': ')[1]
+        timestamp = log_parts[1].split(': ')[1]
+        action = log_parts[2]
 
-        temp = InElevatorLog(inout, timestamp, action, prev_button, curr_button, curr_floor, elevator_number)
-        in_log_list.append(temp)
+        if inout == 'In':
+            prev_button = log_parts[3].split(': ')[1]
+            curr_button = log_parts[4].split(': ')[1]
+            curr_floor = log_parts[5].split(': ')[1]
+            elevator_number = log_parts[6].split(': ')[1]
 
-    else:
-        floor = log_parts[3].split(': ')[1]
-        number = log_parts[4].split(': ')[1]
-        direction = log_parts[5].split(': ')[1]
+            temp = InElevatorLog(inout, timestamp, action, prev_button, curr_button, curr_floor, elevator_number)
+            in_log_list.append(temp)
 
-        temp = OutElevatorLog(inout, timestamp, floor, number, direction)
-        out_log_list.append(temp)
+        else:
+            floor = log_parts[3].split(': ')[1]
+            number = log_parts[4].split(': ')[1]
+            direction = log_parts[5].split(': ')[1]
 
-    all_log_list.append(temp)
+            temp = OutElevatorLog(inout, timestamp, floor, number, direction)
+            out_log_list.append(temp)
 
-# print("All Logs:")
-# all_log_list.display()
+        all_log_list.append(temp)
 
-# Display InElevatorLogs
-print("\nInElevator Logs:")
-in_log_list.display()
+    # print("All Logs:")
+    # all_log_list.display()
 
-# Display OutElevatorLogs
-print("\nOutElevator Logs:")
-out_log_list.display()
+    # Display InElevatorLogs
+    # print("\nInElevator Logs:")
+    # in_log_list.display()
+
+    # Display OutElevatorLogs
+    # print("\nOutElevator Logs:")
+    # out_log_list.display()
+
+    return all_log_list, in_log_list, out_log_list
+
+if __name__ == '__main__':
+    log_path =  r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
+    a_log , i_log, o_log = run(log_path)

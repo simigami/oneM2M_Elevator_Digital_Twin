@@ -1,0 +1,160 @@
+Inout: Out
+Timestamp: 2023_1030_110000
+Somebody Called Elevator
+Floor: B5
+Number: 1
+Direction: Up
+
+Inout: In
+Timestamp: 2023_1030_110003
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['5']
+Current Floor: B5 between B4
+Elevator Number: 1
+
+Inout: Out
+Timestamp: 2023_1030_110005
+Somebody Called Elevator
+Floor: 8
+Number: 1
+Direction: Down
+
+Inout: In
+Timestamp: 2023_1030_110027
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['1']
+Current Floor: 8 between 9
+Elevator Number: 2
+
+Inout: In
+Timestamp: 2023_1030_110027
+Somebody Pressed Button
+Previous Button Panel: ['5']
+Current Button Panel: []
+Current Floor: 5 between 6
+Elevator Number: 1
+
+Inout: Out
+Timestamp: 2023_1030_110030
+Somebody Called Elevator
+Floor: 3
+Number: 1
+Direction: Up
+
+Inout: In
+Timestamp: 2023_1030_110040
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['10']
+Current Floor: 3 between 4
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110051
+Somebody Pressed Button
+Previous Button Panel: ['1']
+Current Button Panel: []
+Current Floor: 1 between 2
+Elevator Number: 2
+
+Inout: Out
+Timestamp: 2023_1030_110056
+Somebody Called Elevator
+Floor: B5
+Number: 1
+Direction: Up
+
+Inout: Out
+Timestamp: 2023_1030_110056
+Somebody Called Elevator
+Floor: 7
+Number: 1
+Direction: Down
+
+Inout: In
+Timestamp: 2023_1030_110101
+Somebody Pressed Button
+Previous Button Panel: ['10']
+Current Button Panel: []
+Current Floor: 10 between 11
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110109
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['7']
+Current Floor: B5 between B4
+Elevator Number: 2
+
+Inout: In
+Timestamp: 2023_1030_110113
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['2']
+Current Floor: 7 between 8
+Elevator Number: 1
+
+Inout: Out
+Timestamp: 2023_1030_110114
+Somebody Called Elevator
+Floor: 5
+Number: 1
+Direction: Down
+
+Inout: Out
+Timestamp: 2023_1030_110120
+Somebody Called Elevator
+Floor: 5
+Number: 1
+Direction: Up
+
+Inout: In
+Timestamp: 2023_1030_110126
+Somebody Pressed Button
+Previous Button Panel: ['2']
+Current Button Panel: ['1', '2']
+Current Floor: 5 between 6
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110135
+Somebody Pressed Button
+Previous Button Panel: ['1', '2']
+Current Button Panel: ['1']
+Current Floor: 5 between 6
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110137
+Somebody Pressed Button
+Previous Button Panel: ['7']
+Current Button Panel: ['7', '12']
+Current Floor: 5 between 6
+Elevator Number: 2
+
+Inout: In
+Timestamp: 2023_1030_110145
+Somebody Pressed Button
+Previous Button Panel: ['1']
+Current Button Panel: []
+Current Floor: 5 between 6
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110147
+Somebody Pressed Button
+Previous Button Panel: ['7', '12']
+Current Button Panel: ['12']
+Current Floor: 5 between 6
+Elevator Number: 2
+
+Inout: In
+Timestamp: 2023_1030_110202
+Somebody Pressed Button
+Previous Button Panel: ['12']
+Current Button Panel: []
+Current Floor: 5 between 6
+Elevator Number: 2
