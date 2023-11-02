@@ -76,7 +76,6 @@ class System:
 
         return elevator_floor
 
-
     def get_delta_altimeter_altimeter_and_floor(self, altimeter, floor):
         if floor < 0:
             delta_index = abs(self.underground_floors) - abs(floor)
@@ -142,6 +141,9 @@ class Elevator:
 
     def get_direction(self):
         return self.direction
+
+    def set_direction(self, direction):
+        self.direction = direction
 
     def set_opcode(self, op):
         self.action.opcode = op
@@ -288,8 +290,9 @@ def code10(a_log, System, data, floor):
     else:
         elevator = System.get_elevator(0)
         if elevator.get_opcode() == 0 or elevator.get_opcode() == 10:
-
             elevator_floor = System.get_elevator_current_stopped_floor(0)
+            elevator.set_direction(True if elevator_floor <= floor else False)
+
             altimeter_array = System.get_delta_altimeter_floor_and_floor(elevator_floor, floor)
             move_elevator(elevator, altimeter_array, elevator_floor, floor)
 
