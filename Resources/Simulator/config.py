@@ -75,6 +75,8 @@ class TEST_VARIABLES:
     Number_Of_Trips_To_Floor = []
     Number_Of_Trips_To_Floor_Of_Each_Floor = []
 
+    BP_Loop_Flag = True
+
 class TEST_ELEVATOR:
     Luxen_capacity = 1350
     Luxen_Seater = 20

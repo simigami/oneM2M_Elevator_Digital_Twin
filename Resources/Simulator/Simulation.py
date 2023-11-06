@@ -93,6 +93,27 @@ class LinkedList:
 
             temp = temp.next
 
+    def get_first_log_timestamp(self):
+        temp = self.head
+        if temp is not None:
+            return temp.data.timestamp
+
+    def get_all_log(self):
+        if self.pointer_all is not None:
+            node = self.pointer_all.next
+            self.pointer_all = self.pointer_all.next
+
+            return node
+
+        else:
+            node = self.head
+            if node is not None:
+                self.pointer_all = self.head
+                return node
+            else:
+                return None
+
+
     def get_out_log(self):
         if self.pointer_out is None:
             if self.head is not None:
@@ -144,6 +165,9 @@ class ElevatorLog:
     def __init__(self, inout, timestamp):
         self.inout = True if inout == "In" else False
         self.timestamp = datetime.datetime.strptime(timestamp, '%Y_%m%d_%H%M%S')
+
+    def get_inout(self):
+        return self.inout
 
 class OutElevatorLog(ElevatorLog):
     def __init__(self, inout, timestamp, floor, number, direction):

@@ -1,19 +1,12 @@
 Inout: Out
 Timestamp: 2023_1030_110000
 Somebody Called Elevator
-Floor: 1
+Floor: 5
 Number: 1
 Direction: Up
 
 Inout: Out
 Timestamp: 2023_1030_110005
-Somebody Called Elevator
-Floor: B2
-Number: 1
-Direction: Up
-
-Inout: Out
-Timestamp: 2023_1030_110010
 Somebody Called Elevator
 Floor: 3
 Number: 1
@@ -22,27 +15,20 @@ Direction: Up
 Inout: Out
 Timestamp: 2023_1030_110015
 Somebody Called Elevator
-Floor: 4
-Number: 1
-Direction: Up
-
-Inout: Out
-Timestamp: 2023_1030_110018
-Somebody Called Elevator
-Floor: 9
+Floor: 8
 Number: 1
 Direction: Up
 
 Inout: Out
 Timestamp: 2023_1030_110020
 Somebody Called Elevator
-Floor: 7
+Floor: 10
 Number: 1
 Direction: Up
 
 Inout: Out
-Timestamp: 2023_1030_110030
+Timestamp: 2023_1030_110045
 Somebody Called Elevator
-Floor: 11
+Floor: 12
 Number: 1
 Direction: Up
