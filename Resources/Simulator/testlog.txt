@@ -20,15 +20,15 @@ Number: 1
 Direction: Up
 
 Inout: Out
-Timestamp: 2023_1030_110020
+Timestamp: 2023_1030_110025
 Somebody Called Elevator
 Floor: 10
 Number: 1
 Direction: Up
 
 Inout: Out
-Timestamp: 2023_1030_110045
+Timestamp: 2023_1030_110027
 Somebody Called Elevator
-Floor: 12
+Floor: 7
 Number: 1
 Direction: Up
