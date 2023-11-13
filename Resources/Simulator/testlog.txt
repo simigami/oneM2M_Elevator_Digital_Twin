@@ -32,3 +32,38 @@ Somebody Called Elevator
 Floor: 7
 Number: 1
 Direction: Up
+
+Inout: Out
+Timestamp: 2023_1030_110030
+Somebody Called Elevator
+Floor: 5
+Number: 1
+Direction: Up
+
+Inout: Out
+Timestamp: 2023_1030_110130
+Somebody Called Elevator
+Floor: 12
+Number: 1
+Direction: Up
+
+Inout: Out
+Timestamp: 2023_1030_110135
+Somebody Called Elevator
+Floor: 2
+Number: 1
+Direction: Down
+
+Inout: Out
+Timestamp: 2023_1030_110145
+Somebody Called Elevator
+Floor: 9
+Number: 1
+Direction: Down
+
+Inout: Out
+Timestamp: 2023_1030_110150
+Somebody Called Elevator
+Floor: 8
+Number: 1
+Direction: Down

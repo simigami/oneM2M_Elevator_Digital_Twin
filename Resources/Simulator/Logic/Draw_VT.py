@@ -1,5 +1,7 @@
 # This Function Will Return a Trip_List(A List of Nodes) of Start Floor and Destination Floor
 import datetime
+import math
+
 
 # class TripList:
 #     def __init__(self):
@@ -155,7 +157,7 @@ def put_trip_node_data_into_trip_list(Elevator_System, elevator, TTR_array, alti
     #
     # TTR_array = [TTR, time_to_reach_maximum_velocity, time_to_stay_maximum, t]
     millisecond = 1000
-    trip_list = elevator.full_trip_list.head
+    trip_list = elevator.full_trip_list.reachable_head
     trip_list.init_trip_list()
 
     if direction:
@@ -231,26 +233,42 @@ def put_trip_node_data_into_trip_list(Elevator_System, elevator, TTR_array, alti
             return elevator
 
         else:
-            for elapsed_time in range(0, TTR_to_microsecond, 100):  # Loop through each 0.1 second
-                if elapsed_time == 0:
-                    continue
+            half_time = int(round(TTR_to_microsecond / 2))
+            temp = (half_time/2) / 100
+            flag = float.is_integer(temp)
 
-                elif elapsed_time <= TTR_to_microsecond/2:  # Acceleration phase
+            for elapsed_time in range(100, TTR_to_microsecond+100, 100):  # Loop through each 0.1 second
+                if elapsed_time < half_time-100:  # Acceleration phase
                     before = current_velocity
                     current_velocity += acceleration * 0.1
                     after = current_velocity
 
                     current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
 
-                elif elapsed_time > TTR_to_microsecond/2:
+                # elif half_time-100 <= elapsed_time <= half_time and not flag:
+                #     before = current_velocity
+                #     current_velocity += acceleration * 0.05
+                #     after = current_velocity
+                #
+                #     current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
+
+                elif half_time < elapsed_time < half_time + 100 and not flag:
+                    before = current_velocity
+                    current_velocity += (acceleration * 0.05)
+                    after = current_velocity
+
+                    current_altimeter += ((before + after) * 0.1) * constant_direction
+
+                elif elapsed_time > half_time and elapsed_time != TTR_to_microsecond:
                     before = current_velocity
                     current_velocity += (acceleration * -0.1)
                     after = current_velocity
 
                     current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
 
-                if elapsed_time == (TTR_to_microsecond-100):
-                    current_altimeter = altimeter_array[0] + altimeter_array[2]
+                elif elapsed_time == TTR_to_microsecond:
+                    current_velocity = 0
+                    current_altimeter = altimeter_array[1]
 
                 current_altimeter = round(current_altimeter, 5)
                 closest_floors = find_closest_floors(Elevator_System.alts_dict, current_altimeter)
@@ -283,13 +301,20 @@ def get_TTR(elevator, altimeter_difference):
     time_to_reach_maximum_velocity = round(elevator_maximum_velocity / a, 2)
 
     altimeter_to_reach_maximum_velocity = elevator_maximum_velocity * time_to_reach_maximum_velocity * 0.5
-    altimeter_to_stay_maximum = round(altimeter_difference - altimeter_to_reach_maximum_velocity - (0.5 * a * t * t), 2)
+    if altimeter_to_reach_maximum_velocity * 2 >= altimeter_difference:
+        half_of_altimeter_difference = round(altimeter_difference / 2, 2)
+        time_to_reach_altimeter_diff = round(math.sqrt((4*altimeter_difference)/a), 2)
+        time_to_reach_half_of_altimeter = round(time_to_reach_altimeter_diff /2, 2)
 
-    time_to_stay_maximum = altimeter_to_stay_maximum / elevator_maximum_velocity
+        return [time_to_reach_altimeter_diff, time_to_reach_half_of_altimeter, 0, time_to_reach_half_of_altimeter]
+    else:
+        altimeter_to_stay_maximum = round(altimeter_difference - altimeter_to_reach_maximum_velocity - (0.5 * a * t * t), 2)
 
-    TTR = time_to_reach_maximum_velocity + time_to_stay_maximum + t
+        time_to_stay_maximum = altimeter_to_stay_maximum / elevator_maximum_velocity
 
-    return [TTR, time_to_reach_maximum_velocity, time_to_stay_maximum, t]
+        TTR = time_to_reach_maximum_velocity + time_to_stay_maximum + t
+
+        return [TTR, time_to_reach_maximum_velocity, time_to_stay_maximum, t]
 
 def find_closest_floors(alts_dict, current_altimeter):
     closest_floors = {

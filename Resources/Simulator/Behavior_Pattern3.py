@@ -31,6 +31,7 @@ class System:
     def __init__(self):
         self.elevators = [] # List of Elevator Class
         self.now = None
+        self.simulation_start_time = None
 
         self.underground_floors = TEST_VARIABLES.underground_floors
         self.ground_floors = TEST_VARIABLES.ground_floors
@@ -94,7 +95,9 @@ class System:
             return [higher_floor_alts, lower_floor_alts, delta_altimeter, direction]
 
     def display(self):
-        print(f"Time is {self.now}")
+        text = f"Time is {self.now}\n"
+
+        return text
 
 class Elevator:
     def __init__(self):
@@ -126,6 +129,12 @@ class Elevator:
 
     def get_opcode(self):
         return self.opcode
+
+    def set_direction(self, direction):
+        self.direction = direction
+
+    def get_direction(self):
+        return self.direction
 
     def set_current_velocity(self, velocity):
         self.current_velocity = velocity
@@ -168,13 +177,28 @@ class Elevator:
 
     def display(self):
         node = self.current_trip_node
-        print(f"This Node Time : {node.current_time}\nTime Elapsed: {node.elapsed_time / 1000} seconds\nVelocity : {node.velocity}m/s\nAltimeter: {node.altimeter} meters\nClosest Floor: {node.closest_floor}\n")
+        text = f"This Node Time : {node.current_time}\nTime Elapsed: {node.elapsed_time / 1000} seconds\nVelocity : {node.velocity}m/s\nAltimeter: {node.altimeter} meters\nClosest Floor: {node.closest_floor}\n\n"
+        return text
 
+def write_to_file(Elevator_System, Elevator, file):
+    f = open(file, 'a')
+
+    current_time_text = Elevator_System.display()
+    node_info_text = Elevator.display()
+
+    f.write(current_time_text)
+    f.write(node_info_text)
+
+def write_text_to_file(text, file):
+    f = open(file, 'a')
+
+    f.write(text)
 
 def run():
     # PHASE 0 Get Actual Log from real log + Set Flags, Elevators, Variables
     Elevator_System = System()
 
+    result_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\result.txt'
     log_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
     a_log, i_log, o_log = Simulation.run(log_path)
     log_instance = None # Pointer For Log Detect
@@ -188,13 +212,14 @@ def run():
     simulation_timestamp = a_log.head.data.timestamp
 
     # Set Flags
-    flag_force_end_time = simulation_timestamp + datetime.timedelta(minutes=1)
+    flag_force_end_time = simulation_timestamp + datetime.timedelta(minutes=3)
     flag_elevator_IDLE = [False * len(elevators)]
     flag_elevator_time_to_get_out_IDLE = [0 * len(elevators)]
     flag_end_loop = True # False = Loop End
     flag_analyze_log = False # True = Analyze Log Start
     flag_log_analysis_complete = True
     flag_end_log = False # True = Start End Phase
+    flag_record_start_time = True
 
     # Init Settings
     for elevator in elevators:
@@ -202,6 +227,10 @@ def run():
 
     # While Loop Begin
     while(flag_end_loop):
+        if flag_record_start_time:
+            Elevator_System.simulation_start_time = simulation_timestamp
+            flag_record_start_time = False
+
         Elevator_System.now = simulation_timestamp
     # PHASE 1 : Change Elevator Status Per 0.1 Second
         for index, elevator in enumerate(elevators):
@@ -215,6 +244,9 @@ def run():
                     current_velocity = current_trip_node.get_velocity()
                     next_node_velocity = next.get_velocity()
 
+                    current_altimeter = current_trip_node.get_altimeter()
+                    next_node_altimeter = next.get_altimeter()
+
                     if current_velocity < next_node_velocity:
                         elevator.set_opcode(21)
                     elif current_velocity > next_node_velocity:
@@ -222,18 +254,27 @@ def run():
                     elif current_velocity == next_node_velocity:
                         elevator.set_opcode(23)
 
+                    if current_altimeter < next_node_altimeter:
+                        elevator.set_direction(True)
+                    else:
+                        elevator.set_direction(False)
+
                     elevator.set_current_velocity(current_velocity)
                     # Change Current Trip Node
-                    Elevator_System.display()
-                    elevator.display()
+                    write_to_file(Elevator_System, elevator, result_path)
+                    # Elevator_System.display()
+                    # elevator.display()
+
                     elevator.set_current_trip_node(next)
 
-                # If current Trip Node is Last Before IDLE
+                # If current Trip Node is Last Before IDLE, velocity = 0
                 elif next is None:
-                    Elevator_System.display()
-                    elevator.display()
+                    write_to_file(Elevator_System, elevator, result_path)
+                    # Elevator_System.display()
+                    # elevator.display()
 
                     current_velocity = current_trip_node.get_velocity()
+                    elevator.set_current_velocity(current_velocity)
 
                     if current_velocity == 0:
                         elevator.set_opcode(20)
@@ -254,6 +295,9 @@ def run():
                             full_trip_list.remove_trip_list(current_trip_list)  # Remove Current Trip List To next One
 
                             elevator.current_trip_list = None
+                            if elevator.full_trip_list.reachable_head is not None:
+                                elevator.full_trip_list.reachable_head = elevator.full_trip_list.reachable_head.next
+
                             elevator.done_trip_list.append(current_trip_list)
 
                             elevator.set_trip_node_right_before_IDLE(current_trip_node)
@@ -286,26 +330,85 @@ def run():
 
                     elevator.set_trip_node_right_before_IDLE(None)
 
-                else:
+                elif trip_node_right_before_IDLE is None:
                     if flag_elevator_time_to_get_out_IDLE[index] != 0:
 
                         if simulation_timestamp == flag_elevator_time_to_get_out_IDLE[index]:
                             # Check if there is any Operation Remaining
                             full_trip_list = elevator.full_trip_list
-                            elevator.current_trip_list = full_trip_list.head
+                            reachable_head = full_trip_list.reachable_head
+
+                            if reachable_head is None:
+                                # Check if there is any unreachable domains left
+                                num_up = full_trip_list.get_number_of_trip_list(1)
+                                num_down = full_trip_list.get_number_of_trip_list(2)
+
+                                if num_up == num_down == 0: # There is No more Trip List Remaining
+                                    pass
+                                elif num_up >= num_down: # Up Direction Should Work First(정의)
+                                    unreachable_up = full_trip_list.unreachable_up_head
+                                    unreachable_up.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_up.direction = True if unreachable_up.start_floor < unreachable_up.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(1)
+
+                                else: # Down Direction Should Work First
+                                    unreachable_down = full_trip_list.unreachable_up_head
+                                    unreachable_down.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_down.direction = True if unreachable_down.start_floor < unreachable_down.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(2)
+
+                            elevator.current_trip_list = full_trip_list.reachable_head
 
                             if elevator.current_trip_list is not None:  # Start to Move Again
                                 Single_Elevator.run(Elevator_System, elevator, None)
 
-                            else:  # There is no operation remaining, so change opcode to 10
+                            elif elevator.current_trip_list is None:  # There is no operation remaining, so change opcode to 10
                                 elevator.set_opcode(10)
                                 flag_elevator_IDLE[index] = True
 
                             flag_elevator_time_to_get_out_IDLE[index] = 0
 
                         else:
-                            continue
+                            full_trip_list = elevator.full_trip_list
+                            reachable_head = full_trip_list.reachable_head
+                            if reachable_head is None:
+                                # Check if there is any unreachable domains left
+                                num_up = full_trip_list.get_number_of_trip_list(1)
+                                num_down = full_trip_list.get_number_of_trip_list(2)
 
+                                if num_up == num_down == 0: # There is No more Trip List Remaining
+                                    pass
+                                elif num_up >= num_down: # Up Direction Should Work First(정의)
+                                    unreachable_up = full_trip_list.unreachable_up_head
+                                    unreachable_up.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_up.direction = True if unreachable_up.start_floor < unreachable_up.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(1)
+
+                                else: # Down Direction Should Work First
+                                    unreachable_down = full_trip_list.unreachable_down_head
+                                    unreachable_down.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_down.direction = True if unreachable_down.start_floor < unreachable_down.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(2)
+
+                            else: # If reachable head is not None
+                                pass
+                                # # Check if TTR is None
+                                # TTR = reachable_head.TTR
+                                # if len(TTR) == 0:
+                                #     Single_Elevator.run(Elevator_System, elevator, log_instance)
+                                # else:
+                                #     pass
+
+                    else:
+                        #Search if there is any trip list is newly opened
+                        reachable_head = elevator.full_trip_list.reachable_head
+                        if reachable_head is not None:
+                            elevator.current_trip_list = reachable_head
+                            elevator.set_opcode(0)
+                            Single_Elevator.run(Elevator_System, elevator, log_instance)
+
+                        else:
+                            pass
 
     # PHASE 2 : LOG DETECT
 
@@ -321,6 +424,7 @@ def run():
                 flag_log_analysis_complete = False
 
             else:
+
                 if flag_log_analysis_complete:
                     next_log = log_instance.next
 
@@ -333,6 +437,7 @@ def run():
 
         log_timestamp = log_instance.data.timestamp
         if log_timestamp == simulation_timestamp:
+
             flag_analyze_log = True
 
         else:
@@ -345,6 +450,9 @@ def run():
         if flag_analyze_log:
             log_instance_data = log_instance.data
             inout = log_instance_data.inout
+
+            # if log_instance_data.out_floor == 8:
+            #     print("ASDASDSAD")
 
             if inout: # If Log is IN Log
                 pass
@@ -372,8 +480,10 @@ def run():
                     number_of_elevator_code10 += 1
 
             if number_of_elevator_code10 == len(elevators):
-                print("Log Instance Has Meet Last Log")
-                print("Every Elevator Finished Operation and No Log Remains. Turning Off Simulator")
+                text = "Log Instance Has Meet Last Log\n Every Elevator Finished Operation and No Log Remains. Turning Off Simulator"
+                write_text_to_file(text, result_path)
+                # print("Log Instance Has Meet Last Log")
+                # print("Every Elevator Finished Operation and No Log Remains. Turning Off Simulator")
                 flag_end_loop = False
                 flag_log_analysis_complete = False
 
