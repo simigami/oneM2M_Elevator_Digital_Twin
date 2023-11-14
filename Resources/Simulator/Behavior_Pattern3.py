@@ -198,8 +198,12 @@ def run():
     # PHASE 0 Get Actual Log from real log + Set Flags, Elevators, Variables
     Elevator_System = System()
 
-    result_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\result.txt'
-    log_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
+    # result_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\result.txt'
+    # log_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
+    
+    result_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator/result.txt'
+    log_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator/testlog.txt'
+    
     a_log, i_log, o_log = Simulation.run(log_path)
     log_instance = None # Pointer For Log Detect
 
@@ -455,6 +459,32 @@ def run():
             #     print("ASDASDSAD")
 
             if inout: # If Log is IN Log
+                resource = log_instance_data.get_resources()
+                
+                previous_button_list = resource[0]
+                current_button_list = resource[1]  
+                current_floor = resource[2] 
+                elevator_number = resource[3]   
+                timestamp = resource[4]
+                
+                number_of_elevators = len(elevators)
+                if number_of_elevators >= 2:
+                    pass
+                elif number_of_elevators == 0:
+                    print("Error Occured, number of elevators should be larger than 0")
+                else:   # Single Elevator Moving Algorithms
+                    # Check if elevator is currently moving?
+                    opcode = elevators[0].get_opcode()
+                    if opcode == 20: # If Elevator is not IDLE but Stopped at floor
+                        Single_Elevator.run(Elevator_System, elevator, log_instance)
+                    
+                    else: # If Elevator is IDLE
+                        pass
+                
+                # Check 
+                print(previous_button_list)
+                print(current_button_list) 
+                
                 pass
 
             else: # If Log is OUT Log

@@ -179,6 +179,20 @@ class Full_Trip_List:
                 print(f"start : {head3.start_floor}, dst : {head3.destination_floor}\ndirection : {head3.direction}\n")
                 head3 = head3.next
 
+def str_floor_to_int(str_floor):
+    if str_floor.startswith('B'):
+        return -int(str_floor[1:])
+    else:
+        return int(str_floor)
+
+def analyze_in_log(in_log):
+    data = in_log.data
+    log_array = data.get_resources()
+    
+    print(log_array)
+    return log_array
+    
+
 def analyze_out_log(out_log):
     #latest_out_log.display()
     data = out_log.data
@@ -229,13 +243,21 @@ def can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor
         else: # Elevator Cannot Stop To This Floor
             return False
 
+def run_In(Elevator_System, elevator, log_instance):
+    pass
+
 def run(Elevator_System, elevator, log_instance):
     opcode = elevator.get_opcode()
     log_array = None
 
     if log_instance is not None:
-        log_array = analyze_out_log(log_instance)  # [inout, floor, timestamp, direction]
-
+        data = log_instance.data
+        if data.inout is True: # In Log
+            # [in_previous_buttons, in_current_buttons, in_current_floor, in_elevator_number , timestamp]
+            log_array = analyze_in_log(log_instance)    
+        else: # Out Log
+            log_array = analyze_out_log(log_instance)   # [inout, floor, timestamp, direction]
+     
     direction = None
 
     #print(opcode)
@@ -283,10 +305,37 @@ def run(Elevator_System, elevator, log_instance):
             elevator.current_trip_node = current_trip_list.head
 
         elif log_instance is not None: # Log has been Transferred when Elevator is not IDLE but fixed on floor
+            
             # Check if there is other reachable trip list remained
             presume_next_trip_list = elevator.full_trip_list.reachable_head
-            dst_floor = log_array[1]  # [inout, floor, timestamp, direction]
-            dst_floor_direction = log_array[-1]
+            
+            # Check if this log_instance is In or Out
+            inout = log_instance.data.inout
+            if inout is True: # In Log
+                # [in_previous_buttons, in_current_buttons, in_current_floor, in_elevator_number , timestamp]
+                # Step 1. Find Difference = Get Button = Get Trip Dst
+                delta = list(set(log_array[1]) - set(log_array[0]))
+                if len(delta) != 1:
+                    print("Error Occurred")
+                    return None
+                
+                else:
+                     dst_floor = delta[0]
+                
+                # Step 2. Find Direction = Get Current Elevator Floor and compare with dst_floor
+                str_floor = log_array[2][0]
+                int_floor = str_floor_to_int(str_floor)
+                
+                if int_floor < dst_floor:
+                    dst_floor_direction = True
+                else:
+                    dst_floor_direction = False
+                
+                
+                pass
+            else: # Out Log
+                dst_floor = log_array[1]  # [inout, floor, timestamp, direction]
+                dst_floor_direction = log_array[-1]
 
             if presume_next_trip_list is None: # There is no other trip remained
                 # Check if there is any unreachable header exists

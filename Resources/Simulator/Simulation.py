@@ -241,6 +241,15 @@ class InElevatorLog(ElevatorLog):
 
     def get_inout(self):
         return self.inout
+    
+    def get_resources(self):
+        v1 = self.in_previous_buttons
+        v2 = self.in_current_buttons
+        v3 = self.in_current_floor  
+        v4 = self.in_elevator_number
+        v5 = self.timestamp
+        
+        return [v1, v2, v3, v4, v5]
 
 def run(log_path):
     # Usage example:
