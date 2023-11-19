@@ -1,5 +1,7 @@
 import cv2
+import yaml
 
+import Detect_Color
 import config_default
 def get_label_data(label_text_path):
     label_data = []

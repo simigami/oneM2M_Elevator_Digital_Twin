@@ -133,7 +133,7 @@ def make_files_for_program_Linux(Raspi_Number, logger):
 
 	else:
 		os.chdir(Config_DefaultPath.code_default_path)
-		os.chdir('../config')
+		os.chdir('config')
 
 		label_txt_name = fr"label_{Raspi_Number}.txt"
 		yaml_name = "data.yaml"
@@ -151,7 +151,7 @@ def make_dirs_for_program_Windows():
 	os.chdir(current_directory)
 	default_path = os.getcwd()
 
-	os.chdir('../../..')
+	os.chdir('../..')
 	home_path = os.getcwd()
 
 	dir_name = "Elevator_Results"
@@ -232,7 +232,7 @@ def make_files_for_program_Windows(Raspi_Number):
 	else:
 		os.chdir(Config_DefaultPath.code_default_path)
 		#print(Config_DefaultPath.code_default_path)
-		os.chdir('../config')
+		os.chdir('config')
 
 		label_txt_name = fr"label_{Raspi_Number}.txt"
 		yaml_name = "data.yaml"

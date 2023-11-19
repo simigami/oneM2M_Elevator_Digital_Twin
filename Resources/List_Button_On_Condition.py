@@ -1,3 +1,4 @@
+import config_default
 import classid
 
 try:

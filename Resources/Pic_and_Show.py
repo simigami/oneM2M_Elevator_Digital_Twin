@@ -1,5 +1,6 @@
 import cv2
 import View_Label
+import Video_To_Image
 import Raspi_Shoot
 from config_default import Config_DefaultPath, Config_Detection
 
