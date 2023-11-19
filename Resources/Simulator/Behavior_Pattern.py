@@ -1,410 +1,536 @@
-import copy
 import datetime
-import math
+import os.path
+
+import queue
 import sys
 import json
 
-import Calculation
+import Logic.Single_Elevator as Single_Elevator
+import Calculation, Simulation
 from config import TEST_VARIABLES, TEST_ELEVATOR
 
-second = 1
+
+one_tenth_second = 1
+second = 10
 minute = 60 * second
 hour = 60 * minute
 
-class LinkedList:
-    def __init__(self):
-        self.head = None
-        self.last = None
-        self.count = 0
+# OPCODE
+# 0 = Initial Value
+# 1 = Elevator response from OUT Action and move to destination floor
+# 2 = Elevator Detects New Button and re-coordinate its location
+# 3 = Elevator Detects Button Disappear and re-coordinate its location
+# 10 = Elevator finishes its trip and turns to IDLE + STANDBY
+# 11 = Elevator turns to OPERATION mode and start moving or while moving
+# 21 = Elevator decelerate to stop at floor due to OUT Action
+# 22 = Elevator decelerate to stop at floor due to IN Action
+# 100 = Elevator Emergency Halt
 
-    def add_node(self, node):
-        if self.head is not None and self.last is not None:
-            self.last.next = node
-            node.prev = self.last
-            self.last = node
+class System:
+    def __init__(self):
+        self.elevators = [] # List of Elevator Class
+        self.now = None
+        self.simulation_start_time = None
+
+        self.underground_floors = TEST_VARIABLES.underground_floors
+        self.ground_floors = TEST_VARIABLES.ground_floors
+
+        self.building_alts = TEST_VARIABLES.alts
+        self.alts_dict = {}
+
+        self.TTS = 3
+
+        self.make_altimeter_dictionary(self.underground_floors, self.ground_floors, self.building_alts)
+
+    def make_altimeter_dictionary(self, underground_floors, ground_floors, alts):
+        index = 0
+        for i in range(underground_floors, 0, -1):
+            str_i = str(i)
+            str_floor = "B"+str_i
+            self.alts_dict[str_floor] = alts[index]
+            index += 1
+
+        index = 0
+        for i in range(1, ground_floors+1, 1):
+            str_floor = str(i)
+            self.alts_dict[str_floor] = alts[index+underground_floors]
+            index += 1
+
+    def add_elevator(self, elevator):
+        self.elevators.append(elevator)
+
+    def get_elevators(self):
+        return self.elevators
+
+    def get_delta_altimeter_floor_and_floor(self, start, dst):
+        if start < dst:
+            direction = True # True = Up, False = Down
         else:
-            self.head = node
-            self.last = node
-        self.count += 1
+            direction = False
 
-    def get_last(self):
-        return self.last
+        higher_floor = max(start, dst)
+        lower_floor = start if higher_floor == dst else dst
 
-    def get_head(self):
-        return self.head
+        if higher_floor < 0:
+            delta_index = abs(self.underground_floors) - abs(higher_floor)
+            higher_floor_alts = self.building_alts[delta_index]
 
-    def print_all_node(self):
-        pointer = self.head
-        while pointer is not None:
-            pointer.pattern.print_var()
-            if pointer.energy is not None:
-                pointer.energy.print_energy()
-            self.parse_node_to_json(pointer)
-            pointer = pointer.next
+        else:
+            higher_floor_alts = self.building_alts[self.underground_floors + higher_floor - 1]
 
-    def parse_node_to_json(self, pointer):
-        json_list_data = {
-            'default_info' : pointer.pattern.parse_data_instance.data,
-            'trip_path' : pointer.pattern.trip_path,
-            'floor_to_floor_metrix' : pointer.pattern.floor_dict,
-            'trip_count' : pointer.pattern.trip_count,
-            'trip_distance' : pointer.pattern.trip_distance,
-            'total_distance' : pointer.pattern.total_distance
-        }
-        json_list = json.dumps(json_list_data)
+        if lower_floor < 0:
+            delta_index = abs(self.underground_floors) - abs(lower_floor)
+            lower_floor_alts = self.building_alts[delta_index]
 
-        path = rf"E:\ML\Elevator Git\Elevator_Results\temp.json"
-        with open(path, "w") as json_file:
-            json.dump(json_list_data, json_file, indent=4)
+        else:
+            lower_floor_alts = self.building_alts[self.underground_floors + lower_floor - 1]
 
-class Node:
+        delta_altimeter = abs(higher_floor_alts - lower_floor_alts)
+
+        if direction:
+            return [lower_floor_alts, higher_floor_alts, delta_altimeter, direction]
+
+        else:
+            return [higher_floor_alts, lower_floor_alts, delta_altimeter, direction]
+
+    def display(self):
+        text = f"Time is {self.now}\n"
+
+        return text
+
+class Elevator:
     def __init__(self):
-        self.pattern = None
-        self.energy = None
-        self.timestamp = None
-        self.next = None
-        self.prev = None
+        self.opcode = 0
 
-    def set_pattern(self, pattern, timestamp):
-        self.pattern = pattern
-        self.timestamp = timestamp
+        self.full_trip_list = None
+        self.current_trip_list = None
+        self.done_trip_list = []
 
-    def set_energy(self, energy):
-        self.energy = energy
+        self.current_trip_node = None
+        self.trip_node_right_before_IDLE = None
 
-class patt:
-    def __init__(self):
-        self.parse_data_instance = parse_data()
-        self.on_time = 0
-        self.trip_path = []
+        self.current_stopped_floor = -5
+        self.current_stopped_altimeter = -55
+
+        self.current_velocity = 0
+        self.maximum_velocity = 2.5
+        self.time_to_reach_maximum_velocity = 2.0
+        self.acceleration = 1.25
+        self.direction = True
+
+        self.current_trip_start_time = None
+        self.current_trip_end_time = None
+
         self.trip_count = 0
-        self.trip_direction = None  # True = Up, False = Down
-        self.trip_distance = None
-        self.total_distance = 0
-        self.floor = None
-        self.floor_int = None
-        self.floor_dict = build_floor_dict()
-        self.what_is_done = None
-        self.what_is_new = None
-        self.latest_stop = None
 
-    def set_on_time(self, value):
-        self.on_time = value
+    def set_opcode(self, opcode):
+        self.opcode = opcode
 
-    def reset_trip_path(self):
-        self.trip_path = []
+    def get_opcode(self):
+        return self.opcode
 
-    def add_trip_path(self, floor):
-        self.trip_path.append(floor)
+    def set_direction(self, direction):
+        self.direction = direction
 
-    def pop_trip_path(self, floor):
-        self.trip_path.remove(floor)
+    def get_direction(self):
+        return self.direction
 
-    def remove_trip_path(self, trip_path, floor):
-        if floor in trip_path:
-            trip_path.remove(floor)
-        else:
-            print("Error in trip_path, no such floor in list")
+    def set_current_velocity(self, velocity):
+        self.current_velocity = velocity
 
-    def print_floor_dict_all(self):
-        print(self.floor_dict)
+    def get_current_velocity(self):
+        return self.current_velocity
 
-    def print_floor_dict_specific(self, floor):
-        print(self.floor_dict[floor])
+    def get_time_to_reach_maximum_velocity(self):
+        return self.time_to_reach_maximum_velocity
 
-    def print_trip_count(self):
-        print(self.trip_count)
+    def get_acceleration(self):
+        return self.acceleration
 
-    def print_trip_distance(self):
-        print(self.trip_distance)
+    def get_maximum_velocity(self):
+        return self.maximum_velocity
 
-    def print_total_distance(self):
-        print(self.total_distance)
+    def set_current_trip_node(self, node):
+        self.current_trip_node = node
 
-    def print_var(self):
-        print("default info : {}\ntrip path : {}\nfloor to floor metrix : {}\ntrip count : {}\ntrip distance : {}\ntotal distance : {}\n".format(
-        self.parse_data_instance.data,
-        self.trip_path,
-        self.floor_dict,
-        self.trip_count,
-        self.trip_distance,
-        self.total_distance))
+    def get_current_trip_node(self):
+        return self.current_trip_node
 
-class parse_data:
-    def __init__(self):
-        self.data = {
-            'Inout': '',
-            'Timestamp': '',
-            'Operation': '',
-            'Previous Button Panel': '',
-            'Current Button Panel' : '',
-            'Current Floor' : [0, 0],
-            'Elevator Number' : 0,
-            'Altimeter' : 0
-        }
+    def set_trip_node_right_before_IDLE(self, node):
+        self.trip_node_right_before_IDLE = node
 
-def build_floor_dict():
-    if(TEST_VARIABLES.underground_floors == None or TEST_VARIABLES.ground_floors == None):
-        print("Error on building floor data, floor data is None")
+    def get_trip_node_right_before_IDLE(self):
+        return self.trip_node_right_before_IDLE
 
-        return None
-    else:
-        dict_dict = {}
-        for i in range(1, TEST_VARIABLES.underground_floors + 1):
-            dict = {}
-            for j in range(1, TEST_VARIABLES.underground_floors+1):
-                dict[f'B{j}'] = 0
+    def set_current_stopped_floor(self, floor):
+        self.current_stopped_floor = floor
 
-            for j in range(1, TEST_VARIABLES.ground_floors+1):
-                dict[f'{j}'] = 0
-            dict['Alt'] = TEST_VARIABLES.underground_alts[-i]
+    def get_current_stopped_floor(self):
+        return self.current_stopped_floor
 
-            dict_dict[f'B{i}'] = dict
+    def set_current_stopped_altimeter(self, altimeter):
+        self.current_stopped_altimeter = altimeter
 
-        for i in range(1, TEST_VARIABLES.ground_floors + 1):
-            dict = {}
-            for j in range(1, TEST_VARIABLES.underground_floors+1):
-                dict[f'B{j}'] = 0
+    def get_current_stopped_altimeter(self):
+        return self.current_stopped_altimeter
 
-            for j in range(1, TEST_VARIABLES.ground_floors+1):
-                dict[f'{j}'] = 0
-            dict['Alt'] = TEST_VARIABLES.ground_alts[i-1]
+    def display(self):
+        node = self.current_trip_node
+        text = f"This Node Time : {node.current_time}\nTime Elapsed: {node.elapsed_time / 1000} seconds\nVelocity : {node.velocity}m/s\nAltimeter: {node.altimeter} meters\nClosest Floor: {node.closest_floor}\n\n"
+        return text
 
-            dict_dict[f'{i}'] = dict
+def write_to_file(Elevator_System, Elevator, file_path):
+    file_name = 'result.txt'
+    mode = 'a' if os.path.exists(file_path) else 'w'
 
-    return dict_dict
+    file_path += '/' + file_name
 
-def parse_button_list(pattern):
-    pbl = pattern.parse_data_instance.data['Previous Button Panel']
-    pbl_int = []
-    cbl = pattern.parse_data_instance.data['Current Button Panel']
-    cbl_int = []
-    cf = pattern.parse_data_instance.data['Current Floor']
+    f = open(file_path, mode)
 
-    for elem in pbl:
-        if elem[0] == 'B':
-            button_int = int(elem[1]) * -1
-        elif elem[0] == 'C' or elem[0] == 'O':
-            button_int = 0
-        else:
-            button_int = int(elem)
-        pbl_int.append(button_int)
+    current_time_text = Elevator_System.display()
+    node_info_text = Elevator.display()
 
-    for elem in cbl:
-        if elem[0] == 'B':
-            button_int = int(elem[1]) * -1
-        elif elem[0] == 'C' or elem[0] == 'O':
-            button_int = 0
-        else:
-            button_int = int(elem)
-        cbl_int.append(button_int)
+    f.write(current_time_text)
+    f.write(node_info_text)
 
-    floor_int = 0
-    for elem in cf:
-        if elem[0] == 'B':
-            floor_int += int(elem[1]) * -1
-        elif elem[0] == 'C' or elem[0] == 'O':
+def write_text_to_file(text, file_path):
+    file_name = 'result.txt'
+    mode = 'a' if os.path.exists(file_path) else 'w'
+
+    file_path += '/' + file_name
+
+    f = open(file_path, mode)
+
+def run():
+    # PHASE 0 Get Actual Log from real log + Set Flags, Elevators, Variables
+    Elevator_System = System()
+
+    result_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator'
+    log_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
+    
+    # result_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator'
+    # log_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator/testlog.txt'
+    
+    a_log, i_log, o_log = Simulation.run(log_path)
+    log_instance = None # Pointer For Log Detect
+
+    elevator_test = Elevator()
+    Elevator_System.add_elevator(elevator_test)
+    number_of_elevator_code10 = 0
+
+    elevators = Elevator_System.get_elevators()
+
+    simulation_timestamp = a_log.head.data.timestamp
+
+    # Set Flags
+    flag_force_end_time = simulation_timestamp + datetime.timedelta(minutes=3)
+    flag_elevator_IDLE = [False * len(elevators)]
+    flag_elevator_time_to_get_out_IDLE = [0 * len(elevators)]
+    flag_end_loop = True # False = Loop End
+    flag_analyze_log = False # True = Analyze Log Start
+    flag_log_analysis_complete = True
+    flag_end_log = False # True = Start End Phase
+    flag_record_start_time = True
+
+    # Init Settings
+    for elevator in elevators:
+        elevator.full_trip_list = Single_Elevator.Full_Trip_List()
+
+    # While Loop Begin
+    while(flag_end_loop):
+        if flag_record_start_time:
+            Elevator_System.simulation_start_time = simulation_timestamp
+            flag_record_start_time = False
+
+        Elevator_System.now = simulation_timestamp
+    # PHASE 1 : Change Elevator Status Per 0.1 Second
+        for index, elevator in enumerate(elevators):
+            current_trip_node = elevator.get_current_trip_node()
+
+            if current_trip_node is not None:
+
+                next = current_trip_node.next
+                if next is not None:
+                    # Compare Velocity and Set opcode
+                    current_velocity = current_trip_node.get_velocity()
+                    next_node_velocity = next.get_velocity()
+
+                    current_altimeter = current_trip_node.get_altimeter()
+                    next_node_altimeter = next.get_altimeter()
+
+                    if current_velocity < next_node_velocity:
+                        elevator.set_opcode(21)
+                    elif current_velocity > next_node_velocity:
+                        elevator.set_opcode(22)
+                    elif current_velocity == next_node_velocity:
+                        elevator.set_opcode(23)
+
+                    if current_altimeter < next_node_altimeter:
+                        elevator.set_direction(True)
+                    else:
+                        elevator.set_direction(False)
+
+                    elevator.set_current_velocity(current_velocity)
+                    # Change Current Trip Node
+                    write_to_file(Elevator_System, elevator, result_path)
+                    # Elevator_System.display()
+                    # elevator.display()
+
+                    elevator.set_current_trip_node(next)
+
+                # If current Trip Node is Last Before IDLE, velocity = 0
+                elif next is None:
+                    write_to_file(Elevator_System, elevator, result_path)
+                    # Elevator_System.display()
+                    # elevator.display()
+
+                    current_velocity = current_trip_node.get_velocity()
+                    elevator.set_current_velocity(current_velocity)
+
+                    if current_velocity == 0:
+                        elevator.set_opcode(20)
+
+                        current_trip_list = elevator.current_trip_list
+                        if current_trip_list.next is not None:
+                            full_trip_list = elevator.full_trip_list
+                            full_trip_list.remove_trip_list(current_trip_list) # Remove Current Trip List To next One
+
+                            elevator.current_trip_list = None
+                            elevator.done_trip_list.append(current_trip_list)
+
+                            elevator.set_trip_node_right_before_IDLE(current_trip_node)
+                            elevator.set_current_trip_node(next)
+
+                        else:   # if this trip list is last, and also node is last
+                            full_trip_list = elevator.full_trip_list
+                            full_trip_list.remove_trip_list(current_trip_list)  # Remove Current Trip List To next One
+
+                            elevator.current_trip_list = None
+                            if elevator.full_trip_list.reachable_head is not None:
+                                elevator.full_trip_list.reachable_head = elevator.full_trip_list.reachable_head.next
+
+                            elevator.done_trip_list.append(current_trip_list)
+
+                            elevator.set_trip_node_right_before_IDLE(current_trip_node)
+                            elevator.set_current_trip_node(next)
+
+                            pass
+                    elevator.set_current_trip_node(None)
+
+            # If current Trip Node is None
+            else:
+                # Get trip_node_right_before_IDLE
+                trip_node_right_before_IDLE = elevator.get_trip_node_right_before_IDLE()
+
+                if trip_node_right_before_IDLE is not None:
+                    # Set Elevator to IDLE and wait for next log or operation
+                    elevator.set_opcode(20)
+                    TTS = 3
+                    flag_elevator_time_to_get_out_IDLE[index] = Elevator_System.now + datetime.timedelta(seconds=TTS)
+
+                    current_stopped_floor = trip_node_right_before_IDLE.closest_floor['upper_floor']
+                    if current_stopped_floor[0] == 'B':
+                        int_floor = int(current_stopped_floor[1:]) * -1
+                    else:
+                        int_floor = int(current_stopped_floor)
+
+                    elevator.set_current_stopped_floor(int_floor)
+                    current_stopped_altimeter = Elevator_System.alts_dict[current_stopped_floor]
+
+                    elevator.set_current_stopped_altimeter(current_stopped_altimeter)
+
+                    elevator.set_trip_node_right_before_IDLE(None)
+
+                elif trip_node_right_before_IDLE is None:
+                    if flag_elevator_time_to_get_out_IDLE[index] != 0:
+
+                        if simulation_timestamp == flag_elevator_time_to_get_out_IDLE[index]:
+                            # Check if there is any Operation Remaining
+                            full_trip_list = elevator.full_trip_list
+                            reachable_head = full_trip_list.reachable_head
+
+                            if reachable_head is None:
+                                # Check if there is any unreachable domains left
+                                num_up = full_trip_list.get_number_of_trip_list(1)
+                                num_down = full_trip_list.get_number_of_trip_list(2)
+
+                                if num_up == num_down == 0: # There is No more Trip List Remaining
+                                    pass
+                                elif num_up >= num_down: # Up Direction Should Work First(정의)
+                                    unreachable_up = full_trip_list.unreachable_up_head
+                                    unreachable_up.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_up.direction = True if unreachable_up.start_floor < unreachable_up.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(1)
+
+                                else: # Down Direction Should Work First
+                                    unreachable_down = full_trip_list.unreachable_up_head
+                                    unreachable_down.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_down.direction = True if unreachable_down.start_floor < unreachable_down.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(2)
+
+                            elevator.current_trip_list = full_trip_list.reachable_head
+
+                            if elevator.current_trip_list is not None:  # Start to Move Again
+                                Single_Elevator.run(Elevator_System, elevator, None)
+
+                            elif elevator.current_trip_list is None:  # There is no operation remaining, so change opcode to 10
+                                elevator.set_opcode(10)
+                                flag_elevator_IDLE[index] = True
+
+                            flag_elevator_time_to_get_out_IDLE[index] = 0
+
+                        else:
+                            full_trip_list = elevator.full_trip_list
+                            reachable_head = full_trip_list.reachable_head
+                            if reachable_head is None:
+                                # Check if there is any unreachable domains left
+                                num_up = full_trip_list.get_number_of_trip_list(1)
+                                num_down = full_trip_list.get_number_of_trip_list(2)
+
+                                if num_up == num_down == 0: # There is No more Trip List Remaining
+                                    pass
+                                elif num_up >= num_down: # Up Direction Should Work First(정의)
+                                    unreachable_up = full_trip_list.unreachable_up_head
+                                    unreachable_up.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_up.direction = True if unreachable_up.start_floor < unreachable_up.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(1)
+
+                                else: # Down Direction Should Work First
+                                    unreachable_down = full_trip_list.unreachable_down_head
+                                    unreachable_down.start_floor = elevator.get_current_stopped_floor()
+                                    unreachable_down.direction = True if unreachable_down.start_floor < unreachable_down.destination_floor else False
+                                    full_trip_list.move_unreachable_head_to_reachable_head(2)
+
+                            else: # If reachable head is not None
+                                pass
+                                # # Check if TTR is None
+                                # TTR = reachable_head.TTR
+                                # if len(TTR) == 0:
+                                #     Single_Elevator.run(Elevator_System, elevator, log_instance)
+                                # else:
+                                #     pass
+
+                    else:
+                        #Search if there is any trip list is newly opened
+                        reachable_head = elevator.full_trip_list.reachable_head
+                        if reachable_head is not None:
+                            elevator.current_trip_list = reachable_head
+                            elevator.set_opcode(0)
+                            Single_Elevator.run(Elevator_System, elevator, log_instance)
+
+                        else:
+                            pass
+
+    # PHASE 2 : LOG DETECT
+
+        # If log is live mode
+        if a_log.head is None:
+            print("There is no pre-loaded Log, Simulator Turns To Live mode")
             pass
+
+        # If log is already made
         else:
-            floor_int += int(elem)
+            if log_instance is None:
+                log_instance = a_log.head
+                flag_log_analysis_complete = False
 
-    floor_int = round(floor_int / 2, 1)
-    what_is_done = list(set(pbl_int) - set(cbl_int))
-    what_is_new = list(set(cbl_int) - set(pbl_int))
-
-    # print(what_is_done)
-    # print(what_is_new)
-
-    pattern.floor_int = floor_int
-    pattern.what_is_done = what_is_done
-    pattern.what_is_new = what_is_new
-
-    return pattern
-
-def refresh_trip_path(pattern):
-
-    if len(pattern.trip_path) == 0: # If trip_path is empty, it means Elevator is now operating with a single-side direction
-        if len(pattern.what_is_new) == 0:
-            print("Error, what_is_new should have a value")
-        else:
-            if pattern.floor_int < pattern.what_is_new[0]:  # If Lowest Detected Button is Upper than current detected Altimeter, It moves Up
-                pattern.trip_direction = True
             else:
-                pattern.trip_direction = False
-            what_is_new = sorted(pattern.what_is_new, reverse=(not pattern.trip_direction))
 
-            floor_int = math.floor(pattern.floor_int)
-            pattern.latest_stop = floor_int
+                if flag_log_analysis_complete:
+                    next_log = log_instance.next
 
-            for elem in what_is_new:
-                pattern.add_trip_path(elem)
+                    if next_log is None: # If log_instance is Last Log
+                        flag_end_log = True
 
-    else:
-        if pattern.trip_direction is None:
-            print("Error, Trip_direction is None")
+                    else:
+                        log_instance = next_log
+                        flag_log_analysis_complete = False
+
+        log_timestamp = log_instance.data.timestamp
+        if log_timestamp == simulation_timestamp:
+
+            flag_analyze_log = True
+
         else:
-            what_is_done = sorted(pattern.what_is_done, reverse=(not pattern.trip_direction))
-            what_is_new = sorted(pattern.what_is_new, reverse=(not pattern.trip_direction))
-
-            if len(what_is_done) != 0:
-                for elem in what_is_done:
-                    if elem != 0:   # if floor is not Closed or Open = 0
-                        #print("Stop at {}, Start From {}\n".format(elem, pattern.latest_stop))
-                        pattern = calculate_trip_distance(pattern, pattern.latest_stop, elem)
-
-                        pattern.pop_trip_path(elem)
-                        pattern.trip_count += 1
-                        pattern.latest_stop = elem
-
-            if len(what_is_new) != 0:
-                for elem in what_is_new:
-                    if elem != 0:  # if floor is not Closed or Open = 0
-                        pattern.add_trip_path(elem)
-
-            if len(pattern.trip_path) == 0:
-                pattern.trip_direction = None
-
-    return pattern
+            flag_analyze_log = False
 
 
-def calculate_trip_distance(pattern, start, end):
-    if TEST_VARIABLES.total_floors != (len(TEST_VARIABLES.underground_alts) + len(TEST_VARIABLES.ground_alts)):
-        print("Error in Calculation, total floor and Altimeter length is mismatched")
-    else:
-        if start >= 0:
-            start_str = str(start)
-        else:
-            start_str = 'B'+str(-1*start)
+        #flag_end_loop = False
 
-        if end >= 0:
-            end_str = str(end)
-        else:
-            end_str = 'B'+str(-1*end)
+    # PHASE 3: LOG Analyze
+        if flag_analyze_log:
+            log_instance_data = log_instance.data
+            inout = log_instance_data.inout
 
-        pattern.trip_distance = abs(pattern.floor_dict[start_str]['Alt']-pattern.floor_dict[end_str]['Alt'])
-        pattern.total_distance += pattern.trip_distance
+            if log_instance.data.inout is True and 10 in log_instance.data.in_current_buttons:
+                print("ASDASDSAD")
 
-        return pattern
+            if log_instance.data.inout is False and log_instance.data.out_floor == 5:
+                print("ASDASDSAD")
 
-def add_where_to_where(pattern):
-    pbl = pattern.parse_data_instance.data['Previous Button Panel']
-    cbl = pattern.parse_data_instance.data['Current Button Panel']
+            if inout: # If Log is IN Log
+                resource = log_instance_data.get_resources()
+                
+                previous_button_list = resource[0]
+                current_button_list = resource[1]  
+                current_floor = resource[2] 
+                elevator_number = resource[3]   
+                timestamp = resource[4]
+                
+                number_of_elevators = len(elevators)
+                if number_of_elevators >= 2:
+                    pass
+                elif number_of_elevators == 0:
+                    print("Error Occured, number of elevators should be larger than 0")
+                else:   # Single Elevator Moving Algorithms
+                    # Check if elevator is currently moving?
+                    opcode = elevators[0].get_opcode()
+                    if opcode == 20: # If Elevator is not IDLE but Stopped at floor
+                        Single_Elevator.run(Elevator_System, elevator, log_instance)
+                    
+                    elif opcode == 21 or opcode == 22 or opcode == 23: # If Elevator is IDLE
+                        Single_Elevator.run(Elevator_System, elevator, log_instance)
+                
+                # Check 
+                print(previous_button_list)
+                print(current_button_list) 
+                
+                pass
 
-    what_is_new = list(set(cbl) - set(pbl))
+            else: # If Log is OUT Log
+                number_of_elevators = len(elevators)
+                if number_of_elevators >= 2:
+                    pass
+                elif number_of_elevators == 0:
+                    print("Error Occured, number of elevators should be larger than 0")
+                else:   # Single Elevator Moving Algorithms
+                    elevator = elevators[0]
 
-    if len(pattern.what_is_new) != 0:
-        current_floor = str(math.floor(pattern.floor_int))
-        for elem in what_is_new:
-            if elem != 'Close' and elem != 'Open':
-                pattern.floor_dict[current_floor][elem] += 1
+                    Single_Elevator.run(Elevator_System, elevator, log_instance)
 
-    return pattern
+            flag_analyze_log = False
+            flag_log_analysis_complete = True
 
-def check_interval_passed(LL, interval):
-    v_hour = interval // hour
-    v_minute = (interval % hour) // minute
-    v_second = (interval % hour) % minute
+    # PHASE 4 END PHASE
+        if flag_end_log:
+            # Check if any other elevator is still operating
+            for elevator in elevators:
+                opcode = elevator.get_opcode()
+                if opcode == 10:
+                    number_of_elevator_code10 += 1
 
-    head_time = LL.head.timestamp
-    end_time = LL.last.timestamp
-    on_time = end_time - head_time
+            if number_of_elevator_code10 == len(elevators):
+                text = "Log Instance Has Meet Last Log\n Every Elevator Finished Operation and No Log Remains. Turning Off Simulator"
+                write_text_to_file(text, result_path)
+                # print("Log Instance Has Meet Last Log")
+                # print("Every Elevator Finished Operation and No Log Remains. Turning Off Simulator")
+                flag_end_loop = False
+                flag_log_analysis_complete = False
 
-    if head_time != end_time:
-        day_bar_interval = round(datetime.timedelta(days=1) / (end_time-head_time))
+        if simulation_timestamp == flag_force_end_time:
+            flag_end_loop = False
 
-        #print(end_time-head_time)
-        #if (end_time-head_time) >= datetime.timedelta(hours=v_hour, minutes=v_minute, seconds=v_second):
-        temp = Calculation.Config_Elevator_Specification()
-
-        temp2 = Calculation.values()
-        temp2.set_cb(0.5)
-        temp2.set_h(1)
-        temp2.set_max_load(TEST_ELEVATOR.Luxen_capacity)
-        temp2.set_trip(LL.last.pattern.trip_count * day_bar_interval)
-
-        temp2.set_ref_cycle_energy(TEST_ELEVATOR.Luxen_ref_cycle_energy)
-        temp2.set_ref_cycle_distance(TEST_VARIABLES.total_height)
-
-        temp2.set_short_cycle_energy(TEST_ELEVATOR.Luxen_short_cycle_energy)
-        temp2.set_short_cycle_distance(TEST_ELEVATOR.Luxen_short_cycle_distance)
-
-        temp.set_values(temp2)
-        temp.get_energy()   # Calculate Energy Consumption
-
-        node = Calculation.energy_node()
-        node.set_vaule(temp)
-
-        LL.last.energy = node
-        LL.last.pattern.set_on_time(on_time)
-
-        #temp.print_energy()
-        #print(end_time - head_time)
-
-def parse_log_to_log_array(file_name):
-    with open(file_name, 'r') as f:
-        log = f.read()
-
-    paragraphs = log.strip().split('\n\n')
-    pattern = patt()
-
-    arr = []
-    for paragraph in paragraphs:
-        arr.append(paragraph)
-
-    return arr
-
-def parse_log_array_to_node(elem, LL, pattern):
-    #pattern = patt()
-    lines = elem.strip().split('\n')
-
-    if len(lines) == 7:
-        for i in range(len(lines)):
-            #print(lines[i])
-            if i != 2:
-                value = lines[i].split(': ')
-                pattern.parse_data_instance.data[value[0]] = value[1]
-            else:
-                key, value = 'Operation', lines[i]
-                pattern.parse_data_instance.data[key] = value
-
-        pattern.parse_data_instance.data['Previous Button Panel'] = eval(
-            pattern.parse_data_instance.data['Previous Button Panel'])
-        pattern.parse_data_instance.data['Current Button Panel'] = eval(
-            pattern.parse_data_instance.data['Current Button Panel'])
-        floor_list = pattern.parse_data_instance.data['Current Floor'].split(' between ')
-        pattern.parse_data_instance.data['Current Floor'] = [floor_list[0], floor_list[1]]
-
-        pattern = parse_button_list(pattern)
-        pattern = add_where_to_where(pattern)
-        pattern = refresh_trip_path(pattern)
-
-        pattern_copy = copy.deepcopy(pattern)
-
-        temp = Node()
-        temp.set_pattern(pattern_copy, datetime.datetime.strptime(pattern_copy.parse_data_instance.data['Timestamp'],
-                                                                  '%Y_%m%d_%H%M%S'))
-        #temp.pattern.print_var()
-
-        LL.add_node(temp)
-        check_interval_passed(LL, 1 * minute)
-
-        return LL
-
-    else:
-        print("Error in lines, log attribute does not match")
-
-        return None
-
-def init():
-    TEST_VARIABLES.total_height = abs(TEST_VARIABLES.ground_alts[-1] - TEST_VARIABLES.underground_alts[0])
-    TEST_VARIABLES.short_cycle_height = round(TEST_VARIABLES.total_height/4, 1)
-    LL = LinkedList()
-
-    return LL
+        simulation_timestamp += datetime.timedelta(seconds=0.1)
 
 if __name__ == '__main__':
-    LL = init()
-
-    path = rf"E:\ML\Elevator Git\Elevator_Results\temp.txt"
-    LL = parse_log_to_log_array(path)
-    LL.print_all_node()
+    run()

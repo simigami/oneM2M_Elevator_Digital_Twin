@@ -1,7 +1,6 @@
 import os
 import re
 import config_default
-import config_elevator
 
 try:
     from config_default import Config_Elevator_SW, Config_Elevator_HW, Config_DefaultPath
