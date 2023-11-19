@@ -5,7 +5,7 @@ import tailer
 import cv2
 import numpy as np
 
-import Write_Log, Behavior_Pattern
+import Write_Log, Simulator
 
 try:
     from config import TEST_PATH, TEST_COLOR, TEST_VARIABLES

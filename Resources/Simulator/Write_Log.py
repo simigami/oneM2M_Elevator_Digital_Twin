@@ -1,6 +1,6 @@
 import os
 import yaml
-import Behavior_Pattern
+import Simulator
 
 from config import TEST_PATH, TEST_VARIABLES
 # This function is in charge of gathering each small logs from other and make a final log for Customers
