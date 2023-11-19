@@ -6,7 +6,6 @@ import classid
 import List_Button_On_Floor
 import Calculate_Elevator_Energy
 import Logging
-import Make_Dirs
 
 try:
     from config_default import Config_Detection, Config_Elevator_SW, Config_Log, Config_DefaultPath

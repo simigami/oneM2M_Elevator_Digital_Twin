@@ -1,18 +1,15 @@
-import logging
 import datetime
-import os.path
 import time
 import threading
 import queue
 
 import Make_Dirs
-import Pic_and_Show
 import cv2_Detection
 #import GetPressure
 import Raspi_Shoot
 import Video_To_Image
 
-from config_default import Config_Detection, Config_Log, Config_DefaultPath, Config_Test
+from config_default import Config_Detection, Config_DefaultPath, Config_Test
 #from GetPressure import Get_Pressure
 
 Raspi_Number = "No1"    # Raspi_Number should be like "No#"
