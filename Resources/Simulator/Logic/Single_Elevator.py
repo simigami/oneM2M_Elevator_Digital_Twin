@@ -207,11 +207,8 @@ def analyze_out_log(out_log):
 def can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor):
     current_trip_node = elevator.current_trip_node
 
-    # If Elevator dont have trip, it can always reach destination
     if current_trip_node is None:
         current_altimeter = elevator.current_stopped_altimeter
-
-    # If Elevator already has trip, it have to check reachability
     else:
         current_altimeter = elevator.current_trip_node.altimeter
 
@@ -223,16 +220,12 @@ def can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor
     new_trip_dst_altimeter = Elevator_System.alts_dict[str_floor]
 
     direction = elevator.direction
-
-    # If Elevator is Moving Up, and Destination Floor is below this floor, Elevator Cannot reach this floor
     if direction and new_trip_dst_altimeter < current_altimeter:
         return False
 
-    # If Elevator is Moving Down, and Destination Floor is above this floor, Elevator Cannot reach this floor
     elif not direction and new_trip_dst_altimeter > current_altimeter:
         return False
 
-    # Else Elevator have to test whether reach this floor if it decelerates instantly
     else:
         delta_altimeter = abs(current_altimeter-new_trip_dst_altimeter)
 
@@ -387,13 +380,11 @@ def run(Elevator_System, elevator, log_instance):
         current_trip_list = elevator.current_trip_list
         current_trip_node = elevator.current_trip_node
 
-        current_trip_dst_floor = current_trip_list.destination_floor
-
         if log_instance.data.inout == True: # If Elevator Log is IN Log
             new_trip_dst_floor = list(set(log_array[1])-set(log_array[0]))[0]
             new_trip_direction = elevator.direction
 
-        elif log_instance.data.inout == False: # If Elevator Log is Out Log
+        else: # If Elevator Log is Out Log
             new_trip_dst_floor = log_array[1]
             new_trip_direction = log_array[-1]
 
@@ -404,6 +395,10 @@ def run(Elevator_System, elevator, log_instance):
         else:
             reachable = can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor)
 
+        current_trip_dst_floor = current_trip_list.destination_floor
+        new_trip_dst_floor = log_array[1]
+
+        reachable = can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor)
         if direction: # If Elevator is Currently Moving Up
             if reachable: # If new dst floor can be reachable
                 elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
