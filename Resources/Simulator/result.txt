@@ -1042,99 +1042,93 @@ Altimeter: -25.5 meters
 Closest Floor: {'upper_floor': '4', 'lower_floor': '3'}
 
 Time is 2023-10-30 11:00:23.100000
-This Node Time : 0:00:06.100000
-Time Elapsed: 6.1 seconds
-Velocity : 2.5m/s
-Altimeter: -25.25 meters
-Closest Floor: {'upper_floor': '4', 'lower_floor': '3'}
-
-Time is 2023-10-30 11:00:23.200000
 This Node Time : 0:00:06.200000
 Time Elapsed: 6.2 seconds
 Velocity : 2.5m/s
 Altimeter: -25.0 meters
 Closest Floor: {'upper_floor': '4', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.300000
+Time is 2023-10-30 11:00:23.200000
 This Node Time : 0:00:06.300000
 Time Elapsed: 6.3 seconds
 Velocity : 2.5m/s
 Altimeter: -24.75 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.400000
+Time is 2023-10-30 11:00:23.300000
 This Node Time : 0:00:06.400000
 Time Elapsed: 6.4 seconds
 Velocity : 2.5m/s
 Altimeter: -24.5 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.500000
+Time is 2023-10-30 11:00:23.400000
 This Node Time : 0:00:06.500000
 Time Elapsed: 6.5 seconds
 Velocity : 2.375m/s
 Altimeter: -24.25625 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.600000
+Time is 2023-10-30 11:00:23.500000
 This Node Time : 0:00:06.600000
 Time Elapsed: 6.6 seconds
 Velocity : 2.25m/s
 Altimeter: -24.025 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.700000
+Time is 2023-10-30 11:00:23.600000
 This Node Time : 0:00:06.700000
 Time Elapsed: 6.7 seconds
 Velocity : 2.125m/s
 Altimeter: -23.80625 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.800000
+Time is 2023-10-30 11:00:23.700000
 This Node Time : 0:00:06.800000
 Time Elapsed: 6.8 seconds
 Velocity : 2.0m/s
 Altimeter: -23.6 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:23.900000
+Time is 2023-10-30 11:00:23.800000
 This Node Time : 0:00:06.900000
 Time Elapsed: 6.9 seconds
 Velocity : 1.875m/s
 Altimeter: -23.40625 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:24
+Time is 2023-10-30 11:00:23.900000
 This Node Time : 0:00:07
 Time Elapsed: 7.0 seconds
 Velocity : 1.75m/s
 Altimeter: -23.225 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:24.100000
+Time is 2023-10-30 11:00:24
 This Node Time : 0:00:07.100000
 Time Elapsed: 7.1 seconds
 Velocity : 1.625m/s
 Altimeter: -23.05625 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:24.200000
+Time is 2023-10-30 11:00:24.100000
 This Node Time : 0:00:07.200000
 Time Elapsed: 7.2 seconds
 Velocity : 1.5m/s
 Altimeter: -22.9 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:24.300000
+Time is 2023-10-30 11:00:24.200000
 This Node Time : 0:00:07.300000
 Time Elapsed: 7.3 seconds
 Velocity : 1.375m/s
 Altimeter: -22.75625 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
 
-Time is 2023-10-30 11:00:24.400000
+Time is 2023-10-30 11:00:24.300000
 This Node Time : 0:00:07.400000
 Time Elapsed: 7.4 seconds
+<<<<<<< HEAD
 Velocity : 1.25m/s
 Altimeter: -22.625 meters
 Closest Floor: {'upper_floor': '5', 'lower_floor': '4'}
@@ -1968,129 +1962,598 @@ Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
 Time is 2023-10-30 11:00:49.900000
 This Node Time : 0:00:07.800000
 Time Elapsed: 7.8 seconds
-Velocity : 2.25m/s
-Altimeter: -35.975 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+=======
+Velocity : 2.5m/s
+Altimeter: -22.0 meters
+Closest Floor: {'upper_floor': '5', 'lower_floor': '5'}
 
+Time is 2023-10-30 11:00:24.400000
+This Node Time : 0:00:07.500000
+Time Elapsed: 7.5 seconds
+Velocity : 2.5m/s
+Altimeter: -21.75 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:24.500000
+This Node Time : 0:00:07.600000
+Time Elapsed: 7.6 seconds
+Velocity : 2.5m/s
+Altimeter: -21.5 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:24.600000
+This Node Time : 0:00:07.700000
+Time Elapsed: 7.7 seconds
+Velocity : 2.5m/s
+Altimeter: -21.25 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:24.700000
+This Node Time : 0:00:07.800000
+Time Elapsed: 7.8 seconds
+Velocity : 2.5m/s
+Altimeter: -21.0 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:24.800000
+This Node Time : 0:00:07.900000
+Time Elapsed: 7.9 seconds
+Velocity : 2.5m/s
+Altimeter: -20.75 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:24.900000
+This Node Time : 0:00:08
+Time Elapsed: 8.0 seconds
+Velocity : 2.5m/s
+Altimeter: -20.5 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:25
+This Node Time : 0:00:08.100000
+Time Elapsed: 8.1 seconds
+Velocity : 2.5m/s
+Altimeter: -20.25 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:25.100000
+This Node Time : 0:00:08.200000
+Time Elapsed: 8.2 seconds
+Velocity : 2.5m/s
+Altimeter: -20.0 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:25.200000
+This Node Time : 0:00:08.300000
+Time Elapsed: 8.3 seconds
+Velocity : 2.5m/s
+Altimeter: -19.75 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:25.300000
+This Node Time : 0:00:08.400000
+Time Elapsed: 8.4 seconds
+Velocity : 2.5m/s
+Altimeter: -19.5 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:25.400000
+This Node Time : 0:00:08.500000
+Time Elapsed: 8.5 seconds
+Velocity : 2.5m/s
+Altimeter: -19.25 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '5'}
+
+Time is 2023-10-30 11:00:25.500000
+This Node Time : 0:00:08.600000
+Time Elapsed: 8.6 seconds
+Velocity : 2.5m/s
+Altimeter: -19.0 meters
+Closest Floor: {'upper_floor': '6', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:25.600000
+This Node Time : 0:00:08.700000
+Time Elapsed: 8.7 seconds
+Velocity : 2.5m/s
+Altimeter: -18.75 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:25.700000
+This Node Time : 0:00:08.800000
+Time Elapsed: 8.8 seconds
+Velocity : 2.5m/s
+Altimeter: -18.5 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:25.800000
+This Node Time : 0:00:08.900000
+Time Elapsed: 8.9 seconds
+Velocity : 2.5m/s
+Altimeter: -18.25 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:25.900000
+This Node Time : 0:00:09
+Time Elapsed: 9.0 seconds
+Velocity : 2.5m/s
+Altimeter: -18.0 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26
+This Node Time : 0:00:09.100000
+Time Elapsed: 9.1 seconds
+Velocity : 2.5m/s
+Altimeter: -17.75 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.100000
+This Node Time : 0:00:09.200000
+Time Elapsed: 9.2 seconds
+Velocity : 2.5m/s
+Altimeter: -17.5 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.200000
+This Node Time : 0:00:09.300000
+Time Elapsed: 9.3 seconds
+Velocity : 2.5m/s
+Altimeter: -17.25 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.300000
+This Node Time : 0:00:09.400000
+Time Elapsed: 9.4 seconds
+Velocity : 2.5m/s
+Altimeter: -17.0 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.400000
+This Node Time : 0:00:09.500000
+Time Elapsed: 9.5 seconds
+Velocity : 2.5m/s
+Altimeter: -16.75 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.500000
+This Node Time : 0:00:09.600000
+Time Elapsed: 9.6 seconds
+Velocity : 2.5m/s
+Altimeter: -16.5 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.600000
+This Node Time : 0:00:09.700000
+Time Elapsed: 9.7 seconds
+Velocity : 2.5m/s
+Altimeter: -16.25 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '6'}
+
+Time is 2023-10-30 11:00:26.700000
+This Node Time : 0:00:09.800000
+Time Elapsed: 9.8 seconds
+Velocity : 2.5m/s
+Altimeter: -16.0 meters
+Closest Floor: {'upper_floor': '7', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:26.800000
+This Node Time : 0:00:09.900000
+Time Elapsed: 9.9 seconds
+Velocity : 2.5m/s
+Altimeter: -15.75 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:26.900000
+This Node Time : 0:00:10
+Time Elapsed: 10.0 seconds
+Velocity : 2.5m/s
+Altimeter: -15.5 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27
+This Node Time : 0:00:10.100000
+Time Elapsed: 10.1 seconds
+Velocity : 2.5m/s
+Altimeter: -15.25 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.100000
+This Node Time : 0:00:10.200000
+Time Elapsed: 10.2 seconds
+Velocity : 2.5m/s
+Altimeter: -15.0 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.200000
+This Node Time : 0:00:10.300000
+Time Elapsed: 10.3 seconds
+Velocity : 2.5m/s
+Altimeter: -14.75 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.300000
+This Node Time : 0:00:10.400000
+Time Elapsed: 10.4 seconds
+Velocity : 2.5m/s
+Altimeter: -14.5 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.400000
+This Node Time : 0:00:10.500000
+Time Elapsed: 10.5 seconds
+Velocity : 2.5m/s
+Altimeter: -14.25 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.500000
+This Node Time : 0:00:10.600000
+Time Elapsed: 10.6 seconds
+Velocity : 2.5m/s
+Altimeter: -14.0 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.600000
+This Node Time : 0:00:10.700000
+Time Elapsed: 10.7 seconds
+Velocity : 2.5m/s
+Altimeter: -13.75 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.700000
+This Node Time : 0:00:10.800000
+Time Elapsed: 10.8 seconds
+Velocity : 2.5m/s
+Altimeter: -13.5 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.800000
+This Node Time : 0:00:10.900000
+Time Elapsed: 10.9 seconds
+Velocity : 2.5m/s
+Altimeter: -13.25 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '7'}
+
+Time is 2023-10-30 11:00:27.900000
+This Node Time : 0:00:11
+Time Elapsed: 11.0 seconds
+Velocity : 2.5m/s
+Altimeter: -13.0 meters
+Closest Floor: {'upper_floor': '8', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28
+This Node Time : 0:00:11.100000
+Time Elapsed: 11.1 seconds
+Velocity : 2.5m/s
+Altimeter: -12.75 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.100000
+This Node Time : 0:00:11.200000
+Time Elapsed: 11.2 seconds
+Velocity : 2.5m/s
+Altimeter: -12.5 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.200000
+This Node Time : 0:00:11.300000
+Time Elapsed: 11.3 seconds
+Velocity : 2.5m/s
+Altimeter: -12.25 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.300000
+This Node Time : 0:00:11.400000
+Time Elapsed: 11.4 seconds
+Velocity : 2.5m/s
+Altimeter: -12.0 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.400000
+This Node Time : 0:00:11.500000
+Time Elapsed: 11.5 seconds
+Velocity : 2.5m/s
+Altimeter: -11.75 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.500000
+This Node Time : 0:00:11.600000
+Time Elapsed: 11.6 seconds
+Velocity : 2.5m/s
+Altimeter: -11.5 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.600000
+This Node Time : 0:00:11.700000
+Time Elapsed: 11.7 seconds
+Velocity : 2.5m/s
+Altimeter: -11.25 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.700000
+This Node Time : 0:00:11.800000
+Time Elapsed: 11.8 seconds
+Velocity : 2.5m/s
+Altimeter: -11.0 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.800000
+This Node Time : 0:00:11.900000
+Time Elapsed: 11.9 seconds
+Velocity : 2.5m/s
+Altimeter: -10.75 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:28.900000
+This Node Time : 0:00:12
+Time Elapsed: 12.0 seconds
+Velocity : 2.5m/s
+Altimeter: -10.5 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:29
+This Node Time : 0:00:12.100000
+Time Elapsed: 12.1 seconds
+Velocity : 2.5m/s
+Altimeter: -10.25 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '8'}
+
+Time is 2023-10-30 11:00:29.100000
+This Node Time : 0:00:12.200000
+Time Elapsed: 12.2 seconds
+Velocity : 2.5m/s
+Altimeter: -10.0 meters
+Closest Floor: {'upper_floor': '9', 'lower_floor': '9'}
+
+Time is 2023-10-30 11:00:29.200000
+This Node Time : 0:00:12.300000
+Time Elapsed: 12.3 seconds
+Velocity : 2.5m/s
+Altimeter: -9.75 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
+
+Time is 2023-10-30 11:00:29.300000
+This Node Time : 0:00:12.400000
+Time Elapsed: 12.4 seconds
+Velocity : 2.5m/s
+Altimeter: -9.5 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
+
+Time is 2023-10-30 11:00:29.400000
+This Node Time : 0:00:12.500000
+Time Elapsed: 12.5 seconds
+Velocity : 2.375m/s
+Altimeter: -9.25625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
+
+Time is 2023-10-30 11:00:29.500000
+This Node Time : 0:00:12.600000
+Time Elapsed: 12.6 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
+Velocity : 2.25m/s
+Altimeter: -9.025 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
+
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50
 This Node Time : 0:00:07.900000
 Time Elapsed: 7.9 seconds
+=======
+Time is 2023-10-30 11:00:29.600000
+This Node Time : 0:00:12.700000
+Time Elapsed: 12.7 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 2.125m/s
-Altimeter: -36.19375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -8.80625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.100000
 This Node Time : 0:00:08
 Time Elapsed: 8.0 seconds
+=======
+Time is 2023-10-30 11:00:29.700000
+This Node Time : 0:00:12.800000
+Time Elapsed: 12.8 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 2.0m/s
-Altimeter: -36.4 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -8.6 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.200000
 This Node Time : 0:00:08.100000
 Time Elapsed: 8.1 seconds
+=======
+Time is 2023-10-30 11:00:29.800000
+This Node Time : 0:00:12.900000
+Time Elapsed: 12.9 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.875m/s
-Altimeter: -36.59375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -8.40625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.300000
 This Node Time : 0:00:08.200000
 Time Elapsed: 8.2 seconds
+=======
+Time is 2023-10-30 11:00:29.900000
+This Node Time : 0:00:13
+Time Elapsed: 13.0 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.75m/s
-Altimeter: -36.775 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -8.225 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.400000
 This Node Time : 0:00:08.300000
 Time Elapsed: 8.3 seconds
+=======
+Time is 2023-10-30 11:00:30
+This Node Time : 0:00:13.100000
+Time Elapsed: 13.1 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.625m/s
-Altimeter: -36.94375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -8.05625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.500000
 This Node Time : 0:00:08.400000
 Time Elapsed: 8.4 seconds
+=======
+Time is 2023-10-30 11:00:30.100000
+This Node Time : 0:00:13.200000
+Time Elapsed: 13.2 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.5m/s
-Altimeter: -37.1 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.9 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.600000
 This Node Time : 0:00:08.500000
 Time Elapsed: 8.5 seconds
+=======
+Time is 2023-10-30 11:00:30.200000
+This Node Time : 0:00:13.300000
+Time Elapsed: 13.3 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.375m/s
-Altimeter: -37.24375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.75625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.700000
 This Node Time : 0:00:08.600000
 Time Elapsed: 8.6 seconds
+=======
+Time is 2023-10-30 11:00:30.300000
+This Node Time : 0:00:13.400000
+Time Elapsed: 13.4 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.25m/s
-Altimeter: -37.375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.800000
 This Node Time : 0:00:08.700000
 Time Elapsed: 8.7 seconds
+=======
+Time is 2023-10-30 11:00:30.400000
+This Node Time : 0:00:13.500000
+Time Elapsed: 13.5 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.125m/s
-Altimeter: -37.49375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.50625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:50.900000
 This Node Time : 0:00:08.800000
 Time Elapsed: 8.8 seconds
+=======
+Time is 2023-10-30 11:00:30.500000
+This Node Time : 0:00:13.600000
+Time Elapsed: 13.6 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 1.0m/s
-Altimeter: -37.6 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.4 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51
 This Node Time : 0:00:08.900000
 Time Elapsed: 8.9 seconds
+=======
+Time is 2023-10-30 11:00:30.600000
+This Node Time : 0:00:13.700000
+Time Elapsed: 13.7 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.875m/s
-Altimeter: -37.69375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.30625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.100000
 This Node Time : 0:00:09
 Time Elapsed: 9.0 seconds
+=======
+Time is 2023-10-30 11:00:30.700000
+This Node Time : 0:00:13.800000
+Time Elapsed: 13.8 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.75m/s
-Altimeter: -37.775 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.225 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.200000
 This Node Time : 0:00:09.100000
 Time Elapsed: 9.1 seconds
+=======
+Time is 2023-10-30 11:00:30.800000
+This Node Time : 0:00:13.900000
+Time Elapsed: 13.9 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.625m/s
-Altimeter: -37.84375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.15625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.300000
 This Node Time : 0:00:09.200000
 Time Elapsed: 9.2 seconds
+=======
+Time is 2023-10-30 11:00:30.900000
+This Node Time : 0:00:14
+Time Elapsed: 14.0 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.5m/s
-Altimeter: -37.9 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.1 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.400000
 This Node Time : 0:00:09.300000
 Time Elapsed: 9.3 seconds
+=======
+Time is 2023-10-30 11:00:31
+This Node Time : 0:00:14.100000
+Time Elapsed: 14.1 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.375m/s
-Altimeter: -37.94375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.05625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.500000
 This Node Time : 0:00:09.400000
 Time Elapsed: 9.4 seconds
+=======
+Time is 2023-10-30 11:00:31.100000
+This Node Time : 0:00:14.200000
+Time Elapsed: 14.2 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.25m/s
-Altimeter: -37.975 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.025 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.600000
 This Node Time : 0:00:09.500000
 Time Elapsed: 9.5 seconds
+=======
+Time is 2023-10-30 11:00:31.200000
+This Node Time : 0:00:14.300000
+Time Elapsed: 14.3 seconds
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 Velocity : 0.125m/s
-Altimeter: -37.99375 meters
-Closest Floor: {'upper_floor': '2', 'lower_floor': '1'}
+Altimeter: -7.00625 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '9'}
 
+<<<<<<< HEAD
 Time is 2023-10-30 11:00:51.700000
 This Node Time : 0:00:09.600000
 Time Elapsed: 9.6 seconds
@@ -4198,6 +4661,14 @@ Time Elapsed: 9.6 seconds
 Velocity : 0.0m/s
 Altimeter: -38.0 meters
 Closest Floor: {'upper_floor': '1', 'lower_floor': '1'}
+=======
+Time is 2023-10-30 11:00:31.300000
+This Node Time : 0:00:14.400000
+Time Elapsed: 14.4 seconds
+Velocity : 0.0m/s
+Altimeter: -7.0 meters
+Closest Floor: {'upper_floor': '10', 'lower_floor': '10'}
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 
 Log Instance Has Meet Last Log
  Every Elevator Finished Operation and No Log Remains. Turning Off Simulator

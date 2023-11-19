@@ -1,9 +1,20 @@
 import simpy
+<<<<<<< HEAD
 import ast
+=======
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 import datetime
 
 import Behavior_Pattern
 
+<<<<<<< HEAD
+=======
+import simpy
+import datetime
+
+import Behavior_Pattern
+
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 # class Building(object):
 #     def __init__(self, env, arr, number_of_elevators):
 #         self.env = env
@@ -214,7 +225,7 @@ class InElevatorLog(ElevatorLog):
         else:
             return int(floor)
     def convert_buttons_to_int(self, button_str):
-        buttons = ast.literal_eval(button_str)
+        buttons = button_str.strip("[]'").split("', '")
         array = []
 
         for button in buttons:

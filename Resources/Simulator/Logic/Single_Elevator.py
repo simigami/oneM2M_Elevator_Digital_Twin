@@ -380,6 +380,7 @@ def run(Elevator_System, elevator, log_instance):
         current_trip_list = elevator.current_trip_list
         current_trip_node = elevator.current_trip_node
 
+<<<<<<< HEAD
         if log_instance.data.inout == True: # If Elevator Log is IN Log
             new_trip_dst_floor = list(set(log_array[1])-set(log_array[0]))[0]
             new_trip_direction = elevator.direction
@@ -395,6 +396,8 @@ def run(Elevator_System, elevator, log_instance):
         else:
             reachable = can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor)
 
+=======
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
         current_trip_dst_floor = current_trip_list.destination_floor
         new_trip_dst_floor = log_array[1]
 

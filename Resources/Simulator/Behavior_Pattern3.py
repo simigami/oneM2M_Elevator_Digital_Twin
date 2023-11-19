@@ -2,7 +2,10 @@ import copy
 import datetime
 import gc
 import math
+<<<<<<< HEAD
 import os.path
+=======
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 import queue
 import sys
 import json
@@ -181,6 +184,7 @@ class Elevator:
         text = f"This Node Time : {node.current_time}\nTime Elapsed: {node.elapsed_time / 1000} seconds\nVelocity : {node.velocity}m/s\nAltimeter: {node.altimeter} meters\nClosest Floor: {node.closest_floor}\n\n"
         return text
 
+<<<<<<< HEAD
 def write_to_file(Elevator_System, Elevator, file_path):
     file_name = 'result.txt'
     mode = 'a' if os.path.exists(file_path) else 'w'
@@ -188,6 +192,10 @@ def write_to_file(Elevator_System, Elevator, file_path):
     file_path += '/' + file_name
 
     f = open(file_path, mode)
+=======
+def write_to_file(Elevator_System, Elevator, file):
+    f = open(file, 'a')
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 
     current_time_text = Elevator_System.display()
     node_info_text = Elevator.display()
@@ -195,6 +203,7 @@ def write_to_file(Elevator_System, Elevator, file_path):
     f.write(current_time_text)
     f.write(node_info_text)
 
+<<<<<<< HEAD
 def write_text_to_file(text, file_path):
     file_name = 'result.txt'
     mode = 'a' if os.path.exists(file_path) else 'w'
@@ -202,6 +211,10 @@ def write_text_to_file(text, file_path):
     file_path += '/' + file_name
 
     f = open(file_path, mode)
+=======
+def write_text_to_file(text, file):
+    f = open(file, 'a')
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
 
     f.write(text)
 
@@ -209,11 +222,19 @@ def run():
     # PHASE 0 Get Actual Log from real log + Set Flags, Elevators, Variables
     Elevator_System = System()
 
+<<<<<<< HEAD
     result_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator'
     log_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
     
     # result_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator'
     # log_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator/testlog.txt'
+=======
+    # result_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\result.txt'
+    # log_path = r'E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Simulator\testlog.txt'
+    
+    result_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator/result.txt'
+    log_path = r'/Users/yummyshrimp/Desktop/Elevator/Resources/Simulator/testlog.txt'
+>>>>>>> 73e38c0d17c8ee51e5059a088c11664c28587310
     
     a_log, i_log, o_log = Simulation.run(log_path)
     log_instance = None # Pointer For Log Detect
