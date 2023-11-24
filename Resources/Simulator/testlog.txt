@@ -73,3 +73,10 @@ Previous Button Panel: ['B4']
 Current Button Panel: ['B4','B5']
 Current Floor: B1 between 1
 Elevator Number: 1
+
+Inout: Out
+Timestamp: 2023_1030_110145
+Somebody Called Elevator
+Floor: 1
+Number: 2
+Direction: Down

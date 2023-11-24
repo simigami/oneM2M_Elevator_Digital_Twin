@@ -227,6 +227,15 @@ def write_text_to_file(text, file_path):
 
     f = open(file_path, mode)
 
+def ending(Elevator_System):
+    # END STEP 1. CHECK EVERY CURRENT TRIP LIST TO DONE TRIP LIST
+    for elevator in Elevator_System.elevators:
+        if elevator.full_trip_list.reachable_head is not None:
+            elevator.done_trip_list.append(elevator.full_trip_list.reachable_head)
+            elevator.full_trip_list.reachable_head = None
+
+    # END STEP 2. PRINT EVERY DONE TRIP LIST OF ELEVATORS
+    Elevator_System.print_all_elevator_trip()
 def run():
     # PHASE 0 Get Actual Log from real log + Set Flags, Elevators, Variables
     Elevator_System = System()
@@ -441,7 +450,7 @@ def run():
                         reachable_head = elevator.full_trip_list.reachable_head
                         if reachable_head is not None:
                             elevator.current_trip_list = reachable_head
-                            elevator.set_opcode(10)
+                            elevator.set_opcode(20)
                             Single_Elevator.run(Elevator_System, elevator, None)
 
                         else:
@@ -494,7 +503,7 @@ def run():
             if log_instance.data.inout is True and len(log_instance.data.in_current_buttons) == 1:
                 print("ASDASDSAD")
 
-            if log_instance.data.inout is False and log_instance.data.out_floor == 6:
+            if log_instance.data.inout is False and log_instance.data.out_floor == 1:
                 print("ASDASDSAD")
 
             if inout: # If Log is IN Log
@@ -561,7 +570,7 @@ def run():
 
     # PHASE 5 DETOR PHASE
         if not flag_end_loop:
-            Elevator_System.print_all_elevator_trip()
+            ending(Elevator_System)
 
         simulation_timestamp += datetime.timedelta(seconds=0.1)
 
