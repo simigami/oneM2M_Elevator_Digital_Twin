@@ -157,8 +157,8 @@ def detect_color(folder_path, show):
 
     #print(images)
     for image in images:
-        # if image == "2023_0908_125334.jpg":
-        #     show = 1
+        if image == "2023_0908_130411.jpg":
+            show = 1
 
         img = cv2.imread(image)
         read_label_and_draw_rectangle(img, coordinates_of_label, show)

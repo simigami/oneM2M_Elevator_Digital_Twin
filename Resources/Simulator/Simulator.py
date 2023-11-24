@@ -62,6 +62,32 @@ class System:
     def get_elevators(self):
         return self.elevators
 
+    def print_all_elevator_trip(self):
+        for elevator in self.elevators:
+            print(f"Trip for Elevator {elevator}")
+            for each_trip in elevator.done_trip_list:
+                print(f"Start Floor = {each_trip.start_floor} -> End Floor = {each_trip.destination_floor}\n")
+
+    def get_closest_floor_from_this_altimeter(self, altimeter, direction):
+        closest_floor = None
+        closest_altitude_diff = float('inf')
+
+        for floor, floor_altimeter in self.alts_dict.items():
+            altitude_diff = abs(floor_altimeter - altimeter)
+            if direction and altimeter > floor_altimeter:
+                # Going up, so skip floors below the altimeter
+                continue
+
+            if not direction and altimeter < floor_altimeter:
+                # Going down, so skip floors above the altimeter
+                continue
+
+            if altitude_diff < closest_altitude_diff:
+                closest_floor = floor
+                break
+
+        return closest_floor
+
     def get_delta_altimeter_floor_and_floor(self, start, dst):
         if start < dst:
             direction = True # True = Up, False = Down
@@ -415,8 +441,8 @@ def run():
                         reachable_head = elevator.full_trip_list.reachable_head
                         if reachable_head is not None:
                             elevator.current_trip_list = reachable_head
-                            elevator.set_opcode(0)
-                            Single_Elevator.run(Elevator_System, elevator, log_instance)
+                            elevator.set_opcode(10)
+                            Single_Elevator.run(Elevator_System, elevator, None)
 
                         else:
                             pass
@@ -462,10 +488,13 @@ def run():
             log_instance_data = log_instance.data
             inout = log_instance_data.inout
 
-            if log_instance.data.inout is True and 10 in log_instance.data.in_current_buttons:
+            if log_instance.data.inout is True and len(log_instance.data.in_current_buttons) == 0:
                 print("ASDASDSAD")
 
-            if log_instance.data.inout is False and log_instance.data.out_floor == 5:
+            if log_instance.data.inout is True and len(log_instance.data.in_current_buttons) == 1:
+                print("ASDASDSAD")
+
+            if log_instance.data.inout is False and log_instance.data.out_floor == 6:
                 print("ASDASDSAD")
 
             if inout: # If Log is IN Log
@@ -485,15 +514,15 @@ def run():
                 else:   # Single Elevator Moving Algorithms
                     # Check if elevator is currently moving?
                     opcode = elevators[0].get_opcode()
-                    if opcode == 20: # If Elevator is not IDLE but Stopped at floor
+                    if opcode == 10 or opcode == 20: # If Elevator is not IDLE but Stopped at floor
                         Single_Elevator.run(Elevator_System, elevator, log_instance)
                     
                     elif opcode == 21 or opcode == 22 or opcode == 23: # If Elevator is IDLE
                         Single_Elevator.run(Elevator_System, elevator, log_instance)
                 
                 # Check 
-                print(previous_button_list)
-                print(current_button_list) 
+                #print(previous_button_list)
+                #print(current_button_list)
                 
                 pass
 
@@ -529,6 +558,10 @@ def run():
 
         if simulation_timestamp == flag_force_end_time:
             flag_end_loop = False
+
+    # PHASE 5 DETOR PHASE
+        if not flag_end_loop:
+            Elevator_System.print_all_elevator_trip()
 
         simulation_timestamp += datetime.timedelta(seconds=0.1)
 

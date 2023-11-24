@@ -46,7 +46,6 @@ def run():
 
     if TEST_PATH.os_name == "Linux":
         Make_Dirs.make_dirs_for_program(debug=0)
-        Behavior_Pattern.init()
         
         timestamp = datetime.datetime.now().replace(microsecond=0)
         timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
@@ -56,7 +55,7 @@ def run():
 
         pool.apply_async(Raspi_Shoot.run_Linux, args=(timestamp, shoot_time_ms))
         time.sleep(2) # It takes approximayely 2 seconds to actually start libcamera_vid
-        
+
         pool.apply_async(Get_Sensors.write_average_alt_per_second, args=(timestamp, shoot_tims_s))
 
         pool.close()

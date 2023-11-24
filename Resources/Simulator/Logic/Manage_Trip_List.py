@@ -34,7 +34,7 @@ class Full_Trip_List:
 
     def remove_trip_list(self, trip_list):
         if trip_list.prev is None and trip_list.next is None:
-            self.head = None
+            self.reachable_head = None
 
         elif trip_list.prev is None:
             next = trip_list.next
@@ -42,7 +42,7 @@ class Full_Trip_List:
             next.prev = None
             trip_list.next = None
 
-            self.head = next
+            self.reachable_head = next
 
         elif trip_list.next is None:
             trip_list.prev = None

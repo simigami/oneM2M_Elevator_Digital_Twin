@@ -185,11 +185,17 @@ def str_floor_to_int(str_floor):
     else:
         return int(str_floor)
 
+def int_floor_to_str(int_floor):
+    if int_floor < 0:
+        return f"B{str(abs(int_floor))}"
+    else:
+        return str(int_floor)
+
 def analyze_in_log(in_log):
     data = in_log.data
     log_array = data.get_resources()
     
-    print(log_array)
+    #print(log_array)
     return log_array
     
 
@@ -243,7 +249,101 @@ def can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor
         else: # Elevator Cannot Stop To This Floor
             return False
 
-def run_In(Elevator_System, elevator, log_instance):
+def check_before_and_current_button_list(log_array):
+    before_button_list = log_array[0]
+    after_button_list = log_array[1]
+
+    set_before = set(before_button_list)
+    set_after = set(after_button_list)
+
+    deleted_button_list = list(set_before - set_after)
+    new_button_list = list(set_after - set_before)
+
+    # Case 1 : after button list has all elements of before list and also has additional dst
+    # EX) [10] -> [10, 12]
+    if set_before.issubset(set_after):
+        if len(new_button_list) != 1:
+            return None
+        else:
+            return [True, new_button_list[0]]
+
+    # Case 2 : some of a button has been changed in after button list
+    # EX) [10] -> [8]
+    elif len(deleted_button_list) != 0:
+        # Check Whether new button list exists
+        if len(deleted_button_list) != 1:
+            return None
+        else:
+            return [False, deleted_button_list[0], after_button_list]
+
+def erase_trip_list_from_elevator(Elevator_System, elevator, delete_floor, after_button_list):
+    direction = elevator.direction
+    current_trip_list = elevator.current_trip_list
+    current_trip_node = elevator.current_trip_node
+
+    if current_trip_list is None:
+        reachable_head = elevator.full_trip_list.reachable_head
+        while reachable_head is not None:
+            if reachable_head.destination_floor == delete_floor:
+                # Delete This Trip List
+                elevator.full_trip_list.remove_trip_list(reachable_head)
+                elevator.full_trip_list.trim(0)
+                break
+
+            reachable_head = reachable_head.next
+
+    else:
+        if len(after_button_list) == 0:  # If Deleted Button is the only button in list
+            # STEP 1 : Delete Current Trip List
+            elevator.full_trip_list.remove_trip_list(current_trip_list)
+
+            # STEP 2 : Search For closest direction floor to stop
+            v = elevator.current_velocity
+            a = elevator.acceleration
+            altimeter_after_decelerate = elevator.current_trip_node.altimeter + (v * (v / a) * 0.5)
+            closest_floor_from_this_altimeter = Elevator_System.get_closest_floor_from_this_altimeter(
+                altimeter_after_decelerate, direction)
+
+            # STEP 3 : move to the closest floor and change opcode 24
+            new_trip_start_floor = elevator.current_stopped_floor
+            new_trip_dst_floor = str_floor_to_int(closest_floor_from_this_altimeter)
+            reachable = True
+            elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
+                                                                                          closest_floor_from_this_altimeter,
+                                                                                          direction, reachable)
+            elevator.full_trip_list.reachable_head.start_floor = int_floor_to_str(new_trip_start_floor)
+
+            altimeter_array = Elevator_System.get_delta_altimeter_floor_and_floor(new_trip_start_floor,
+                                                                                  new_trip_dst_floor)
+
+            elevator = Draw_VT.draw_VT_moving(Elevator_System, elevator, altimeter_array)
+            elevator.current_trip_list = elevator.full_trip_list.reachable_head
+
+            current_time = current_trip_node.prev.current_time
+            node = elevator.current_trip_list.head
+            while node is not None:
+                if node.current_time != current_time:
+                    node = node.next
+                else:
+                    break
+
+            elevator.current_trip_node = node
+
+        else: # If Has Other Trip
+            # STEP 1 Find Trip That Deleted Trip is a destination
+            reachable_head = elevator.full_trip_list.reachable_head
+            while reachable_head is not None:
+                if reachable_head.destination_floor == delete_floor:
+                    # Delete This Trip List
+                    elevator.full_trip_list.remove_trip_list(reachable_head)
+                    elevator.full_trip_list.trim(0)
+                    break
+
+                reachable_head = reachable_head.next
+
+    return elevator
+
+def append_trip_list_to_elevator():
     pass
 
 def run(Elevator_System, elevator, log_instance):
@@ -263,7 +363,7 @@ def run(Elevator_System, elevator, log_instance):
     #print(opcode)
     if opcode == 0:
         start_floor = elevator.get_current_stopped_floor()
-        dst_floor = log_array[1]
+        dst_floor = log_array[1][0] if isinstance(log_array[1], list) else log_array[1]
 
         if start_floor < dst_floor:
             direction = True
@@ -314,159 +414,179 @@ def run(Elevator_System, elevator, log_instance):
             if inout is True: # In Log
                 # [in_previous_buttons, in_current_buttons, in_current_floor, in_elevator_number , timestamp]
                 # Step 1. Find Difference = Get Button = Get Trip Dst
-                delta = list(set(log_array[1]) - set(log_array[0]))
-                if len(delta) != 1:
-                    print("Error Occurred")
-                    return None
-                
+                flag_array = check_before_and_current_button_list(log_array)
+                flag_append_or_erase_trip_list = flag_array[0]
+                dst_floor_direction = elevator.direction
+
+                if flag_append_or_erase_trip_list is True:  # If Elevator has new button list
+                    dst_floor = flag_array[1]
+
                 else:
-                     dst_floor = delta[0]
-                
-                # Step 2. Find Direction = Get Current Elevator Floor and compare with dst_floor
-                str_floor = log_array[2][0]
-                int_floor = str_floor_to_int(str_floor)
-                
-                if int_floor < dst_floor:
-                    dst_floor_direction = True
-                else:
-                    dst_floor_direction = False
-                
-                
-                pass
+                    pass
+
             else: # Out Log
+                flag_append_or_erase_trip_list = True # OUT Log Always Appends Trip List
                 dst_floor = log_array[1]  # [inout, floor, timestamp, direction]
                 dst_floor_direction = log_array[-1]
 
-            if presume_next_trip_list is None: # There is no other trip remained
-                # Check if there is any unreachable header exists
-                unreachable_up = elevator.full_trip_list.unreachable_up_head
-                unreachable_down = elevator.full_trip_list.unreachable_down_head
-                # if unreachable_up is not None or unreachable_down is not None:
-                #     reachable = 0
-                #     elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(
-                #         elevator.full_trip_list,
-                #         dst_floor,
-                #         dst_floor_direction,
-                #         reachable)
+            if flag_append_or_erase_trip_list is True: # If Append Trip List
+                if presume_next_trip_list is None: # There is no other trip remained
+                    # Check if there is any unreachable header exists
+                    unreachable_up = elevator.full_trip_list.unreachable_up_head
+                    unreachable_down = elevator.full_trip_list.unreachable_down_head
+                    # if unreachable_up is not None or unreachable_down is not None:
+                    #     reachable = 0
+                    #     elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(
+                    #         elevator.full_trip_list,
+                    #         dst_floor,
+                    #         dst_floor_direction,
+                    #         reachable)
 
-                # If there is not unreachable header exists. This means Elevator has no more operation, So It can move to different direction
-                #else:
-                elevator.direction = dst_floor_direction
-                reachable = 1
-                elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
-                                                                                              dst_floor,
-                                                                                              dst_floor_direction,
-                                                                                              reachable)
+                    # If there is not unreachable header exists. This means Elevator has no more operation, So It can move to different direction
+                    #else:
+                    elevator.direction = dst_floor_direction
+                    reachable = 1
+                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
+                                                                                                  dst_floor,
+                                                                                                  dst_floor_direction,
+                                                                                                  reachable)
 
-                elevator.full_trip_list.reachable_head.start_floor = elevator.current_stopped_floor
+                    elevator.full_trip_list.reachable_head.start_floor = elevator.current_stopped_floor
 
-            else: # There is Trip Remained
-                current_elevator_direction = True if presume_next_trip_list.destination_floor - presume_next_trip_list.start_floor > 0 else False
+                else: # There is Trip Remained
+                    current_elevator_direction = True if presume_next_trip_list.destination_floor - presume_next_trip_list.start_floor > 0 else False
 
-                if current_elevator_direction != dst_floor_direction: # Elevator Cannot move to this floor
-                    reachable = 0
-                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, dst_floor,
-                                                                                        dst_floor_direction, reachable)
+                    if current_elevator_direction != dst_floor_direction: # Elevator Cannot move to this floor
+                        reachable = 0
+                        elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, dst_floor,
+                                                                                            dst_floor_direction, reachable)
 
-                else: # Elevator Can move to this floor but have to check reachability
-                    reachable = can_elevator_reach_destination(Elevator_System, elevator, dst_floor)
-                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, dst_floor,
-                                                                                        dst_floor_direction, reachable)
+                    else: # Elevator Can move to this floor but have to check reachability
+                        reachable = can_elevator_reach_destination(Elevator_System, elevator, dst_floor)
+                        elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, dst_floor,
+                                                                                            dst_floor_direction, reachable)
+
+            elif flag_append_or_erase_trip_list is False:  # Erase Trip List
+                deleted_dst_floor = flag_array[1]
+                after_button_list = flag_array[2]
+
+                elevator = erase_trip_list_from_elevator(Elevator_System, elevator, deleted_dst_floor,
+                                                         after_button_list)
 
         pass
 
+    elif opcode == 24: # If Elevator IN button list is None and No more trip list so tends to stop at closest floor
+        pass
+
     elif opcode == 21 or opcode == 22 or opcode == 23:
+        flag_append_or_erase_trip_list = None # True = Append, False = Delete Trip List
         direction = elevator.direction
         current_trip_list = elevator.current_trip_list
         current_trip_node = elevator.current_trip_node
 
-        if log_instance.data.inout == True: # If Elevator Log is IN Log
-            new_trip_dst_floor = list(set(log_array[1])-set(log_array[0]))[0]
+        if log_instance.data.inout is True: # If Elevator Log is IN Log
+            # Have To Check If Destination Button has been changed
+            flag_array = check_before_and_current_button_list(log_array)
+            flag_append_or_erase_trip_list = flag_array[0]
+
+            if flag_append_or_erase_trip_list is True: # If Elevator has new button list
+                new_trip_dst_floor = flag_array[1]
+
+            else: # If Elevator has deleted button list
+                deleted_dst_floor = flag_array[1]
+                after_button_list = flag_array[2]
+
             new_trip_direction = elevator.direction
 
         else: # If Elevator Log is Out Log
+            flag_append_or_erase_trip_list = True # OUT Log Always Appends Trip List
             new_trip_dst_floor = log_array[1]
             new_trip_direction = log_array[-1]
 
-        # If elevator is Moving Up, and Destination floor is Down(vice versa) reachable is always False
-        if direction is not new_trip_direction:
-            reachable = False
+        if flag_append_or_erase_trip_list is False: # Erase Trip List
+            elevator = erase_trip_list_from_elevator(Elevator_System, elevator, deleted_dst_floor, after_button_list)
 
-        else:
-            reachable = can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor)
+        elif flag_append_or_erase_trip_list is True: # If Append Trip List
 
-        current_trip_dst_floor = current_trip_list.destination_floor
+            # If elevator is Moving Up, and Destination floor is Down(vice versa) reachable is always False
+            if direction is not new_trip_direction:
+                reachable = False
 
-        if direction: # If Elevator is Currently Moving Up
-            if reachable: # If new dst floor can be reachable
-                elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
-                                                                                              new_trip_dst_floor,
-                                                                                              direction, reachable)
-                if new_trip_dst_floor < current_trip_dst_floor: # -5 -> 5 => -5 -> 3 -> 5
-                    new_trip_start_floor = elevator.full_trip_list.reachable_head.start_floor
-                    altimeter_array = Elevator_System.get_delta_altimeter_floor_and_floor(new_trip_start_floor, new_trip_dst_floor)
+            else:
+                reachable = can_elevator_reach_destination(Elevator_System, elevator, new_trip_dst_floor)
 
-                    elevator = Draw_VT.draw_VT_moving(Elevator_System, elevator, altimeter_array)
-                    elevator.current_trip_list = elevator.full_trip_list.reachable_head
+            current_trip_dst_floor = current_trip_list.destination_floor
 
-                    current_time = current_trip_node.prev.current_time
-                    node = elevator.current_trip_list.head
-                    while node is not None:
-                        if node.current_time != current_time:
-                            node = node.next
-                        else:
-                            break
+            if direction: # If Elevator is Currently Moving Up
+                if reachable: # If new dst floor can be reachable
+                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
+                                                                                                  new_trip_dst_floor,
+                                                                                                  direction, reachable)
+                    if new_trip_dst_floor < current_trip_dst_floor: # -5 -> 5 => -5 -> 3 -> 5
+                        new_trip_start_floor = elevator.full_trip_list.reachable_head.start_floor
+                        altimeter_array = Elevator_System.get_delta_altimeter_floor_and_floor(new_trip_start_floor, new_trip_dst_floor)
 
-                    elevator.current_trip_node = node
-                    # temp = elevator.current_trip_node
-                    # while temp.next is not None:
-                    #     print(f"This Node Time : {temp.current_time}\nTime Elapsed: {temp.elapsed_time / 1000} seconds\nVelocity : {temp.velocity}m/s\nAltimeter: {temp.altimeter} meters\nClosest Floor: {temp.closest_floor}\n")
-                    #     temp = temp.next
+                        elevator = Draw_VT.draw_VT_moving(Elevator_System, elevator, altimeter_array)
+                        elevator.current_trip_list = elevator.full_trip_list.reachable_head
 
-                    #elevator.current_trip_list.display()
+                        current_time = current_trip_node.prev.current_time
+                        node = elevator.current_trip_list.head
+                        while node is not None:
+                            if node.current_time != current_time:
+                                node = node.next
+                            else:
+                                break
 
-                else: # -5 -> 5 => -5 -> 5 -> 8
+                        elevator.current_trip_node = node
+                        # temp = elevator.current_trip_node
+                        # while temp.next is not None:
+                        #     print(f"This Node Time : {temp.current_time}\nTime Elapsed: {temp.elapsed_time / 1000} seconds\nVelocity : {temp.velocity}m/s\nAltimeter: {temp.altimeter} meters\nClosest Floor: {temp.closest_floor}\n")
+                        #     temp = temp.next
+
+                        #elevator.current_trip_list.display()
+
+                    else: # -5 -> 5 => -5 -> 5 -> 8
+                        pass
+
+                else: # If new dst floor cannot be reachable
+                    direction = log_array[-1]
+                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, new_trip_dst_floor, direction, reachable)
                     pass
 
-            else: # If new dst floor cannot be reachable
-                direction = log_array[-1]
-                elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, new_trip_dst_floor, direction, reachable)
-                pass
+            else: # If Elevator is Currently Moving Down
+                if reachable: # If new dst floor can be reachable
+                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
+                                                                                                  new_trip_dst_floor,
+                                                                                                  direction, reachable)
+                    if new_trip_dst_floor > current_trip_dst_floor: # 5 -> -5 => 5 -> 3 -> -5
+                        new_trip_start_floor = elevator.full_trip_list.reachable_head.start_floor
+                        altimeter_array = Elevator_System.get_delta_altimeter_floor_and_floor(new_trip_start_floor, new_trip_dst_floor)
 
-        else: # If Elevator is Currently Moving Down
-            if reachable: # If new dst floor can be reachable
-                elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list,
-                                                                                              new_trip_dst_floor,
-                                                                                              direction, reachable)
-                if new_trip_dst_floor > current_trip_dst_floor: # 5 -> -5 => 5 -> 3 -> -5
-                    new_trip_start_floor = elevator.full_trip_list.reachable_head.start_floor
-                    altimeter_array = Elevator_System.get_delta_altimeter_floor_and_floor(new_trip_start_floor, new_trip_dst_floor)
+                        elevator = Draw_VT.draw_VT_moving(Elevator_System, elevator, altimeter_array)
+                        elevator.current_trip_list = elevator.full_trip_list.reachable_head
 
-                    elevator = Draw_VT.draw_VT_moving(Elevator_System, elevator, altimeter_array)
-                    elevator.current_trip_list = elevator.full_trip_list.reachable_head
+                        current_time = current_trip_node.prev.current_time
+                        node = elevator.current_trip_list.head
+                        while node is not None:
+                            if node.current_time != current_time:
+                                node = node.next
+                            else:
+                                break
 
-                    current_time = current_trip_node.prev.current_time
-                    node = elevator.current_trip_list.head
-                    while node is not None:
-                        if node.current_time != current_time:
-                            node = node.next
-                        else:
-                            break
+                        elevator.current_trip_node = node
+                        #print("Change Current Trip Node\n")
+                        # temp = elevator.current_trip_node
+                        # while temp.next is not None:
+                        #     print(f"This Node Time : {temp.current_time}\nTime Elapsed: {temp.elapsed_time / 1000} seconds\nVelocity : {temp.velocity}m/s\nAltimeter: {temp.altimeter} meters\nClosest Floor: {temp.closest_floor}\n")
+                        #     temp = temp.next
 
-                    elevator.current_trip_node = node
-                    #print("Change Current Trip Node\n")
-                    # temp = elevator.current_trip_node
-                    # while temp.next is not None:
-                    #     print(f"This Node Time : {temp.current_time}\nTime Elapsed: {temp.elapsed_time / 1000} seconds\nVelocity : {temp.velocity}m/s\nAltimeter: {temp.altimeter} meters\nClosest Floor: {temp.closest_floor}\n")
-                    #     temp = temp.next
+                        #elevator.current_trip_list.display()
 
-                    #elevator.current_trip_list.display()
+                    else: # 5 -> -1 => 5 -> -1 -> -5
+                        pass
 
-                else: # 5 -> -1 => 5 -> -1 -> -5
+                else: # If new dst floor cannot be reachable
+                    opposite_direction = False if direction else True
+                    elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full_trip_list(elevator.full_trip_list, new_trip_dst_floor, opposite_direction, reachable)
                     pass
-
-            else: # If new dst floor cannot be reachable
-                opposite_direction = False if direction else True
-                elevator.full_trip_list = Manage_Trip_List.append_trip_list_to_Full(elevator.full_trip_list, new_trip_dst_floor, opposite_direction)
                 pass
-            pass

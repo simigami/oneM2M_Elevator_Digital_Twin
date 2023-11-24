@@ -13,6 +13,22 @@ Current Button Panel: ['10']
 Current Floor: 1 between 2
 Elevator Number: 1
 
+Inout: In
+Timestamp: 2023_1030_110016
+Somebody Pressed Button
+Previous Button Panel: ['10']
+Current Button Panel: []
+Current Floor: 1 between 2
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110017
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['8']
+Current Floor: 1 between 2
+Elevator Number: 1
+
 Inout: Out
 Timestamp: 2023_1030_110022
 Somebody Called Elevator
