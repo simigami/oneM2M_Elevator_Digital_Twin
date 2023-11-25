@@ -79,4 +79,51 @@ Timestamp: 2023_1030_110145
 Somebody Called Elevator
 Floor: 1
 Number: 2
-Direction: Down
+Direction: Up
+
+Inout: In
+Timestamp: 2023_1030_110155
+Somebody Pressed Button
+Previous Button Panel: []
+Current Button Panel: ['6']
+Current Floor: B1 between 1
+Elevator Number: 1
+
+Inout: Out
+Timestamp: 2023_1030_110158
+Somebody Called Elevator
+Floor: 3
+Number: 2
+Direction: Up
+
+Inout: In
+Timestamp: 2023_1030_110205
+Somebody Pressed Button
+Previous Button Panel: ['6']
+Current Button Panel: ['6', '10']
+Current Floor: 3 between 4
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110207
+Somebody Pressed Button
+Previous Button Panel: ['6', '10']
+Current Button Panel: ['6', '10', '12']
+Current Floor: 3 between 4
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110218
+Somebody Pressed Button
+Previous Button Panel: ['10', '12']
+Current Button Panel: ['10']
+Current Floor: 8 between 9
+Elevator Number: 1
+
+Inout: In
+Timestamp: 2023_1030_110219
+Somebody Pressed Button
+Previous Button Panel: ['10']
+Current Button Panel: ['10', '11']
+Current Floor: 8 between 9
+Elevator Number: 1

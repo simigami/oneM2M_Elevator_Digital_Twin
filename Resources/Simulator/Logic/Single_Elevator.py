@@ -70,8 +70,23 @@ class Full_Trip_List:
 
             self.reachable_head = next
 
-        elif trip_list.next is None:
+        elif trip_list.next is None: # If This List is Last List
+            prev = trip_list.prev
+
+            prev.next = None
             trip_list.prev = None
+
+        else: # If This List is in between Lists
+            next = trip_list.next
+            prev = trip_list.prev
+
+            prev.next = next
+            next.prev = prev
+
+            trip_list.prev = None
+            trip_list.next = None
+
+        return self.reachable_head
 
     def append_trip_list(self, trip_list, flag):
         node = self.select_which_head(flag)
@@ -335,7 +350,7 @@ def erase_trip_list_from_elevator(Elevator_System, elevator, delete_floor, after
             while reachable_head is not None:
                 if reachable_head.destination_floor == delete_floor:
                     # Delete This Trip List
-                    elevator.full_trip_list.remove_trip_list(reachable_head)
+                    reachable_head = elevator.full_trip_list.remove_trip_list(reachable_head)
                     elevator.full_trip_list.trim(0)
                     break
 

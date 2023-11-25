@@ -258,7 +258,7 @@ def run():
     simulation_timestamp = a_log.head.data.timestamp
 
     # Set Flags
-    flag_force_end_time = simulation_timestamp + datetime.timedelta(minutes=3)
+    flag_force_end_time = simulation_timestamp + datetime.timedelta(minutes=30)
     flag_elevator_IDLE = [False * len(elevators)]
     flag_elevator_time_to_get_out_IDLE = [0 * len(elevators)]
     flag_end_loop = True # False = Loop End
@@ -498,23 +498,30 @@ def run():
             inout = log_instance_data.inout
 
             if log_instance.data.inout is True and len(log_instance.data.in_current_buttons) == 0:
-                print("ASDASDSAD")
+                #print("ASDASDSAD0")
+                pass
 
             if log_instance.data.inout is True and len(log_instance.data.in_current_buttons) == 1:
-                print("ASDASDSAD")
+                #print("ASDASDSAD1")
+                pass
+
+            if log_instance.data.inout is True and len(log_instance.data.in_current_buttons) == 2:
+                #print("ASDASDSAD2")
+                pass
 
             if log_instance.data.inout is False and log_instance.data.out_floor == 1:
-                print("ASDASDSAD")
+                #print("ASDASDSAD3")
+                pass
 
             if inout: # If Log is IN Log
                 resource = log_instance_data.get_resources()
-                
+
                 previous_button_list = resource[0]
-                current_button_list = resource[1]  
-                current_floor = resource[2] 
-                elevator_number = resource[3]   
+                current_button_list = resource[1]
+                current_floor = resource[2]
+                elevator_number = resource[3]
                 timestamp = resource[4]
-                
+
                 number_of_elevators = len(elevators)
                 if number_of_elevators >= 2:
                     pass
@@ -525,14 +532,14 @@ def run():
                     opcode = elevators[0].get_opcode()
                     if opcode == 10 or opcode == 20: # If Elevator is not IDLE but Stopped at floor
                         Single_Elevator.run(Elevator_System, elevator, log_instance)
-                    
+
                     elif opcode == 21 or opcode == 22 or opcode == 23: # If Elevator is IDLE
                         Single_Elevator.run(Elevator_System, elevator, log_instance)
-                
+
                 # Check 
                 #print(previous_button_list)
                 #print(current_button_list)
-                
+
                 pass
 
             else: # If Log is OUT Log
