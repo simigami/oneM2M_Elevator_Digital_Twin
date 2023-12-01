@@ -1,5 +1,6 @@
 import datetime
 import os.path
+import csv
 
 import queue
 import sys
@@ -14,16 +15,16 @@ one_tenth_second = 1
 second = 10
 minute = 60 * second
 hour = 60 * minute
+global csv_number
 
 # OPCODE
 # 0 = Initial Value
-# 1 = Elevator response from OUT Action and move to destination floor
-# 2 = Elevator Detects New Button and re-coordinate its location
-# 3 = Elevator Detects Button Disappear and re-coordinate its location
 # 10 = Elevator finishes its trip and turns to IDLE + STANDBY
-# 11 = Elevator turns to OPERATION mode and start moving or while moving
-# 21 = Elevator decelerate to stop at floor due to OUT Action
-# 22 = Elevator decelerate to stop at floor due to IN Action
+# 20 = Elevator Stops on Floor but not IDLE
+# 21 = Elevator on Acceleration
+# 22 = Elevator on Max Speed
+# 23 = Elevator on Deceleration
+# 24 = Elevator Move on Temp Floor due to No button detected in elevator inside
 # 100 = Elevator Emergency Halt
 
 class System:
@@ -205,6 +206,41 @@ class Elevator:
         text = f"This Node Time : {node.current_time}\nTime Elapsed: {node.elapsed_time / 1000} seconds\nVelocity : {node.velocity}m/s\nAltimeter: {node.altimeter} meters\nClosest Floor: {node.closest_floor}\n\n"
         return text
 
+def write_to_csv(Elevator, file_path):
+    global csv_number
+
+    file_name = 'result.csv'
+    mode = 'a' if os.path.exists(file_path) else 'w'
+    current_trip_node = Elevator.current_trip_node
+    clf = current_trip_node.closest_floor['lower_floor']
+    cuf = current_trip_node.closest_floor['upper_floor']
+
+    file_path += '/' + file_name
+
+    if not os.path.isfile(file_path):
+        with open(file_path, 'w', newline='') as csv_file:
+            fwriter = csv.writer(csv_file)
+
+            csv_header = ['Number', 'Current Time', 'Trip Time', 'Velocity', 'Altimeter', 'Closest Upper Floor', 'Closest Lower Floor']
+            #csv_header = ['Current Time', 'Trip Time', 'Velocity', 'Altimeter', 'Closest Upper Floor', 'Closest Lower Floor']
+            fwriter.writerow(csv_header)
+
+            csv_payload = [csv_number, current_trip_node.current_time, current_trip_node.elapsed_time/1000, current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
+            fwriter.writerow(csv_payload)
+
+    else:
+        with open(file_path, 'a', newline='') as csv_file:
+            fwriter = csv.writer(csv_file)
+
+            csv_payload = [csv_number, current_trip_node.current_time, current_trip_node.elapsed_time / 1000,
+                           current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
+            # csv_payload = [current_trip_node.current_time, current_trip_node.elapsed_time / 1000,
+            #                current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
+
+            fwriter.writerow(csv_payload)
+
+    csv_number += 1
+
 def write_to_file(Elevator_System, Elevator, file_path):
     file_name = 'result.txt'
     mode = 'a' if os.path.exists(file_path) else 'w'
@@ -267,6 +303,9 @@ def run():
     flag_end_log = False # True = Start End Phase
     flag_record_start_time = True
 
+    global csv_number
+    csv_number = 1
+
     # Init Settings
     for elevator in elevators:
         elevator.full_trip_list = Single_Elevator.Full_Trip_List()
@@ -308,6 +347,7 @@ def run():
                     elevator.set_current_velocity(current_velocity)
                     # Change Current Trip Node
                     write_to_file(Elevator_System, elevator, result_path)
+                    write_to_csv(elevator, result_path)
                     # Elevator_System.display()
                     # elevator.display()
 
@@ -316,6 +356,7 @@ def run():
                 # If current Trip Node is Last Before IDLE, velocity = 0
                 elif next is None:
                     write_to_file(Elevator_System, elevator, result_path)
+                    write_to_csv(elevator, result_path)
                     # Elevator_System.display()
                     # elevator.display()
 
