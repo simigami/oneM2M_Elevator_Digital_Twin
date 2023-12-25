@@ -35,9 +35,6 @@ class TEST_PATH:
     sample_image_linux = rf""
     sample_image_windows = rf"E:\ML\Elevator Git\Elevator_Results\Pictures\No5\20230912_142324"
 
-    #sample_image_windows = rf"E:\ML\Elevator Git\Elevator_Results\Pictures\No5\Test"
-    #sample_image_windows = rf"E:\ML\Elevator Git\Elevator_Results"
-
     yaml_linux = rf""
     yaml_windows = rf"E:\ML\Elevator Git\Elevator_Results\Configs\data.yaml"
 

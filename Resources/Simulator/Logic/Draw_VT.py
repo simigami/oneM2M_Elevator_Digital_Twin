@@ -160,6 +160,9 @@ def put_trip_node_data_into_trip_list(Elevator_System, elevator, TTR_array, alti
     trip_list = elevator.full_trip_list.reachable_head
     trip_list.init_trip_list()
 
+    for i in range(len(TTR_array)):
+        TTR_array[i] = round(TTR_array[i], 1)
+
     if direction:
         constant_direction = 1
     else:
@@ -189,22 +192,22 @@ def put_trip_node_data_into_trip_list(Elevator_System, elevator, TTR_array, alti
             for elapsed_time in range(100, TTR_to_microsecond+100, 100):  # Loop through each 0.1 second
                 if elapsed_time <= time_to_reach_maximum_velocity:  # Acceleration phase
                     before = current_velocity
-                    current_velocity += acceleration * 0.1
+                    current_velocity += acceleration * 0.1 * constant_direction
                     after = current_velocity
 
-                    current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
+                    current_altimeter += ((before + after) * 0.1 * 0.5)
                     #print(f"E time : {elapsed_time}, before : {before}, after : {after}")
 
                 elif time_to_reach_maximum_velocity+100 <= elapsed_time <= time_to_reach_maximum_velocity + time_to_stay_maximum:  # Constant speed phase
-                    current_altimeter += (current_velocity * 0.1) * constant_direction
+                    current_altimeter += (current_velocity * 0.1)
                     #print(f"E time : {elapsed_time}")
 
                 elif time_to_reach_maximum_velocity + time_to_stay_maximum + 100 <= elapsed_time <= time_to_reach_maximum_velocity + time_to_stay_maximum + time_to_decelerate_to_zero:  # Deceleration phase
                     before = current_velocity
-                    current_velocity += (acceleration * -0.1)
+                    current_velocity += (acceleration * -0.1) * constant_direction
                     after = current_velocity
 
-                    current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
+                    current_altimeter += ((before + after) * 0.1 * 0.5)
                     #print(f"E time : {elapsed_time}, before : {before}, after : {after}")
 
                 elif elapsed_time == TTR_to_microsecond:
@@ -234,37 +237,32 @@ def put_trip_node_data_into_trip_list(Elevator_System, elevator, TTR_array, alti
 
         else:
             half_time = int(round(TTR_to_microsecond / 2))
+            acceleration = (4 * altimeter_array[-2]) / ((TTR_to_microsecond/1000)**2)
+
             temp = (half_time/2) / 100
             flag = float.is_integer(temp)
 
             for elapsed_time in range(100, TTR_to_microsecond+100, 100):  # Loop through each 0.1 second
-                if elapsed_time < half_time-100:  # Acceleration phase
+                if half_time-100 < elapsed_time < half_time:
                     before = current_velocity
-                    current_velocity += acceleration * 0.1
+                    current_velocity += acceleration * 0.1 * constant_direction
                     after = current_velocity
 
-                    current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
+                    current_altimeter += ((before + after) * 0.1 * 0.5) * 2
 
-                # elif half_time-100 <= elapsed_time <= half_time and not flag:
-                #     before = current_velocity
-                #     current_velocity += acceleration * 0.05
-                #     after = current_velocity
-                #
-                #     current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
-
-                elif half_time < elapsed_time < half_time + 100 and not flag:
+                elif elapsed_time <= half_time:  # Acceleration phase
                     before = current_velocity
-                    current_velocity += (acceleration * 0.05)
+                    current_velocity += acceleration * 0.1 * constant_direction
                     after = current_velocity
 
-                    current_altimeter += ((before + after) * 0.1) * constant_direction
+                    current_altimeter += ((before + after) * 0.1 * 0.5)
 
                 elif elapsed_time > half_time and elapsed_time != TTR_to_microsecond:
                     before = current_velocity
-                    current_velocity += (acceleration * -0.1)
+                    current_velocity += (acceleration * -0.1) * constant_direction
                     after = current_velocity
 
-                    current_altimeter += ((before + after) * 0.1 * 0.5) * constant_direction
+                    current_altimeter += ((before + after) * 0.1 * 0.5)
 
                 elif elapsed_time == TTR_to_microsecond:
                     current_velocity = 0

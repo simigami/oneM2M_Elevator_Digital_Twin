@@ -16,6 +16,7 @@ second = 10
 minute = 60 * second
 hour = 60 * minute
 global csv_number
+global simulation_timestamp
 
 # OPCODE
 # 0 = Initial Value
@@ -139,6 +140,9 @@ class Elevator:
         self.current_stopped_floor = -5
         self.current_stopped_altimeter = -55
 
+        # self.current_stopped_floor = 12
+        # self.current_stopped_altimeter = 1
+
         self.current_velocity = 0
         self.maximum_velocity = 2.5
         self.time_to_reach_maximum_velocity = 2.0
@@ -207,6 +211,7 @@ class Elevator:
         return text
 
 def write_to_csv(Elevator, file_path):
+    global simulation_timestamp
     global csv_number
 
     file_name = 'result.csv'
@@ -225,14 +230,15 @@ def write_to_csv(Elevator, file_path):
             #csv_header = ['Current Time', 'Trip Time', 'Velocity', 'Altimeter', 'Closest Upper Floor', 'Closest Lower Floor']
             fwriter.writerow(csv_header)
 
-            csv_payload = [csv_number, current_trip_node.current_time, current_trip_node.elapsed_time/1000, current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
+            csv_payload = [csv_number, simulation_timestamp, current_trip_node.current_time,
+                           current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
             fwriter.writerow(csv_payload)
 
     else:
         with open(file_path, 'a', newline='') as csv_file:
             fwriter = csv.writer(csv_file)
 
-            csv_payload = [csv_number, current_trip_node.current_time, current_trip_node.elapsed_time / 1000,
+            csv_payload = [csv_number, simulation_timestamp, current_trip_node.current_time,
                            current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
             # csv_payload = [current_trip_node.current_time, current_trip_node.elapsed_time / 1000,
             #                current_trip_node.velocity, current_trip_node.altimeter, cuf, clf]
@@ -291,6 +297,7 @@ def run():
 
     elevators = Elevator_System.get_elevators()
 
+    global simulation_timestamp
     simulation_timestamp = a_log.head.data.timestamp
 
     # Set Flags
@@ -322,7 +329,6 @@ def run():
             current_trip_node = elevator.get_current_trip_node()
 
             if current_trip_node is not None:
-
                 next = current_trip_node.next
                 if next is not None:
                     # Compare Velocity and Set opcode
@@ -405,6 +411,7 @@ def run():
                     flag_elevator_time_to_get_out_IDLE[index] = Elevator_System.now + datetime.timedelta(seconds=TTS)
 
                     current_stopped_floor = trip_node_right_before_IDLE.closest_floor['upper_floor']
+
                     if current_stopped_floor[0] == 'B':
                         int_floor = int(current_stopped_floor[1:]) * -1
                     else:

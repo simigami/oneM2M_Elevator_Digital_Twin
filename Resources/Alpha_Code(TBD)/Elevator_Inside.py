@@ -1,11 +1,10 @@
 import os
 import time
-import datetime
 import tailer
 import cv2
 import numpy as np
 
-import Write_Log, Simulator
+import Write_Log
 
 try:
     from config import TEST_PATH, TEST_COLOR, TEST_VARIABLES

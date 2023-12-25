@@ -3,7 +3,7 @@ import os
 import platform
 import glob
 import multiprocessing
-import Make_Dirs, Raspi_Shoot, Get_Sensors,Video_To_Image, Elevator_Inside, Simulator
+import Make_Dirs, Get_Sensors,Video_To_Image, Elevator_Inside
 from config import TEST_PATH
 
 shoot_time_ms = 10000
