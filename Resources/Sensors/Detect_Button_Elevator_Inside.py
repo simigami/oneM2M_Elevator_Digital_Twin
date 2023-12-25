@@ -42,11 +42,6 @@ def read_label_and_draw_rectangle(img, coordinates_of_label, debug=0):
             coordinates_of_label.append([int(class_id), left_x, right_x, top_y, bottom_y])
             cv2.rectangle(img, (left_x, top_y), (right_x, bottom_y), (0, 255, 0), 2)
 
-        if(debug):
-            cv2.namedWindow('sample', cv2.WINDOW_NORMAL)  # WINDOW_NORMAL allows for window resizing
-            cv2.resizeWindow('sample', width // 2, height // 2)
-            cv2.imshow('sample', img)
-            cv2.waitKey(0)
 
 def detect_contours(img, lowest_color_to_detect, highest_color_to_detect, debug=0):
     detected_img = cv2.inRange(img, lowest_color_to_detect, highest_color_to_detect)
@@ -60,13 +55,6 @@ def detect_contours(img, lowest_color_to_detect, highest_color_to_detect, debug=
             flattened_contour.extend(contour.reshape(-1, 2))
 
     flattened_contour = np.array(flattened_contour)
-
-    if(debug):
-        height, width, _ = img.shape
-        cv2.namedWindow('sample', cv2.WINDOW_NORMAL)  # WINDOW_NORMAL allows for window resizing
-        cv2.resizeWindow('sample', width // 2, height // 2)
-        cv2.imshow('sample', detected_img)
-        cv2.waitKey(0)
 
     return flattened_contour, hierarchy
 
@@ -106,8 +94,10 @@ def get_data(image_path, debug=0):
     start = time.time()
 
     # if(debug):
-    #     image_path = "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Images_Sample\Sample_Image_2.jpg"
+    #         image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
+    
     image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
+    
     img = cv2.imread(image_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     height, width, _ = img.shape
@@ -126,6 +116,7 @@ def get_data(image_path, debug=0):
     for id in final_id_list:
         detected.append(detection_list[id])
 
+    print(detected)
     return detected
 
 if __name__ == '__main__':

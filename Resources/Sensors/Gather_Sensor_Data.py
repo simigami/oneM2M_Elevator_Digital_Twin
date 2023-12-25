@@ -1,4 +1,5 @@
 import datetime
+import time
 import socket
 import json
 import os
@@ -7,7 +8,7 @@ import Altimeter_Sensor
 import Camera_Sensor
 import Detect_Button_Elevator_Inside
 
-server_ip = "127.0.0.1"
+server_ip = "192.168.0.134"
 server_port = 10050
 
 def get_sensor_datas():
@@ -17,7 +18,9 @@ def get_sensor_datas():
     }
 
     altimeter, temperature = Altimeter_Sensor.get_data()
-    picture_output_path = Camera_Sensor.get_data()
+    
+    picture_output_path = ""
+    #picture_output_path = Camera_Sensor.get_data()
 
     if picture_output_path is None:
         return None
@@ -51,15 +54,17 @@ def send_json_to_server(json_file_path, server_ip, server_port):
     try:
         with open(json_file_path, 'r') as json_file:
             json_data = json.load(json_file)
+           
+        last_dict = json_data.get("EV1", [])[-1]
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(address)
-            s.sendall(json.dumps(json_data).encode() + b'\n')
+            s.sendall(json.dumps(last_dict).encode() + b'\n')
 
             print("JSON data sent successfully.")
             return
 
-    except (socket.error, json.JSONDecodeError) as e:
+    except (socket.error, json.JSONDecodeError, socket.timeout) as e:
         print(f"Error sending JSON data: {e}")
 
 

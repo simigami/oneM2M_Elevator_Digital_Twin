@@ -16,7 +16,7 @@ def take_one_picture(picture_output):
 	vid_output = fr" -o {picture_output}"
 
 	command = vid_command + vid_width + vid_height + vid_time + vid_output
-	print(command)
+	#print(command)
 	os.system(command)
 
 def get_data():
