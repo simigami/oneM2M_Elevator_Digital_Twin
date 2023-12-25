@@ -3,7 +3,7 @@ import socket
 import json
 import os
 
-# import Altimeter_Sensor
+import Altimeter_Sensor
 import Camera_Sensor
 import Detect_Button_Elevator_Inside
 
@@ -16,18 +16,18 @@ def get_sensor_datas():
         rf"{device_name}": []
     }
 
-    # altimeter, temperature = Altimeter_Sensor.get_data()
+    altimeter, temperature = Altimeter_Sensor.get_data()
     picture_output_path = Camera_Sensor.get_data()
 
     if picture_output_path is None:
         return None
     else:
-        button_detected_elevator_inside = Detect_Button_Elevator_Inside.get_data(picture_output_path, debug=0)
+        button_detected_elevator_inside = Detect_Button_Elevator_Inside.get_data(picture_output_path, debug=1)
 
         sensor_data = {
             "timestamp": datetime.datetime.now().strftime("%Y_%m%d_%H%M%S"),
-            # "altimeter": altimeter,
-            # "temperature": temperature,
+            "altimeter": altimeter,
+            "temperature": temperature,
             "button_inside": button_detected_elevator_inside
         }
 

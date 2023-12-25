@@ -107,8 +107,7 @@ def get_data(image_path, debug=0):
 
     # if(debug):
     #     image_path = "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Images_Sample\Sample_Image_2.jpg"
-    image_path = "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Images_Sample\Sample_Image_2.jpg"
-
+    image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
     img = cv2.imread(image_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     height, width, _ = img.shape
