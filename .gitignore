@@ -420,3 +420,9 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+*.sln
+*.vsidx
+*.db
+*.db-shm
+*.db-wal
+*.opendb
