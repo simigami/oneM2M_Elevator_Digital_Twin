@@ -18,5 +18,22 @@
     <ClCompile Include="main.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="parse_json.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="send_oneM2M.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="parse_json.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="main.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="send_oneM2M.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

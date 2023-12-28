@@ -1,23 +1,30 @@
 import datetime
-import time
+import requests
 import socket
 import json
 import os
 
-import Altimeter_Sensor
+#import Altimeter_Sensor
 import Camera_Sensor
 import Detect_Button_Elevator_Inside
 
-server_ip = "192.168.0.134"
+#server_ip = "192.168.0.134"
+server_ip = "127.0.0.1"
 server_port = 10050
 
 def get_sensor_datas():
+    building_name = "SejongAI"
     device_name = "EV1"
+    altimeter = None
+    temperature = None
+    button_detected_elevator_inside = None
+    button_detected_elevator_outside = None
+
     header = {
         rf"{device_name}": []
     }
 
-    altimeter, temperature = Altimeter_Sensor.get_data()
+    #altimeter, temperature = Altimeter_Sensor.get_data()
     
     picture_output_path = ""
     #picture_output_path = Camera_Sensor.get_data()
@@ -28,10 +35,13 @@ def get_sensor_datas():
         button_detected_elevator_inside = Detect_Button_Elevator_Inside.get_data(picture_output_path, debug=1)
 
         sensor_data = {
+            "building_name": building_name,
+            "device_name": device_name,
             "timestamp": datetime.datetime.now().strftime("%Y_%m%d_%H%M%S"),
-            "altimeter": altimeter,
-            "temperature": temperature,
-            "button_inside": button_detected_elevator_inside
+            "altimeter": -55,
+            "temperature": 21,
+            "button_inside": button_detected_elevator_inside,
+            "button_outside": button_detected_elevator_outside
         }
 
         json_file_path = os.path.join(os.getcwd(),'result.json')
