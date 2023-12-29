@@ -9,6 +9,7 @@
 using namespace boost::asio;
 using ip::tcp;
 using std::string;
+using std::chrono::system_clock;
 
 int cin_numbering = 1;
 
@@ -25,6 +26,8 @@ void print_elapsed_time()
 
 DTServer::DTServer(parse_json::parsed_struct parsed_struct) //Initialize DT Server 
 {
+    system_clock::time_point start = system_clock::now();
+
     send_oneM2M s(parsed_struct);
 
     string building_name = parsed_struct.building_name;
@@ -42,16 +45,75 @@ DTServer::DTServer(parse_json::parsed_struct parsed_struct) //Initialize DT Serv
     		s.ae_create(parsed_struct);
 
             string device_name = parsed_struct.device_name;
+            vector<string> Default_CNTs;
+            vector<string> Default_PHYSICS_CNTs;
+            vector<string> Default_INSIDE_CNTs;
+            vector<string> Default_OUTSIDE_CNTs;
+
+            Default_CNTs.emplace_back("Elevator_physics");
+            Default_CNTs.emplace_back("Elevator_button_inside");
+            Default_CNTs.emplace_back("Elevator_button_outside");
+
+            Default_PHYSICS_CNTs.emplace_back("Velocity");
+            Default_PHYSICS_CNTs.emplace_back("Altimeter");
+            Default_PHYSICS_CNTs.emplace_back("Temperature");
+            Default_PHYSICS_CNTs.emplace_back("Trip");
+            Default_PHYSICS_CNTs.emplace_back("Distance");
+
         	s.cnt_create(parsed_struct, 1, device_name);
-        	s.cnt_create(parsed_struct, 2, device_name, "Elevator_physics");
-        	s.cnt_create(parsed_struct, 2, device_name, "Elevator_button_inside");
-        	s.cnt_create(parsed_struct, 2, device_name, "Elevator_button_outside");
+            for(const string& CNT_NAME : Default_CNTs)
+            {
+	            s.cnt_create(parsed_struct, 2, device_name, CNT_NAME);
+            }
+            for(const string& CNT_NAME : Default_PHYSICS_CNTs)
+            {
+	            s.cnt_create(parsed_struct, 3, device_name, Default_CNTs[0], CNT_NAME);
+            }
+            for(int i = parsed_struct.underground_floor ; i>=1 ; i--)
+            {
+	            s.cnt_create(parsed_struct, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
+            }
+            for(int i = 1 ; i<=parsed_struct.ground_floor ; i++)
+            {
+	            s.cnt_create(parsed_struct, 3, device_name, Default_CNTs[2], std::to_string(i));
+            }
+
+			// Create or Update Velocity, Altimeter, Temperature
+            string originator = "C" + parsed_struct.building_name;
+            if(parsed_struct.velocity != -1)
+            {
+                string payload = std::to_string(parsed_struct.velocity);
+	            s.cin_create(originator, "velocity", payload, 3, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[0]);
+            }
+            if(parsed_struct.altimeter != -1)
+            {
+                string payload = std::to_string(parsed_struct.altimeter);
+	            s.cin_create(originator, "altimeter", payload, 3, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[1]);
+            }
+            if(parsed_struct.temperature != -1)
+            {
+                string payload = std::to_string(parsed_struct.temperature);
+	            s.cin_create(originator, "temperature", payload, 3, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[2]);
+            }
+            if(!parsed_struct.button_inside.empty())
+            {
+	            string payload = "";
+                for(string temp : parsed_struct.button_inside)
+                {
+	                payload += " " + temp;
+                }
+                s.cin_create(originator, "button_inside", payload, 2, device_name, Default_CNTs[1]);
+            }
+
+            std::chrono::duration<double> delta = system_clock::now() - start;
+
+        	std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
+
     		//s.cin_create(parsed_struct);
         }
         else
         {
 	        std::cout << "ACP Found, Create New CIN Based on This JSON,,,\n"  << std::endl;
-            s.cin_create(parsed_struct);
         }
     }
     catch(const std::exception& e)
@@ -92,12 +154,11 @@ int main()
 
                 // Make ACP for Originator name Device_name
 			}
-			else if(parsed_struct.button_outside.empty())
+			else
 			{
 				std::cout << "Received Elevator Inside Data" << json_data << std::endl;
 
                 string originator;
-
                 DTServer DTServer(parsed_struct);
 			}
 

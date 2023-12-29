@@ -17,8 +17,11 @@ def get_sensor_datas():
     device_name = "EV1"
     altimeter = None
     temperature = None
+    velocity = -10
     button_detected_elevator_inside = None
-    button_detected_elevator_outside = None
+
+    # [0] = Underground Floors, [1] = ground Floors, [2][0] = Detected Floor, [2][1] = Upside or Downside
+    button_detected_elevator_outside = [5, 12, [8, True]]
 
     header = {
         rf"{device_name}": []
@@ -38,6 +41,7 @@ def get_sensor_datas():
             "building_name": building_name,
             "device_name": device_name,
             "timestamp": datetime.datetime.now().strftime("%Y_%m%d_%H%M%S"),
+            "velocity": velocity,
             "altimeter": -55,
             "temperature": 21,
             "button_inside": button_detected_elevator_inside,

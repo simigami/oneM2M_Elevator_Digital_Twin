@@ -48,8 +48,7 @@ void send_oneM2M::acp_create(const parse_json::parsed_struct& data)
 	http_client client(utility::conversions::to_string_t(CSE_URL));
 	http_request request(methods::POST);
 
-    std::cout << "URL is" << CSE_URL << "\n"  << std::endl;
-    std::cout << "Creating ACP\n"  << std::endl;
+    std::cout << "ACP Create Under : " << CSE_URL << std::endl;
 
     json::value json_data;
     json_data[U("m2m:acp")][U("rn")] = json::value::string(utility::conversions::to_string_t(rn));
@@ -79,8 +78,51 @@ void send_oneM2M::acp_create(const parse_json::parsed_struct& data)
     auto response = client.request(request).get();
 
     // Print the HTTP response
-    std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
+}
+
+bool send_oneM2M::acp_validate()
+{
+    string originator_name = "CAdmin";
+    string URL = "";
+    URL += host_protocol;
+    URL += host_ip;
+    URL += ":";
+    URL += host_port;
+    URL += "/";
+    URL += CSE_NAME;
+    URL += "/";
+    URL += "DT_ACP";
+
+    http_client client(utility::conversions::to_string_t(URL));
+	http_request request(methods::GET);
+
+    std::cout << "ACP vaildate on URL : " << URL << "\n"  << std::endl;
+
+    // Create an HTTP request
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+
+	auto response = client.request(request).get();
+	utility::string_t response_str_t = response.to_string();
+
+    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+
+    if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
+    {
+	    return false;
+    }
+    else if(response_str_t.find(U("m2m:acp")) != utility::string_t::npos)
+    {
+	    return true;
+    }
+    else
+    {
+	    return false;
+    }
 }
 
 void send_oneM2M::ae_create(const parse_json::parsed_struct& data)
@@ -97,8 +139,7 @@ void send_oneM2M::ae_create(const parse_json::parsed_struct& data)
     http_client client(utility::conversions::to_string_t(CSE_URL));
 	http_request request(methods::POST) ;
 
-    std::cout << "URL is" << CSE_URL << "\n"  << std::endl;
-	std::cout << "Creating AE\n"  << std::endl;
+    std::cout << "AE Create Under " << CSE_URL << std::endl;
 
     json::value json_data;
     json_data[U("m2m:ae")][U("rn")] = json::value::string(utility::conversions::to_string_t(ri));
@@ -121,41 +162,45 @@ void send_oneM2M::ae_create(const parse_json::parsed_struct& data)
     auto response = client.request(request).get();
 
     // Print the HTTP response
-    std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
     this->URL_TO_AE = this->URL_TO_CSE + "/" + ri;
 }
 
-void send_oneM2M::cnt_create(const parse_json::parsed_struct& data, int nargs, string ...)
+void send_oneM2M::ae_retrieve()
 {
-    va_list list;
-    va_start(list, nargs);
 
-    string AE_URL = this->URL_TO_AE;
+}
+
+void send_oneM2M::cnt_create(const parse_json::parsed_struct& data, int num, ...)
+{
+    va_list args;
+    va_start(args, num);
+
+    string CNT_URL = this->URL_TO_AE;
     string originator = "C" + data.building_name;
     string CNT_NAME = "";
 
-    if(nargs<1)
+    if(num<1)
     {
         exit(0);
     }
     else
     {
-        for(int i=1; i<nargs; i++)
+        for(int i=1; i<num; i++)
         {
-	        auto ret = va_arg(list, const string);
-	        AE_URL += "/";
-	        AE_URL += ret;
+	        auto ret = va_arg(args, const string);
+	        CNT_URL += "/";
+	        CNT_URL += ret;
         }
-        CNT_NAME = va_arg(list, const string);
-		va_end(list);
+        CNT_NAME = va_arg(args, const string);
+		va_end(args);
     }
-    http_client client(utility::conversions::to_string_t(AE_URL));
-	http_request request1(methods::POST) ;
-	http_request request2(methods::POST) ;
 
-    std::cout << "URL is " << AE_URL << std::endl;
-	std::cout << "Creating Sensor Output CNT"  << std::endl;
+    http_client client(utility::conversions::to_string_t(CNT_URL));
+	http_request request(methods::POST) ;
+
+    std::cout << "CNT Create Under " << CNT_URL << std::endl;
 
     json::value json_data1;
     json_data1[U("m2m:cnt")][U("rn")] = json::value::string(utility::conversions::to_string_t(CNT_NAME));
@@ -165,79 +210,23 @@ void send_oneM2M::cnt_create(const parse_json::parsed_struct& data, int nargs, s
     json_data1[U("m2m:cnt")][U("lbl")][1] = json::value::string(U("key2"));
 
     // Create an HTTP request
-    request1.headers().set_content_type(U("application/json; ty=3"));
-    request1.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request1.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
-    request1.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(CNT_NAME));
-
-    request1.set_body(json_data1);
-
-    // Send the HTTP request and wait for the response
-    auto response = client.request(request1).get();
-
-    // Print the HTTP response
-    std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
-}
-
-void send_oneM2M::cin_create(const parse_json::parsed_struct& data)
-{
-    string ri = "";
-    if(data.button_outside.empty())
-    {
-    	this->URL_TO_CNT = this->URL_TO_AE + "/" + SO;
-        ri += "S" + std::to_string(cin_numbering);
-        cin_numbering++;
-    }
-    else
-    {
-    	this->URL_TO_CNT = this->URL_TO_AE + "/" + UI;
-        ri += "U"+ std::to_string(cin_numbering);
-        cin_numbering++;;
-    }
-
-    string device_name = data.device_name;
-    string originator = "C" + device_name;
-
-    string payload = "";
-    payload += "Device_name: ";
-    payload += device_name + "\n";
-    payload += "Timestamp: ";
-    payload += data.timestamp + "\n";
-    payload += "Altimeter: ";
-    payload += std::to_string(data.altimeter) + "\n";
-    payload += "Temperature: ";
-    payload += std::to_string(data.temperature) + "\n";
-    payload += "button_inside: ";
-    for (const auto &button : data.button_outside) {
-       payload += button + ", "; 
-    }
-    payload += "\n";
-
-
-    http_client client(utility::conversions::to_string_t(this->URL_TO_CNT));
-	http_request request(methods::POST) ;
-
-    json::value json_data;
-
-	json_data[U("m2m:cin")][U("rn")] = json::value::string(utility::conversions::to_string_t(ri));
-	json_data[U("m2m:cin")][U("cnf")] = json::value::string(utility::conversions::to_string_t("application/json"));
-    json_data[U("m2m:cin")][U("con")] =json::value::string(utility::conversions::to_string_t(payload));
-
-
-    // Create an HTTP request
-    request.headers().set_content_type(U("application/json; ty=4"));
+    request.headers().set_content_type(U("application/json; ty=3"));
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
-    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(ri));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(CNT_NAME));
 
-    request.set_body(json_data);
+    request.set_body(json_data1);
 
     // Send the HTTP request and wait for the response
     auto response = client.request(request).get();
 
     // Print the HTTP response
-    std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+}
+
+void send_oneM2M::cnt_retrieve()
+{
+
 }
 
 bool send_oneM2M::cnt_validate(const string& CNT_NAME)
@@ -246,47 +235,60 @@ bool send_oneM2M::cnt_validate(const string& CNT_NAME)
     return false;
 }
 
-bool send_oneM2M::acp_validate()
+void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload, int num, ...)
 {
-    string originator_name = "CAdmin";
-    string URL = "";
-    URL += host_protocol;
-    URL += host_ip;
-    URL += ":";
-    URL += host_port;
-    URL += "/";
-    URL += CSE_NAME;
-    URL += "/";
-    URL += "DT_ACP";
+    va_list args;
+    va_start(args, num);
 
-    http_client client(utility::conversions::to_string_t(URL));
-	http_request request(methods::GET);
+    string CIN_URL = this->URL_TO_AE;
+    string CNT_NAME = "";
 
-    std::cout << "URL is" << URL << "\n"  << std::endl;
-
-    // Create an HTTP request
-    request.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
-    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
-
-	auto response = client.request(request).get();
-	utility::string_t response_str_t = response.to_string();
-
-    std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
-
-    if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
+    if(num<1)
     {
-	    return false;
-    }
-    else if(response_str_t.find(U("m2m:acp")) != utility::string_t::npos)
-    {
-	    return true;
+        exit(0);
     }
     else
     {
-	    return false;
+        for(int i=1; i<num; i++)
+        {
+	        auto ret = va_arg(args, const string);
+	        CIN_URL += "/";
+	        CIN_URL += ret;
+        }
+        CNT_NAME = va_arg(args, const string);
+		va_end(args);
     }
+
+    http_client client(utility::conversions::to_string_t(CIN_URL));
+	http_request request(methods::POST) ;
+
+    std::cout << CIN_NAME << " CIN Create Under " << CIN_URL << std::endl;
+
+    json::value json_data;
+
+	json_data[U("m2m:cin")][U("rn")] = json::value::string(utility::conversions::to_string_t(CIN_NAME));
+	//json_data[U("m2m:cin")][U("cnf")] = json::value::string(utility::conversions::to_string_t("application/json"));
+    json_data[U("m2m:cin")][U("con")] =json::value::string(utility::conversions::to_string_t(payload));
+
+    // Create an HTTP request
+    request.headers().set_content_type(U("application/json; ty=4"));
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(CIN_NAME));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+
+    request.set_body(json_data);
+
+    // Send the HTTP request and wait for the response
+    auto response = client.request(request).get();
+
+    // Print the HTTP response
+    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+}
+
+void send_oneM2M::cin_update(const parse_json::parsed_struct& data, int num, ...)
+{
+
 }
 
 void send_oneM2M::grp_create(const parse_json::parsed_struct& data)
@@ -339,14 +341,4 @@ void send_oneM2M::grp_create(const parse_json::parsed_struct& data)
 
 	    this->URL_TO_AE = this->URL_TO_CSE + "/" + ri;
     }
-}
-
-void send_oneM2M::ae_retrieve()
-{
-
-}
-
-void send_oneM2M::cnt_retrieve()
-{
-
 }

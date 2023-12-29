@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <cpprest/http_client.h>
+#include <chrono>
 #include <cpprest/filestream.h>
 #include <boost/asio.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>

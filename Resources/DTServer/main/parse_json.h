@@ -16,14 +16,19 @@ public:
 		string device_name;
 		string timestamp;
 
-		float altimeter;
-		float temperature;
+		int underground_floor = -1;
+		int ground_floor = -1;
+		int button_outside_floor;
 
+		float velocity = -1;
+		float altimeter = -1;
+		float temperature = -1;
+
+		bool button_outside_direction;
 		bool inFlag = true;
 		bool outFlag = true;
 
-		vector<std::string> button_inside;
-		vector<std::string> button_outside;
+		vector<string> button_inside;
 	};
 
 	parsed_struct parsing(string json_data);
