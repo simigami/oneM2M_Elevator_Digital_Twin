@@ -29,6 +29,7 @@ public:
 		bool outFlag = true;
 
 		vector<string> button_inside;
+		vector<vector<int>> button_outside;
 	};
 
 	parsed_struct parsing(string json_data);
