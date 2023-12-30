@@ -140,11 +140,13 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parse_json.cpp" />
     <ClCompile Include="send_oneM2M.cpp" />
+    <ClCompile Include="socket_oneM2M.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
     <ClInclude Include="parse_json.h" />
     <ClInclude Include="send_oneM2M.h" />
+    <ClInclude Include="socket_oneM2M.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
