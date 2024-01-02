@@ -92,6 +92,12 @@ void send_oneM2M::acp_create(int num, ...)
     // Print the HTTP response
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
+    if(400 <= response.status_code()  && response.status_code() < 500)
+    {
+	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
+        exit(0);
+    }
+
 }
 
 void send_oneM2M::acp_update(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...)
@@ -151,6 +157,12 @@ void send_oneM2M::acp_update(const parse_json::parsed_struct& data, vector<strin
     request.set_body(json_data);
 
     auto response = client.request(request).get();
+
+    if(400 <= response.status_code()  && response.status_code() < 500)
+    {
+	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
+        exit(0);
+    }
 }
 
 bool send_oneM2M::acp_validate(int num, ...)
@@ -225,12 +237,12 @@ bool send_oneM2M::acp_validate(int num, ...)
     }
 }
 
-void send_oneM2M::ae_create(const parse_json::parsed_struct& data)
+void send_oneM2M::ae_create(string AE_NAME, string CNT_NAME)
 {
     string CSE_URL = this->URL_TO_CSE;
 
-	string building_name = data.building_name;
-    string device_name = data.device_name;
+	string building_name = AE_NAME;
+    string device_name = CNT_NAME;
 
     string originator = "C" + building_name;
     string api = "NBuilding";
@@ -260,6 +272,12 @@ void send_oneM2M::ae_create(const parse_json::parsed_struct& data)
 
     // Send the HTTP request and wait for the response
     auto response = client.request(request).get();
+
+    if(400 <= response.status_code()  && response.status_code() < 500)
+    {
+	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
+        exit(0);
+    }
 
     // Print the HTTP response
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
@@ -325,13 +343,13 @@ bool send_oneM2M::ae_validate(const parse_json::parsed_struct& data, int num, ..
     }
 }
 
-void send_oneM2M::cnt_create(const parse_json::parsed_struct& data, int num, ...)
+void send_oneM2M::cnt_create(string originator_string, int num, ...)
 {
     va_list args;
     va_start(args, num);
 
     string CNT_URL = this->URL_TO_AE;
-    string originator = "C" + data.building_name;
+    string originator = originator_string;
     string CNT_NAME = "";
 
     if(num<1)
@@ -375,6 +393,12 @@ void send_oneM2M::cnt_create(const parse_json::parsed_struct& data, int num, ...
 
     // Print the HTTP response
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+    if(400 <= response.status_code()  && response.status_code() < 500)
+    {
+	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
+        exit(0);
+    }
+
 }
 
 void send_oneM2M::cnt_retrieve()
@@ -435,12 +459,6 @@ bool send_oneM2M::cnt_validate(const parse_json::parsed_struct& data, int num, .
     return false;
 }
 
-bool send_oneM2M::cnt_validate(const string& CNT_NAME)
-{
-
-    return false;
-}
-
 void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload, int num, ...)
 {
     va_list args;
@@ -486,7 +504,13 @@ void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload,
     // Send the HTTP request and wait for the response
     auto response = client.request(request).get();
 
-    if(response.status_code() == status_codes::Created)
+    if(400 <= response.status_code()  && response.status_code() < 500)
+    {
+	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
+        exit(0);
+    }
+
+    else if(response.status_code() == status_codes::Created)
     {
 	    json::value response_json = response.extract_json().get();
         std::wstring ri = response_json[U("m2m:cin")][U("ri")].as_string();
@@ -500,6 +524,57 @@ void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload,
 void send_oneM2M::cin_update(const parse_json::parsed_struct& data, int num, ...)
 {
 
+}
+
+http_response send_oneM2M::cin_retrieve_la(string originator, int num, ...)
+{
+    va_list args;
+    va_start(args, num);
+
+    string CIN_URL = this->URL_TO_AE;
+
+    if(num<1)
+    {
+        exit(0);
+    }
+    else
+    {
+        for(int i=1; i<=num; i++)
+        {
+	        auto ret = va_arg(args, const string);
+	        CIN_URL += "/";
+	        CIN_URL += ret;
+        }
+		va_end(args);
+    }
+    CIN_URL += "/";
+    CIN_URL += "la";
+
+    http_client client(utility::conversions::to_string_t(CIN_URL));
+	http_request request(methods::GET) ;
+
+    //std::cout << "CIN RETRIEVE Under : " << CIN_URL << std::endl;
+
+    // Create an HTTP request
+    request.headers().set_content_type(U("application/json"));
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+
+    // Send the HTTP request and wait for the response
+    auto response = client.request(request).get();
+
+    if(response.status_code() == status_codes::Created)
+    {
+	    json::value response_json = response.extract_json().get();
+        std::wstring ri = response_json[U("m2m:cin")][U("ri")].as_string();
+
+        std::wcout  << L"RI is : " << ri << std::endl;
+    }
+    // Print the HTTP response
+    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+
+    return response;
 }
 
 void send_oneM2M::grp_create(const parse_json::parsed_struct& data)

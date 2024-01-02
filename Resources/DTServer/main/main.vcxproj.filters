@@ -16,30 +16,48 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="parse_json.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="send_oneM2M.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="socket_oneM2M.cpp">
-      <Filter>소스 파일</Filter>
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="simulation.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="elevator.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="test.cpp">
+      <Filter>리소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="parse_json.h">
-      <Filter>소스 파일</Filter>
-    </ClInclude>
     <ClInclude Include="main.h">
-      <Filter>소스 파일</Filter>
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="parse_json.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="send_oneM2M.h">
-      <Filter>소스 파일</Filter>
+      <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="socket_oneM2M.h">
-      <Filter>소스 파일</Filter>
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="simulation.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="elevator.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="test.h">
+      <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

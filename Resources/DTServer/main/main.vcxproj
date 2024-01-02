@@ -137,16 +137,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="elevator.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parse_json.cpp" />
     <ClCompile Include="send_oneM2M.cpp" />
+    <ClCompile Include="simulation.cpp" />
     <ClCompile Include="socket_oneM2M.cpp" />
+    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="elevator.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="parse_json.h" />
     <ClInclude Include="send_oneM2M.h" />
+    <ClInclude Include="simulation.h" />
     <ClInclude Include="socket_oneM2M.h" />
+    <ClInclude Include="test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
