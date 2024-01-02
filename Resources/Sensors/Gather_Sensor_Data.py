@@ -17,13 +17,11 @@ def get_sensor_datas():
     device_name = "EV1"
     altimeter = None
     temperature = None
-    velocity = -7
+    velocity = -10
     button_detected_elevator_inside = None
 
     # [0] = Underground Floors, [1] = ground Floors, [2][0] = Detected Floor, [2][1] = Upside or Downside
-    underground_floor = 5
-    ground_floor = 12
-    button_detected_elevator_outside = [[-2, False], [8, True]]
+    button_detected_elevator_outside = [5, 12, [8, True]]
 
     header = {
         rf"{device_name}": []
@@ -42,12 +40,10 @@ def get_sensor_datas():
         sensor_data = {
             "building_name": building_name,
             "device_name": device_name,
-            "underground_floor": underground_floor,
-            "ground_floor": ground_floor,
             "timestamp": datetime.datetime.now().strftime("%Y_%m%d_%H%M%S"),
             "velocity": velocity,
-            "altimeter": -52,
-            "temperature": 22,
+            "altimeter": -55,
+            "temperature": 21,
             "button_inside": button_detected_elevator_inside,
             "button_outside": button_detected_elevator_outside
         }
@@ -60,25 +56,20 @@ def get_sensor_datas():
 
         with open('result.json', 'r+') as json_file:
             file_content = json.load(json_file)
-
-            # If device_name is different
-            if device_name not in file_content:
-                file_content[device_name] = []
-
             file_content[device_name].append(sensor_data)
             json_file.seek(0)
             json.dump(file_content, json_file, indent=2)
 
-        return json_file_path, device_name
+        return json_file_path
 
-def send_json_to_server(server_ip, server_port, json_file_path, device_name):
+def send_json_to_server(json_file_path, server_ip, server_port):
     address = (server_ip, server_port)
 
     try:
         with open(json_file_path, 'r') as json_file:
             json_data = json.load(json_file)
            
-        last_dict = json_data.get(device_name, [])[-1]
+        last_dict = json_data.get("EV1", [])[-1]
 
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect(address)
@@ -92,6 +83,6 @@ def send_json_to_server(server_ip, server_port, json_file_path, device_name):
 
 
 if __name__ == '__main__':
-    json_file_path, device_name = get_sensor_datas()
+    json_file_path = get_sensor_datas()
     if json_file_path is not None:
-        send_json_to_server(server_ip, server_port, json_file_path, device_name)
+        send_json_to_server(json_file_path, server_ip, server_port)

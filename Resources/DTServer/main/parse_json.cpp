@@ -11,10 +11,6 @@ parse_json::parsed_struct parse_json::parsing(string json_data)
 
 		p.building_name = parsed_json["building_name"];
 		p.device_name = parsed_json["device_name"];
-
-		p.underground_floor = parsed_json["underground_floor"];
-		p.ground_floor = parsed_json["ground_floor"];
-
 		p.timestamp = parsed_json["timestamp"];
 
 		p.velocity = parsed_json["velocity"];
@@ -27,15 +23,26 @@ parse_json::parsed_struct parse_json::parsing(string json_data)
 		}
 		if(parsed_json["button_outside"] != nullptr)
 		{
-			json buttonOutsideArray = parsed_json["button_outside"];
-
-			 // Iterate over the elements of the JSON array and store them
-			for (const nlohmann::basic_json<>& element : buttonOutsideArray) {
-            // Extract individual elements within the nested array
-	            vector<int> temp = {element[0], element[1]};
-				p.button_outside.push_back(temp);
+			vector<json> temp = parsed_json["button_outside"];
+			for(json data : temp)
+			{
+				if(data.is_number())
+				{
+					if(p.underground_floor == -1)
+					{
+						p.underground_floor = data;
+					}
+					else if(p.ground_floor == -1)
+					{
+						p.ground_floor = data;
+					}
+				}
+				else if(data.is_array() && !data.empty())
+				{
+				}
 			}
 		}
+
 		// Print the parsed values
 		return p;
 	}
