@@ -435,12 +435,6 @@ bool send_oneM2M::cnt_validate(const parse_json::parsed_struct& data, int num, .
     return false;
 }
 
-bool send_oneM2M::cnt_validate(const string& CNT_NAME)
-{
-
-    return false;
-}
-
 void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload, int num, ...)
 {
     va_list args;
