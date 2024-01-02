@@ -24,7 +24,10 @@ class DTServer
 public:
 	DTServer();
 	void Running();
+<<<<<<< HEAD
 	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<socket_oneM2M> socket_array, const string AE_ID);
+=======
+>>>>>>> origin/Prototype_Beta
 
 	vector<string> ACP_NAMES;
 	vector<socket_oneM2M> oneM2M_sockets;

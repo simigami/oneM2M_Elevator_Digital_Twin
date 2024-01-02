@@ -76,6 +76,7 @@ void DTServer::Running()
         }
         else
         {
+<<<<<<< HEAD
             // CHECK THIS CNT(Device Name) Exists
             string AE_NAME = parsed_struct.building_name;
             string CNT_NAME = parsed_struct.device_name;
@@ -110,6 +111,12 @@ socket_oneM2M DTServer::get_oneM2M_socket_based_on_AE_ID(vector<socket_oneM2M> s
     }
     std::cout << "Error occured in Class DTServer::get_oneM2M_socket_based_on_AE_ID -> AE_ID Not Found : " << AE_ID << std::endl;
     exit(0);
+=======
+            // CHECK THIS AE(Device Name) Exists
+	        std::cout << "Building Socket Exists, Update CIN Based on Socket..." << json_data << std::endl;
+        }
+    }
+>>>>>>> origin/Prototype_Beta
 }
 
 int main()
