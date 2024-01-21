@@ -106,12 +106,13 @@ void Elevator::RETRIEVE_from_oneM2M()
 			sim.update_main_trip_list_via_inside_data(this->latest_RETRIEVE_info[2], p.current_direction);
 		}
 
+		/*
 		cout << "MAIN TRIP LIST : ";
 		for(const auto& elem : sim.main_trip_list)
 		{
 			cout << elem << " ";
 		}
-		cout << endl;
+		cout << endl;*/
 	}
 
 	//COMPARE LATEST RETRIEVE INFO if info vector has value
