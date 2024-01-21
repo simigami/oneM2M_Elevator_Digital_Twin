@@ -1244,6 +1244,7 @@
           true
         ]
       ]
+<<<<<<< HEAD
     },
     {
       "building_name": "SejongAI",
@@ -4237,6 +4238,8 @@
           true
         ]
       ]
+=======
+>>>>>>> origin/Prototype_Beta
     }
   ],
   "EV2": [
@@ -4932,6 +4935,7 @@
           true
         ]
       ]
+<<<<<<< HEAD
     },
     {
       "building_name": "SejongAI",
@@ -5205,6 +5209,8 @@
           true
         ]
       ]
+=======
+>>>>>>> origin/Prototype_Beta
     }
   ],
   "EV3": [

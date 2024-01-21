@@ -164,9 +164,16 @@ void DTServer::Running()
         }
         else
         {
+<<<<<<< HEAD
             std::cout << "Building Socket Exists, Check this CNT Exists..." << CNT_NAME << std::endl;
             // GET THIS BUILDING CLASS
             class_of_one_Building temp = this->get_building_vector(this->class_of_all_Buildings, ACOR_NAME);
+=======
+            // CHECK THIS CNT(Device Name) Exists
+            string AE_NAME = parsed_struct.building_name;
+            string CNT_NAME = parsed_struct.device_name;
+            socket_oneM2M This_AE_Socket = this->get_oneM2M_socket_based_on_AE_ID(this->oneM2M_sockets, AE_NAME);
+>>>>>>> origin/Prototype_Beta
 
             // CHECK THIS CNT(Device Name) Exists
             bool flag = this->exists_elevator(temp, CNT_NAME);
@@ -201,6 +208,24 @@ void DTServer::Running()
     }
 }
 
+<<<<<<< HEAD
+=======
+socket_oneM2M DTServer::get_oneM2M_socket_based_on_AE_ID(vector<socket_oneM2M> socket_array, const string AE_ID)
+{
+    for(auto socket : socket_array)
+    {
+        std::cout << "Socket Name : " << socket.socket_name << std::endl;
+	    if(socket.socket_name == AE_ID)
+	    {
+		    std::cout << "Found Socket " << AE_ID << std::endl;
+            return socket;
+	    }
+    }
+    std::cout << "Error occured in Class DTServer::get_oneM2M_socket_based_on_AE_ID -> AE_ID Not Found : " << AE_ID << std::endl;
+    exit(0);
+}
+
+>>>>>>> origin/Prototype_Beta
 int main()
 {
     try

@@ -4,25 +4,42 @@
 
 #include "socket_oneM2M.h"
 
+<<<<<<< HEAD
 using namespace std;
 
+=======
+>>>>>>> origin/Prototype_Beta
 socket_oneM2M::socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES) : socket(parsed_struct)
 {
 	system_clock::time_point start = system_clock::now();
 
+<<<<<<< HEAD
 	ACOR_NAME = parsed_struct.building_name;
     building_name = parsed_struct.building_name;
 
     originator_name = "C" + parsed_struct.device_name;
     device_name = parsed_struct.device_name;
+=======
+    string building_name = parsed_struct.building_name;
+    string ACOR_NAME = parsed_struct.building_name;
+
+    string originator_name = "C" + parsed_struct.device_name;
+    string device_name = parsed_struct.device_name;
+>>>>>>> origin/Prototype_Beta
 
     try
     {
         this->socket_name = building_name;
 
+<<<<<<< HEAD
         cout << "Updating This Building ACP\n"  << endl;
         socket.acp_update(parsed_struct, ACP_NAMES, 0);
         socket.ae_create(this->building_name, this->device_name);
+=======
+        std::cout << "Updating This Building ACP\n"  << std::endl;
+        socket.acp_update(parsed_struct, ACP_NAMES, 0);
+        socket.ae_create(parsed_struct);
+>>>>>>> origin/Prototype_Beta
 
         Default_CNTs.emplace_back("Elevator_physics");
         Default_CNTs.emplace_back("Elevator_button_inside");
@@ -42,6 +59,7 @@ socket_oneM2M::socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<str
 socket_oneM2M::~socket_oneM2M()
 {
 }
+<<<<<<< HEAD
 
 void socket_oneM2M::check_cin_difference_between_previous_RETRIEVE(vector<vector<string>> previous, vector<vector<string>> current)
 {
@@ -77,6 +95,8 @@ void socket_oneM2M::check_cin_difference_between_previous_RETRIEVE(vector<vector
 
     //CHECK BUTTON OUTSIDE DIFFERENCE
 }
+=======
+>>>>>>> origin/Prototype_Beta
 
 bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct parsed_struct)
 {
@@ -274,6 +294,7 @@ bool socket_oneM2M::create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_st
         std::cerr << "Exception Caught : " << e.what() << std::endl;
         return false;
 	}
+<<<<<<< HEAD
 }
 
 vector<vector<string>> socket_oneM2M::retrieve_oneM2M_cins(vector<int> floor_info)
@@ -407,4 +428,6 @@ vector<vector<string>> socket_oneM2M::retrieve_oneM2M_cins(vector<int> floor_inf
 	{
         std::cerr << "Exception Caught : " << e.what() << std::endl;
 	}
+=======
+>>>>>>> origin/Prototype_Beta
 }

@@ -32,11 +32,15 @@ public:
 	DTServer();
 	void Running();
 
+<<<<<<< HEAD
 	bool exists_elevator(class_of_one_Building class_of_one_building, string device_name);
 
 	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<Elevator> elevator_array, const string AE_ID);
 	class_of_one_Building get_building_vector(vector<class_of_one_Building> class_of_all_Buildings, string ACOR_NAME);
 	Elevator get_elevator(class_of_one_Building class_of_one_building, string device_name);
+=======
+	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<socket_oneM2M> socket_array, const string AE_ID);
+>>>>>>> origin/Prototype_Beta
 
 	vector<string> ACP_NAMES;
 

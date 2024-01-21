@@ -18,13 +18,21 @@ def get_sensor_datas():
     altimeter = None
     temperature = None
     velocity = -10
+<<<<<<< HEAD
     button_detected_elevator_inside = ['1', '4', '7']
+=======
+    button_detected_elevator_inside = None
+>>>>>>> origin/Prototype_Beta
 
     underground_floor = 5
     ground_floor = 12
+<<<<<<< HEAD
 
     # [0] = Outside Floor, [1] Moving Direction -> True = Up, False = Down
     button_detected_elevator_outside = [[4, True], [8, True]] #[[8, True]]
+=======
+    button_detected_elevator_outside = [[8, True]]
+>>>>>>> origin/Prototype_Beta
 
     header = {
         rf"{device_name}": []
@@ -47,8 +55,13 @@ def get_sensor_datas():
             "ground_floor": ground_floor,
             "timestamp": datetime.datetime.now().strftime("%Y_%m%d_%H%M%S"),
             "velocity": velocity,
+<<<<<<< HEAD
             "altimeter": -51,
             "temperature": 22,
+=======
+            "altimeter": -55,
+            "temperature": 21,
+>>>>>>> origin/Prototype_Beta
             "button_inside": button_detected_elevator_inside,
             "button_outside": button_detected_elevator_outside
         }
