@@ -6,14 +6,28 @@
 
 using namespace std;
 
+struct latest_RETRIEVE_STRUCT
+{
+    bool empty = true;
+
+    double velocity;
+    double altimeter;
+
+    vector<string> button_inside;
+    vector<vector<int>> button_outside;
+};
+
 class simulation
 {
 
 public:
+	void check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction);
+	void swap_trip_list();
+
 	bool add_floor_to_main_trip_list(int floor, bool direction);
 	bool add_floor_to_reserve_trip_list(int floor, bool direction);
-	bool pop_floor_of_trip_list(vector<int> trip_list);
-	vector<int> erase_floor_of_trip_list(vector<int> trip_list, int floor);
+	vector<int> pop_floor_of_trip_list(vector<int> trip_list);
+	bool erase_floor_of_trip_list(vector<int> trip_list, int floor);
 
 	bool update_main_trip_list_via_inside_data(vector<string> button_inside, bool direction);
 	bool update_main_trip_list_via_outside_data(vector<vector<int>> button_outside, bool direction);
@@ -56,6 +70,8 @@ public:
 	simulation s;
 	default_building_info info;
 
+	bool init =true;
+	bool lock = true;
 	bool current_direction;
 	long double current_velocity; 
 	long double current_altimeter;
@@ -66,5 +82,5 @@ public:
 	long double timeToVelocity(long double initial_velocity, long double final_velocity, long double acceleration);
 	long double distanceDuringAcceleration(long double initial_velocity, long double final_velocity, long double acceleration);
 
-	vector<vector<long double>> draw_vt_on_sigle_floor(int floor);
+	vector<vector<long double>> draw_vt_on_single_floor(int floor);
 };

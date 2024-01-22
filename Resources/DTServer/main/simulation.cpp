@@ -1,9 +1,80 @@
 #include "simulation.h"
+#include "elevator.h"
 //#include "matplotlibcpp.h"
 #include <algorithm>
+#include <unordered_set>
 
 using namespace std;
 //using namespace matplotlibcpp;
+
+void simulation::check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction)
+{
+    vector<double> velocity_comparison;
+    vector<double> altimeter_comparison;
+
+	vector<string> button_inside_add;
+	vector<string> button_inside_del;
+
+	vector<vector<int>> button_outside_add;
+	vector<vector<int>> button_outside_del;
+
+    //CHECK VELOCITY DIFFERENCE
+
+	//CHECK ALTIMETER DIFFERENCE
+
+	//CHECK BUTTON INSIDE DIFFERENCE
+	if(previous.button_inside == current.button_inside)
+	{
+		//cout << "BUTTON INSIDE DATA IS SAME TO PREVIOUS RETRIEVE..." << endl;
+	}
+	else if(previous.button_inside != current.button_inside)
+	{
+		this->update_main_trip_list_via_inside_data(current.button_inside, direction);
+	}
+
+	//CHECK BUTTON OUTSIDE DIFFERENCE
+	if(previous.button_outside == current.button_outside)
+	{
+		//cout << "BUTTON OUTSIDE DATA IS SAME TO PREVIOUS RETRIEVE..." << endl;
+	}
+	else if(previous.button_outside != current.button_outside)
+	{
+		this->update_main_trip_list_via_outside_data(current.button_outside, direction);
+	}
+
+	//IF INSIDE AND OUTSIDE DATA IS SAME
+
+
+}
+
+void simulation::swap_trip_list()
+{
+	if(this->main_trip_list.empty())
+	{
+		if(this->reserved_trip_list_up.size() > this->reserved_trip_list_down.size())
+		{
+			cout << "UP LIST IS BIGGER THAN DOWN LIST, SWAP MAIN LIST TO RESERVED UP..." << endl;
+			this->main_trip_list = vector<int>(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end());
+			this->reserved_trip_list_up.clear();
+		}
+		else if(this->reserved_trip_list_down.size() > this->reserved_trip_list_up.size())
+		{
+			cout << "DOWN LIST IS BIGGER THAN UP LIST, SWAP MAIN LIST TO RESERVED DOWN..." << endl;
+			this->main_trip_list = vector<int>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
+			this->reserved_trip_list_down.clear();
+		}
+		else if(this->reserved_trip_list_down.size() == this->reserved_trip_list_up.size() && !this->reserved_trip_list_down.empty())
+		{
+			cout << "BOTH RESERVED HAS SAME SIZE, SWAP MAIN LIST TO RESERVED DOWN..." << endl;
+			this->main_trip_list = vector<int>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
+			this->reserved_trip_list_down.clear();
+		}
+		else if(this->reserved_trip_list_down.empty() && this->reserved_trip_list_up.empty())
+		{
+			cout << "ALL LIST IS EMPTY CHANGE ELEVATOR TO RTD..." << endl;
+		}
+	}
+}
 
 bool simulation::add_floor_to_main_trip_list(int floor, bool direction)
 {
@@ -52,26 +123,25 @@ bool simulation::add_floor_to_reserve_trip_list(int floor, bool direction)
 	}
 }
 
-bool simulation::pop_floor_of_trip_list(vector<int> trip_list)
+vector<int> simulation::pop_floor_of_trip_list(vector<int> trip_list)
 {
 	try
 	{
 		trip_list.erase(trip_list.begin());
-		return true;
+		return trip_list;
 	}
 	catch (const std::exception& e)
 	{
 		std::cout << "Exception Caught on simulation.cpp : " << e.what();
-		return false;
 	}
 }
 
-vector<int> simulation::erase_floor_of_trip_list(vector<int> trip_list, int floor)
+bool simulation::erase_floor_of_trip_list(vector<int> trip_list, int floor)
 {
 	try
 	{
 		trip_list.erase(remove(trip_list.begin(), trip_list.end(), floor), trip_list.end());
-		return trip_list;
+		return true;
 	}
 	catch (const std::exception& e)
 	{
@@ -103,7 +173,15 @@ bool simulation::update_main_trip_list_via_inside_data(vector<string> button_ins
 		Currently_Erased.resize(iter_prev-Currently_Erased.begin());
 		Newly_Added.resize(iter_next-Newly_Added.begin());
 
-		cout << endl << "Newly Added Floor" << endl;
+		if(Newly_Added.empty())
+		{
+			cout << "Newly Added Floor is Empty" << endl;
+		}
+		else
+		{
+			cout << endl << "Newly Added Floor" << endl;
+		}
+
 		for(const auto& elem : Newly_Added)
 		{
 			floor = this->string_floor_to_int(elem);
@@ -113,19 +191,51 @@ bool simulation::update_main_trip_list_via_inside_data(vector<string> button_ins
 				add_floor_to_main_trip_list(floor, direction);
 				cout << "INSIDE FLOOR : " << floor << " IS REACHABLE, ADDING ON MAIN LIST..." << endl;
 			}
-			//else
-			//{
-			//	cout << "FLOOR : " << floor << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
-			//	add_floor_to_reserve_trip_list(floor, direction);
-			//}
+			else
+			{
+				cout << "FLOOR : " << floor << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
+				add_floor_to_reserve_trip_list(floor, direction);
+			}
 		}
 
-		cout << endl << "Currently Erased Floor" << endl;
+		if(Currently_Erased.empty())
+		{
+			cout << "Currently_Erased Floor is Empty" << endl;
+		}
+		else
+		{
+			cout << endl << "Currently_Erased Floor" << endl;
+		}
 		for(const auto& elem : Currently_Erased)
 		{
-			cout << " " << elem;
 			floor = this->string_floor_to_int(elem);
-			this->main_trip_list = erase_floor_of_trip_list(this->main_trip_list, floor);
+			auto it = find(this->main_trip_list.begin(), this->main_trip_list.end(), floor);
+			if(it != this->main_trip_list.end())
+			{
+				this->main_trip_list.erase(it);
+			}
+			else
+			{
+				it = find(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), floor);
+				if(it != this->reserved_trip_list_up.end())
+				{
+					this->main_trip_list.erase(it);
+				}
+				else
+				{
+					it = find(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), floor);
+					if(it != this->reserved_trip_list_down.end())
+					{
+						this->main_trip_list.erase(it);
+					}
+					else
+					{
+						cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
+						exit(0);
+					}
+				}
+			}
+			//this->main_trip_list.erase(remove(this->main_trip_list.begin(), this->main_trip_list.end(), floor), this->main_trip_list.end());
 			cout << "INSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << endl;
 		}
 		this->prev_button_inside_data = button_inside;
@@ -189,8 +299,42 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 			}
 			cout << endl;
 		}
-		// ASSUME THAT OUTSIDE FLOOR BUTTON CANNOT BE CANCELED
+
+		for(const vector<int>& elem : Currently_Erased)
+		{
+			int floor = elem[0];
+			auto it = find(this->main_trip_list.begin(), this->main_trip_list.end(), floor);
+			if(it != this->main_trip_list.end())
+			{
+				this->main_trip_list.erase(it);
+			}
+			else
+			{
+				it = find(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), floor);
+				if(it != this->reserved_trip_list_up.end())
+				{
+					this->reserved_trip_list_up.erase(it);
+				}
+				else
+				{
+					it = find(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), floor);
+					if(it != this->reserved_trip_list_down.end())
+					{
+						this->reserved_trip_list_down.erase(it);
+					}
+					else
+					{
+						cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
+						exit(0);
+					}
+				}
+			}
+			cout << "OUTSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << endl;
+		}
+		this->prev_button_outside_data = button_outside;
+
 		return true;
+
 	}
 	catch (const std::exception& e)
 	{
@@ -342,7 +486,7 @@ physics::physics(int underground_floor, int ground_floor, vector<double> altimet
 	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
 
 	this->current_velocity = 0.0;
-	this->current_altimeter = -55;
+	this->current_altimeter = -34;
 
 	this->current_direction = NULL;
 }
@@ -358,15 +502,17 @@ bool physics::set_initial_elevator_direction(vector<string> button_inside)
 	{
 		const int called_floor = this->s.string_floor_to_int(button_inside[0]);
 		const int called_floor_index = called_floor > 0 ? called_floor+(this->info.underground_floor-1) : called_floor+(this->info.underground_floor);
-		const int called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
+		const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
 		if(this->current_altimeter < called_floor_altimeter)
 		{
 			cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << endl;
+			this->current_direction = true;
 			return true;
 		}
 		else
 		{
 			cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << endl;
+			this->current_direction = false;
 			return false;
 		}
 	}
@@ -414,9 +560,9 @@ long double physics::distanceDuringAcceleration(long double initial_velocity, lo
     return distance_during_acceleration;
 }
 
-vector<vector<long double>> physics::draw_vt_on_sigle_floor(int floor)
+vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 {
-	vector<long double> time, velocity, distance;
+	vector<long double> each_tick_time_velocity_altimeter;
 	vector<vector<long double>> ret;
 
 	long double current_altimeter = this->current_altimeter;
@@ -441,13 +587,42 @@ vector<vector<long double>> physics::draw_vt_on_sigle_floor(int floor)
 
 	if(d_deceleration >= abs(called_floor_altimeter - current_altimeter))
 	{
+		// IF ELEVATOR CANNOT REACH TARGET FLOOR
+	}
+	else if(d_current_to_max_acceleration + d_max_to_zero_acceleration >= abs(called_floor_altimeter - current_altimeter)){
 		// IF ELEVATOR REACHES DESTINATION WITHOUT ACCELERATE TO MAXIMUM SPEED
+		long double accumulated_distance = 0.0;
+		long double t_to_max_acheive_velocity = 0.5 * sqrt((4*abs(called_floor_altimeter - current_altimeter))/acceleration);
+		long double max_acheive_velocity = acceleration * t_to_max_acheive_velocity;
+		const long double tick = 0.1;
+
+	    for (long double t = 0.0; t < t_to_max_acheive_velocity; t += tick) {
+			accumulated_distance = current_velocity * tick + 0.5 * acceleration * std::pow(t, 2);
+
+			ret.push_back({t, zero_velocity + acceleration * t, current_altimeter + accumulated_distance});
+			//cout << "TIME : " << t << " VELOCITY : " << current_velocity + acceleration * t << " ALT : " << current_altimeter + accumulated_distance << endl;
+	    }
+
+		for (long double t = 0.0; t < t_to_max_acheive_velocity; t += tick) {
+			accumulated_distance += (t_to_max_acheive_velocity - (t * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2));
+
+			if(abs(max_acheive_velocity - acceleration * t) < 1e-10)
+			{
+				ret.push_back({t_to_max_acheive_velocity+t, 0.0, called_floor_altimeter});
+			}
+			else
+			{
+				ret.push_back({t_to_max_acheive_velocity+t, max_acheive_velocity - acceleration * t, current_altimeter + accumulated_distance});
+			}
+			//cout << "TIME : " << t << " VELOCITY : " << max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed)) << " ALT : " << current_altimeter + accumulated_distance << endl;
+        }
+
 	}
 	else
 	{
 		// IF ELEVATOR REACHES DESTINATION WITH ACCELERATE TO MAXIMUM SPEED
 		long double accumulated_distance = 0.0;
-		const long double tick = 0.01;
+		const long double tick = 0.1;
 
 		long double t_constant_speed = (abs(called_floor_altimeter - current_altimeter) - d_current_to_max_acceleration - d_max_to_zero_acceleration) / max_velocity;
 		long double t_max_to_zero_deceleration = timeToVelocity(max_velocity, zero_velocity, acceleration);
@@ -460,10 +635,7 @@ vector<vector<long double>> physics::draw_vt_on_sigle_floor(int floor)
         for (long double t = 0.0; t < t_to_max_velocity; t += tick) {
 			accumulated_distance = current_velocity * tick + 0.5 * acceleration * std::pow(t, 2);
 
-            time.push_back(t);
-            velocity.push_back(current_velocity + acceleration * t);
-            distance.push_back(current_altimeter + accumulated_distance);
-
+			ret.push_back({t, current_velocity + acceleration * t, current_altimeter + accumulated_distance});
 			//cout << "TIME : " << t << " VELOCITY : " << current_velocity + acceleration * t << " ALT : " << current_altimeter + accumulated_distance << endl;
         }
 
@@ -471,10 +643,7 @@ vector<vector<long double>> physics::draw_vt_on_sigle_floor(int floor)
         for (long double t = t_to_max_velocity; t < t_to_max_velocity + t_constant_speed; t += tick) {
 			accumulated_distance += max_velocity * tick;
 
-            time.push_back(t);
-            velocity.push_back(max_velocity);
-            distance.push_back(current_altimeter + accumulated_distance);
-
+        	ret.push_back({t, max_velocity, current_altimeter + accumulated_distance});
 			//cout << "TIME : " << t << " VELOCITY : " << max_velocity << " ALT : " << current_altimeter + accumulated_distance << endl;
         }
 
@@ -484,26 +653,18 @@ vector<vector<long double>> physics::draw_vt_on_sigle_floor(int floor)
 
 			accumulated_distance += (max_velocity - (delta * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2));
 
-            time.push_back(t);
-
 			if(abs(max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed))) < 1e-10)
 			{
-				velocity.push_back(0.0);
-				distance.push_back(called_floor_altimeter);
+
+				ret.push_back({t, 0.0, called_floor_altimeter});
 			}
 			else
 			{
-				velocity.push_back(max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed)));
-				distance.push_back(current_altimeter + accumulated_distance);
+				ret.push_back({t, max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed)), current_altimeter + accumulated_distance});
 			}
-
 			//cout << "TIME : " << t << " VELOCITY : " << max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed)) << " ALT : " << current_altimeter + accumulated_distance << endl;
         }
 	}
-
-	ret.push_back(time);
-	ret.push_back(velocity);
-	ret.push_back(distance);
 
 	return ret;
 }

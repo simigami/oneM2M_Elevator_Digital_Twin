@@ -210,7 +210,7 @@ bool send_oneM2M::acp_validate(int num, ...)
 	auto response = client.request(request).get();
 	utility::string_t response_str_t = response.to_string();
 
-    std::wcout << L"ACP HTTP Response:\n" << response.to_string() << std::endl;
+    //std::wcout << L"ACP HTTP Response:\n" << response.to_string() << std::endl;
 
     if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
     {
@@ -371,7 +371,7 @@ void send_oneM2M::cnt_create(string originator_string, int num, ...)
     http_client client(utility::conversions::to_string_t(CNT_URL));
 	http_request request(methods::POST) ;
 
-    std::cout << "CNT : " << CNT_NAME << " Create Under " << CNT_URL << std::endl;
+    //std::cout << "CNT : " << CNT_NAME << " Create Under " << CNT_URL << std::endl;
 
     json::value json_data1;
     json_data1[U("m2m:cnt")][U("rn")] = json::value::string(utility::conversions::to_string_t(CNT_NAME));
@@ -484,7 +484,7 @@ void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload,
     http_client client(utility::conversions::to_string_t(CIN_URL));
 	http_request request(methods::POST) ;
 
-    std::cout <<  "CIN : " << CIN_NAME << " Create Under " << CIN_URL << std::endl;
+    //std::cout <<  "CIN : " << CIN_NAME << " Create Under " << CIN_URL << std::endl;
 
     json::value json_data;
 
@@ -515,7 +515,7 @@ void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload,
 	    json::value response_json = response.extract_json().get();
         std::wstring ri = response_json[U("m2m:cin")][U("ri")].as_string();
 
-        std::wcout  << L"RI is : " << ri << std::endl;
+        //std::wcout  << L"RI is : " << ri << std::endl;
     }
     // Print the HTTP response
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
@@ -623,7 +623,7 @@ void send_oneM2M::grp_create(const parse_json::parsed_struct& data)
 	    auto response = client.request(request).get();
 
 	    // Print the HTTP response
-	    std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
+	    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
 	    this->URL_TO_AE = this->URL_TO_CSE + "/" + ri;
     }

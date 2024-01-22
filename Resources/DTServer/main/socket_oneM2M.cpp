@@ -43,41 +43,6 @@ socket_oneM2M::~socket_oneM2M()
 {
 }
 
-void socket_oneM2M::check_cin_difference_between_previous_RETRIEVE(vector<vector<string>> previous, vector<vector<string>> current)
-{
-    vector<double> velocity_comparison;
-    vector<double> altimeter_comparison;
-
-    std::unordered_set<std::string> previous_set(previous[2].begin(), previous[2].end());
-    std::unordered_set<std::string> current_set(current[2].begin(), current[2].end());
-
-    //CHECK VELOCITY DIFFERENCE
-    velocity_comparison.push_back(std::stod(previous[0][0]));
-    velocity_comparison.push_back(std::stod(current[0][0]));
-
-	//CHECK ALTIMETER DIFFERENCE
-    altimeter_comparison.push_back(std::stod(previous[1][0]));
-    altimeter_comparison.push_back(std::stod(current[1][0]));
-
-	//CHECK BUTTON INSIDE DIFFERENCE
-
-    // Find added elements
-    for (const auto& element : current[2]) {
-        if (previous_set.find(element) == previous_set.end()) {
-            std::cout << "ADD FLOOR : " << element << std::endl;
-        }
-    }
-
-    // Find deleted elements
-    for (const auto& element : previous[2]) {
-        if (current_set.find(element) == current_set.end()) {
-            std::cout << "DELETED FLOOR : " << element << std::endl;
-        }
-    }
-
-    //CHECK BUTTON OUTSIDE DIFFERENCE
-}
-
 bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct parsed_struct)
 {
     try
@@ -241,6 +206,16 @@ bool socket_oneM2M::create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_st
 	        }
 	        s.cin_create(originator_name, "button_inside", payload, 3, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
 	    }
+
+        payload = "None";
+        for(int i = parsed_struct.underground_floor ; i>=1 ; i--)
+        {
+            s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
+        }
+        for(int i = 1 ; i<=parsed_struct.ground_floor ; i++)
+        {
+            s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], std::to_string(i));
+        }
 
         if(!parsed_struct.button_outside.empty())
         {

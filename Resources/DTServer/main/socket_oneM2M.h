@@ -36,8 +36,6 @@ public:
 	socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES);
 	~socket_oneM2M();
 
-	void check_cin_difference_between_previous_RETRIEVE(vector<vector<string>> previous, vector<vector<string>> current);
-
 	bool create_oneM2M_under_device_name(parse_json::parsed_struct parsed_struct);
 
 	bool create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_struct);

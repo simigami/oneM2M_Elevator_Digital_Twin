@@ -151,7 +151,7 @@ void DTServer::Running()
 
             // Create THIS CNT(Building's Elevator) Class
             this_Building_Elevator = new Elevator(parsed_struct, this->ACP_NAMES);
-            cout << "MEM ADDR : " << &this_Building_Elevator << endl;
+            //cout << "MEM ADDR : " << &this_Building_Elevator << endl;
 
             temp.class_of_all_Elevators.push_back(*this_Building_Elevator);
             temp.ACP_NAME = ACOR_NAME;

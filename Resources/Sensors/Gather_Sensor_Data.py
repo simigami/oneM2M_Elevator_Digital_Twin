@@ -18,13 +18,13 @@ def get_sensor_datas():
     altimeter = None
     temperature = None
     velocity = -10
-    button_detected_elevator_inside = ['1', '4', '7']
+    button_detected_elevator_inside = ['6', '7']
 
     underground_floor = 5
     ground_floor = 12
 
     # [0] = Outside Floor, [1] Moving Direction -> True = Up, False = Down
-    button_detected_elevator_outside = [[4, True], [8, True]] #[[8, True]]
+    button_detected_elevator_outside = [] #[[8, True]]
 
     header = {
         rf"{device_name}": []
