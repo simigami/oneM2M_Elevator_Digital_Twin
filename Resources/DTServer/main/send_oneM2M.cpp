@@ -84,6 +84,8 @@ void send_oneM2M::acp_create(int num, ...)
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR));
     request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(rn));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
+
 
     request.set_body(json_data);
 
@@ -98,6 +100,70 @@ void send_oneM2M::acp_create(int num, ...)
         exit(0);
     }
 
+}
+
+void send_oneM2M::acp_create_one_ACP(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...)
+{
+    int index = 0;
+
+    string ACP_URL = this->URL_TO_CSE;
+    string rn = DEFAULT_ACP_NAME;
+
+    va_list args;
+    va_start(args, num);
+
+	if(num>=1)
+    {
+        for(int i=1; i<=num; i++)
+        {
+	        auto ret = va_arg(args, const string);
+	        ACP_URL += "/";
+	        ACP_URL += ret;
+        }
+		va_end(args);
+    }
+
+    http_client client(utility::conversions::to_string_t(ACP_URL));
+	http_request request(methods::POST) ;
+
+    std::cout << "new ACP : " << "C" + data.building_name << " is Updating Update Under " << ACP_URL << std::endl;
+
+    json::value json_data;
+
+    json_data[U("m2m:acp")][U("pv")] = json::value::object();
+	json_data[U("m2m:acp")][U("pv")][U("acr")] =  json::value::array();
+    json_data[U("m2m:acp")][U("pv")][U("acr")][0] =  json::value::object();
+    json_data[U("m2m:acp")][U("pv")][U("acr")][0][U("acor")] = json::value::array();
+    json_data[U("m2m:acp")][U("pv")][U("acr")][0][U("acor")][0] =  json::value::string(utility::conversions::to_string_t(DEFAULT_ORIGINATOR));
+    json_data[U("m2m:acp")][U("pv")][U("acr")][0][U("acop")] = json::value::number(acop_all);
+
+    json_data[U("m2m:acp")][U("pvs")] = json::value::object();
+	json_data[U("m2m:acp")][U("pvs")][U("acr")] =  json::value::array();
+    json_data[U("m2m:acp")][U("pvs")][U("acr")][0] =  json::value::object();
+    json_data[U("m2m:acp")][U("pvs")][U("acr")][0][U("acor")] = json::value::array();
+    for(const string& ACOR_NAME : ACP_NAMES)
+    {
+	    json_data[U("m2m:acp")][U("pvs")][U("acr")][0][U("acor")][index] = json::value::string(utility::conversions::to_string_t("C"+ACOR_NAME));
+        index++;
+    }
+    json_data[U("m2m:acp")][U("pvs")][U("acr")][0][U("acop")] = json::value::number(acop_all);
+
+    // Create an HTTP request
+    request.headers().set_content_type(U("application/json; ty=1"));
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR));
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(rn));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
+
+    request.set_body(json_data);
+
+    auto response = client.request(request).get();
+
+    if(400 <= response.status_code()  && response.status_code() < 500)
+    {
+	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
+        exit(0);
+    }
 }
 
 void send_oneM2M::acp_update(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...)
@@ -153,6 +219,7 @@ void send_oneM2M::acp_update(const parse_json::parsed_struct& data, vector<strin
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR));
     request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(rn));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
     request.set_body(json_data);
 
@@ -205,13 +272,26 @@ bool send_oneM2M::acp_validate(int num, ...)
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	auto response = client.request(request).get();
 	utility::string_t response_str_t = response.to_string();
 
     //std::wcout << L"ACP HTTP Response:\n" << response.to_string() << std::endl;
 
+#ifndef oneM2M_tinyIoT
+    if(response.status_code() == 404)
+    {
+	    return false;
+    }
+    else if(response.status_code() == 200)
+    {
+	    return true;
+    }
+#endif
+
+#ifdef oneM2M_tinyIoT
     if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
     {
 	    return false;
@@ -234,6 +314,64 @@ bool send_oneM2M::acp_validate(int num, ...)
     else
     {
 	    return false;
+    }
+#endif
+}
+
+bool send_oneM2M::acp_exists(int num, ...)
+{
+    string originator_name = "CAdmin";
+    string ACOR_NAME = "C";
+    string URL = "";
+
+    URL += host_protocol;
+    URL += host_ip;
+    URL += ":";
+    URL += host_port;
+    URL += "/";
+    URL += DEFAULT_CSE_NAME;
+    URL += "/";
+    URL += DEFAULT_ACP_NAME;
+
+    va_list args;
+    va_start(args, num);
+
+	if(num>=1)
+    {
+        for(int i=1; i<=num; i++)
+        {
+	        auto ret = va_arg(args, const string);
+	        ACOR_NAME += ret;
+        }
+		va_end(args);
+        std::cout << "ACP Name : " << ACOR_NAME << " vaildate on URL : " << URL << std::endl;
+    }
+    else
+    {
+	     std::cout << "Default ACP Validation on URL : " << URL << std::endl;
+    }
+
+    http_client client(utility::conversions::to_string_t(URL));
+	http_request request(methods::GET);
+
+    // Create an HTTP request
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
+
+	auto response = client.request(request).get();
+	utility::string_t response_str_t = response.to_string();
+
+    //std::wcout << L"ACP HTTP Response:\n" << response.to_string() << std::endl;
+    if(response.status_code() == 404)
+    {
+	    return false;
+    }
+    else if(response.status_code() == 200)
+    {
+	    return true;
     }
 }
 
@@ -267,6 +405,7 @@ void send_oneM2M::ae_create(string AE_NAME, string CNT_NAME)
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
     request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(ri));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
     request.set_body(json_data);
 
@@ -322,7 +461,7 @@ bool send_oneM2M::ae_validate(const parse_json::parsed_struct& data, int num, ..
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	auto response = client.request(request).get();
 	utility::string_t response_str_t = response.to_string();
@@ -375,7 +514,11 @@ void send_oneM2M::cnt_create(string originator_string, int num, ...)
 
     json::value json_data1;
     json_data1[U("m2m:cnt")][U("rn")] = json::value::string(utility::conversions::to_string_t(CNT_NAME));
-    json_data1[U("m2m:cnt")][U("ri")] = json::value::string(utility::conversions::to_string_t(CNT_NAME));
+
+#ifdef oneM2M_tinyIoT
+	json_data1[U("m2m:cnt")][U("ri")] = json::value::string(utility::conversions::to_string_t(CNT_NAME));
+#endif
+
     json_data1[U("m2m:cnt")][U("lbl")] = json::value::array();
     json_data1[U("m2m:cnt")][U("lbl")][0] =json::value::string(U("key1"));
     json_data1[U("m2m:cnt")][U("lbl")][1] = json::value::string(U("key2"));
@@ -385,6 +528,8 @@ void send_oneM2M::cnt_create(string originator_string, int num, ...)
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
     request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(CNT_NAME));
+	request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
+
 
     request.set_body(json_data1);
 
@@ -437,7 +582,7 @@ bool send_oneM2M::cnt_validate(const parse_json::parsed_struct& data, int num, .
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	auto response = client.request(request).get();
 	utility::string_t response_str_t = response.to_string();
@@ -497,7 +642,7 @@ void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload,
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
     request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(CIN_NAME));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
     request.set_body(json_data);
 
@@ -559,7 +704,10 @@ http_response send_oneM2M::cin_retrieve_la(string originator, int num, ...)
     request.headers().set_content_type(U("application/json"));
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t("2a"));
+#ifndef oneM2M_tinyIoT
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+#endif
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
     // Send the HTTP request and wait for the response
     auto response = client.request(request).get();
@@ -616,6 +764,7 @@ void send_oneM2M::grp_create(const parse_json::parsed_struct& data)
 	    request.headers().add(U("User-Agent"),U("cpprestsdk"));
 	    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
 	    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(ri));
+        request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	    request.set_body(json_data);
 

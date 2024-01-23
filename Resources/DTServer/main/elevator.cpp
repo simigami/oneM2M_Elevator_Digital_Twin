@@ -42,7 +42,8 @@ void Elevator::run()
 
 	vector<vector<long double>> temp2;
 
-    system_clock::time_point start = system_clock::now();
+    system_clock::time_point start;
+    chrono::duration<double> interval;
 
 	socket_oneM2M s = this->sock;
 	physics p = this->p;
@@ -55,10 +56,15 @@ void Elevator::run()
 
 	bool flag;
 
-	while(true)
+	while(isRunning)
 	{
+		start = system_clock::now();
 		//GET RETRIEVED INFORMATIONS
 		retrieved_string = this->RETRIEVE_from_oneM2M();
+
+		//interval = system_clock::now() - start;
+		//cout << device_name << " RETRIEVE TIME : " << interval.count()<< " seconds..." << endl;
+		//start = system_clock::now();
 
 		//SET or MODIFY MAIN TRIP LIST
 		flag = this->latest.empty;
@@ -96,6 +102,10 @@ void Elevator::run()
 
 			it = current_goTo_Floor_vector_info.begin();
 			current_goTo_Floor_single_info = *it;
+
+			//interval = system_clock::now() - start;
+			//cout << device_name <<  "FIRST OPERTAION TIME : " << interval.count()<< " seconds..." << endl;
+			//start = system_clock::now();
 		}
 
 		//CHECK WITH PREVIOUS CIN RETRIEVE
@@ -148,7 +158,7 @@ void Elevator::run()
 							if(sim.main_trip_list.empty())
 							{
 								cout << "ALL TRIP LIST IS ENDED, SHUTTING DOWN ELEVATOR..." << endl;
-								exit(0);
+								isRunning = false;
 							}
 							else
 							{
@@ -181,21 +191,24 @@ void Elevator::run()
 				p.current_velocity = current_goTo_Floor_single_info[1];
 				p.current_altimeter = current_goTo_Floor_single_info[2];
 			}
+			//interval = system_clock::now() - start;
+			//cout << device_name <<  "DEFAULT OPERTAION TIME : " << interval.count()<< " seconds..." << endl;
+			//start = system_clock::now();
 		}
 
 		if(sim.main_trip_list.empty() && sim.reserved_trip_list_up.empty() && sim.reserved_trip_list_down.empty())
 		{
 			cout << "ALL TRIP LIST IS ENDED, SHUTTING DOWN ELEVATOR..." << endl;
-			exit(0);
+			isRunning = false;
 		}
 		else
 		{
-			cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " <<
-			current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
+			//cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " <<
+			//current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
 
 			latest_trip_list_info = sim.main_trip_list;
-			//std::this_thread::sleep_for(std::chrono::milliseconds(this->RETRIEVE_interval_millisecond));
 		}
+		std::this_thread::sleep_for(std::chrono::milliseconds(this->RETRIEVE_interval_millisecond));
 	}
 }
 

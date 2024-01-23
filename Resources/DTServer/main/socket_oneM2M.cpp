@@ -21,7 +21,21 @@ socket_oneM2M::socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<str
         this->socket_name = building_name;
 
         cout << "Updating This Building ACP\n"  << endl;
+#ifdef oneM2M_tinyIoT
         socket.acp_update(parsed_struct, ACP_NAMES, 0);
+#endif
+
+#ifndef oneM2M_tinyIoT
+        if(!socket.acp_exists(0))
+        {
+	        socket.acp_create_one_ACP(parsed_struct, ACP_NAMES, 0);
+        }
+        else
+        {
+	        socket.acp_update(parsed_struct, ACP_NAMES, 0);
+        }
+#endif
+
         socket.ae_create(this->building_name, this->device_name);
 
         Default_CNTs.emplace_back("Elevator_physics");

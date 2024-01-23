@@ -5,6 +5,19 @@
 
 #define acop_all 63
 
+#define oneM2M_tinyIoT
+
+#ifdef oneM2M_tinyIoT
+#define DEFAULT_RI "DT_RI"
+#define RVI "2a"
+#endif
+
+#ifndef oneM2M_tinyIoT
+#define oneM2M_ACME
+#define DEFAULT_RI "DT_RI"
+#define RVI "4"
+#endif
+
 using namespace web::http;
 
 class send_oneM2M {
@@ -15,8 +28,11 @@ public:
     void grp_create(const parse_json::parsed_struct& data);
 
     void acp_create(int num, ...);
-    void acp_update(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
+    void acp_create_one_ACP(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
+	void acp_update(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
     bool acp_validate(int num, ...);
+    bool acp_exists(int num, ...);
+
 
     void ae_create(string AE_NAME, string CNT_NAME);
     void ae_retrieve();

@@ -14,7 +14,7 @@ server_port = 10050
 
 def get_sensor_datas():
     building_name = "SejongAI"
-    device_name = "EV1"
+    device_name = "EV6"
     altimeter = None
     temperature = None
     velocity = -10

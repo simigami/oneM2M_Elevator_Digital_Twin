@@ -486,7 +486,7 @@ physics::physics(int underground_floor, int ground_floor, vector<double> altimet
 	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
 
 	this->current_velocity = 0.0;
-	this->current_altimeter = -34;
+	this->current_altimeter = -55;
 
 	this->current_direction = NULL;
 }
@@ -648,7 +648,7 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
         }
 
         // Deceleration phase
-        for (long double t = t_to_max_velocity + t_constant_speed + tick; t < t_to_max_velocity + t_constant_speed + t_max_to_zero_deceleration; t += tick) {
+        for (long double t = t_to_max_velocity + t_constant_speed; t < t_to_max_velocity + t_constant_speed + t_max_to_zero_deceleration; t += tick) {
 			const double delta = t - (t_to_max_velocity + t_constant_speed);
 
 			accumulated_distance += (max_velocity - (delta * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2));

@@ -36,9 +36,16 @@ DTServer::DTServer()
     // Check Default ACP Exists
     if(!this->ACP_Validation_Socket.acp_validate(0))
     {
+        
+		#ifdef oneM2M_tinyIoT
         std::cout << "NO Default ACP Found, Creating New Default ACP..." << std::endl;
 	    // Make Default ACP at CSE BASE
         ACP_Validation_Socket.acp_create(0);
+		#endif
+
+		#ifndef oneM2M_tinyIoT
+        std::cout << "ACME DON'T CREATE EMPTY ACP, STAYING..." << std::endl;
+		#endif
     }
     else
     {
