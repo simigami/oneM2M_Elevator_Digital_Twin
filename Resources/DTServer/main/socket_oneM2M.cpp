@@ -10,39 +10,54 @@ socket_oneM2M::socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<str
 {
 	system_clock::time_point start = system_clock::now();
 
+    int flag;
+
 	ACOR_NAME = parsed_struct.building_name;
     building_name = parsed_struct.building_name;
 
     originator_name = "C" + parsed_struct.device_name;
+    originator_name = "C" + parsed_struct.building_name;
     device_name = parsed_struct.device_name;
 
     try
     {
         this->socket_name = building_name;
 
-        cout << "Updating This Building ACP\n"  << endl;
-#ifdef oneM2M_tinyIoT
-        socket.acp_update(parsed_struct, ACP_NAMES, 0);
-#endif
+        cout << "CHECK This Building ACP..."  << endl;
+        flag = socket.acp_validate(building_name, 0);
 
-#ifndef oneM2M_tinyIoT
-        if(!socket.acp_exists(0))
+        if(flag == 0)
         {
+	        //ACP NOT EXISTS
+            cout << "ACP RESOURCE NOT EXISTS..."  << endl;
 	        socket.acp_create_one_ACP(parsed_struct, ACP_NAMES, 0);
+            socket.ae_create(this->building_name);
+        }
+        else if(flag == 1)
+        {
+	        //ACP EXISTS BUT BUILDING NAME NOT EXISTS
+            cout << "ACOR : " << "C" + this->building_name << " NOT EXISTS..."  << endl;
+            socket.acp_update(parsed_struct, ACP_NAMES, 0);
+            socket.ae_create(this->building_name);
         }
         else
         {
-	        socket.acp_update(parsed_struct, ACP_NAMES, 0);
+            cout << "ELEVATOR : " << this->device_name << " NOT EXISTS..."  << endl;
         }
-#endif
-
-        socket.ae_create(this->building_name, this->device_name);
+        //ACP and BUILDING NAME EXISTS BUT ELEVATOR NOT EXISTS
+	    socket.cnt_create(originator_name, 1, this->device_name);
 
         Default_CNTs.emplace_back("Elevator_physics");
         Default_CNTs.emplace_back("Elevator_button_inside");
         Default_CNTs.emplace_back("Elevator_button_outside");
 
         auto res = create_oneM2M_under_device_name(parsed_struct);
+
+        //DISCOVERY TESTING
+        //auto start = system_clock::now();
+        //socket.discovery_retrieve(originator_name, 0);
+        //chrono::duration<double> interval = system_clock::now() - start;;
+		//cout << device_name << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
     }
     catch(const std::exception& e)
     {
@@ -77,8 +92,6 @@ bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct pa
 
         Default_INSIDE_CNTs.emplace_back(device_name +"_Button_List");
         Default_INSIDE_CNTs.emplace_back(device_name +"_GoTo");
-
-        socket.cnt_create(originator_name, 1, device_name);
 
 	    for(const string& CNT_NAME : Default_CNTs)
         {

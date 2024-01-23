@@ -33,24 +33,6 @@ void print_elapsed_time()
 
 DTServer::DTServer()
 {
-    // Check Default ACP Exists
-    if(!this->ACP_Validation_Socket.acp_validate(0))
-    {
-        
-		#ifdef oneM2M_tinyIoT
-        std::cout << "NO Default ACP Found, Creating New Default ACP..." << std::endl;
-	    // Make Default ACP at CSE BASE
-        ACP_Validation_Socket.acp_create(0);
-		#endif
-
-		#ifndef oneM2M_tinyIoT
-        std::cout << "ACME DON'T CREATE EMPTY ACP, STAYING..." << std::endl;
-		#endif
-    }
-    else
-    {
-	    std::cout << "Default ACP Found..." << std::endl;
-    }
 }
 
 bool DTServer::exists_elevator(class_of_one_Building one_building, string device_name)
@@ -145,12 +127,11 @@ void DTServer::Running()
         string AE_NAME = parsed_struct.building_name;
         string CNT_NAME = parsed_struct.device_name;
 
-        // CHECK THIS ACP Exists
-        if(!ACP_Validation_Socket.acp_validate(1, ACOR_NAME))
-        {
-	        std::cout << "NO Building ACP Socket For Building : " << parsed_struct.building_name << std::endl;
-	        std::cout << "Creating New oneM2M Socket For this Building" << std::endl;
+        int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
 
+        // CHECK THIS ACP Exists
+        if(ACP_FLAG == 0 || ACP_FLAG == 1)
+        {
             this->ACP_NAMES.push_back(ACOR_NAME);
 
             // Create THIS AE(Building) Class
@@ -158,7 +139,6 @@ void DTServer::Running()
 
             // Create THIS CNT(Building's Elevator) Class
             this_Building_Elevator = new Elevator(parsed_struct, this->ACP_NAMES);
-            //cout << "MEM ADDR : " << &this_Building_Elevator << endl;
 
             temp.class_of_all_Elevators.push_back(*this_Building_Elevator);
             temp.ACP_NAME = ACOR_NAME;
@@ -166,12 +146,11 @@ void DTServer::Running()
             class_of_all_Buildings.push_back(temp);
 
             this_Building_Elevator->start_thread();
-
             //this_Building_Elevator.RETRIEVE_from_oneM2M(parsed_struct);
         }
         else
         {
-            std::cout << "Building Socket Exists, Check this CNT Exists..." << CNT_NAME << std::endl;
+            std::cout << "Building Exists, Check CNT" << CNT_NAME << " Exists..." << std::endl;
             // GET THIS BUILDING CLASS
             class_of_one_Building temp = this->get_building_vector(this->class_of_all_Buildings, ACOR_NAME);
 
@@ -186,6 +165,12 @@ void DTServer::Running()
                 // Update CIN Value
                 std::cout << "CNT Found, Updating CIN based on this CNT..." << CNT_NAME << std::endl;
                 This_Elevator.sock.create_oneM2M_under_CNTs(parsed_struct);
+
+                //DISCOVERY TEST
+                //auto start = system_clock::now();
+		        //This_Elevator.sock.socket.discovery_retrieve(This_Elevator.sock.originator_name, 0);
+		        //std::chrono::duration<double> interval = system_clock::now() - start;;
+				//cout << CNT_NAME << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
             }
             else
             {
@@ -193,7 +178,6 @@ void DTServer::Running()
                 std::cout << "CNT Not Found, Creating New CNT..." << CNT_NAME << std::endl;
 
                 this_Building_Elevator = new Elevator(parsed_struct, this->ACP_NAMES);
-	            cout << "MEM ADDR : " << &this_Building_Elevator << endl;
 
 	            temp.class_of_all_Elevators.push_back(*this_Building_Elevator);
 	            temp.ACP_NAME = ACOR_NAME;

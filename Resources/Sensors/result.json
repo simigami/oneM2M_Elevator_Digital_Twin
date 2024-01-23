@@ -5976,6 +5976,1965 @@
         "7"
       ],
       "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_193205",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_193319",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_200607",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_200707",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_200829",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_200934",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_201108",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_201217",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_201858",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_202736",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_202934",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_203049",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_203152",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_203415",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_203434",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_203902",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_203930",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_204112",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_204452",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_204557",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_204727",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_205012",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_205033",
+      "velocity": -7,
+      "altimeter": -41,
+      "temperature": 21,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_205724",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_210003",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_210045",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_210154",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_210209",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_210426",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_210436",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_211331",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_211440",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_211721",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_212013",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_212056",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_212240",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_212335",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_212813",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_213251",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_213359",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_214017",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_214151",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_214258",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_215315",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_215350",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_215421",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_215857",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_220014",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_220404",
+      "velocity": -7,
+      "altimeter": -41,
+      "temperature": 21,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_220554",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_220625",
+      "velocity": -7,
+      "altimeter": -41,
+      "temperature": 21,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_220941",
+      "velocity": -7,
+      "altimeter": -41,
+      "temperature": 21,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_220955",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_221157",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_221207",
+      "velocity": -7,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_221417",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_222354",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_222702",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_222820",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_223250",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_223520",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224034",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224100",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224209",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224405",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224430",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224923",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_225126",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_225717",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_225726",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_225848",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_225900",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230158",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230206",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230452",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230501",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230736",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_232051",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_232347",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_232822",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233127",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233218",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233642",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233813",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234017",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234421",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234444",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234632",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234758",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_235227",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_000608",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_000925",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "Gunza",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_000954",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_001236",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_001918",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002002",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002140",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002333",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002355",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002402",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002503",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003053",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003242",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003507",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003546",
+      "velocity": -8,
+      "altimeter": -41,
+      "temperature": 21,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003850",
+      "velocity": -8,
+      "altimeter": -41,
+      "temperature": 21,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003908",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003917",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_003921",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_011522",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_011605",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_011640",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_011732",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012506",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012634",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_014651",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_020225",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_021522",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_021803",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_021939",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_022014",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_022029",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "1",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV1",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_022617",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
     }
   ],
   "EV2": [
@@ -7072,6 +9031,534 @@
         "7"
       ],
       "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_224156",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230542",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_230745",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_232056",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_232337",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_232838",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233120",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233222",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_233622",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234031",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234200",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234412",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234658",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234709",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234806",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_234817",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_235237",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_235247",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_000625",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_000643",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_000935",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_001245",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002006",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002203",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002338",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "GUNZA",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002349",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002511",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "Gunza",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_002525",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012514",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012641",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_022251",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_022449",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV2",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_022513",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "1",
+        "6",
+        "7"
+      ],
+      "button_outside": []
     }
   ],
   "EV3": [
@@ -7820,6 +10307,54 @@
         "7"
       ],
       "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV3",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_001354",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV3",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012531",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV3",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012644",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
     }
   ],
   "EV4": [
@@ -7829,6 +10364,22 @@
       "underground_floor": 5,
       "ground_floor": 12,
       "timestamp": "2024_0123_181414",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV4",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0124_012705",
       "velocity": -10,
       "altimeter": -51,
       "temperature": 22,
@@ -7865,6 +10416,22 @@
       "underground_floor": 5,
       "ground_floor": 12,
       "timestamp": "2024_0123_181425",
+      "velocity": -10,
+      "altimeter": -51,
+      "temperature": 22,
+      "button_inside": [
+        "3",
+        "6",
+        "7"
+      ],
+      "button_outside": []
+    },
+    {
+      "building_name": "SejongAI",
+      "device_name": "EV6",
+      "underground_floor": 5,
+      "ground_floor": 12,
+      "timestamp": "2024_0123_193038",
       "velocity": -10,
       "altimeter": -51,
       "temperature": 22,

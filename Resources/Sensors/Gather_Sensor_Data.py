@@ -14,11 +14,11 @@ server_port = 10050
 
 def get_sensor_datas():
     building_name = "SejongAI"
-    device_name = "EV6"
+    device_name = "EV2"
     altimeter = None
     temperature = None
     velocity = -10
-    button_detected_elevator_inside = ['6', '7']
+    button_detected_elevator_inside = ['1', '6', '7']
 
     underground_floor = 5
     ground_floor = 12
@@ -38,7 +38,7 @@ def get_sensor_datas():
     if picture_output_path is None:
         return None
     else:
-        button_detected_elevator_inside = Detect_Button_Elevator_Inside.get_data(picture_output_path, debug=1)
+        #button_detected_elevator_inside = Detect_Button_Elevator_Inside.get_data(picture_output_path, debug=1)
 
         sensor_data = {
             "building_name": building_name,

@@ -43,7 +43,7 @@ void Elevator::run()
 	vector<vector<long double>> temp2;
 
     system_clock::time_point start;
-    chrono::duration<double> interval;
+    //chrono::duration<double> interval;
 
 	socket_oneM2M s = this->sock;
 	physics p = this->p;
@@ -203,8 +203,8 @@ void Elevator::run()
 		}
 		else
 		{
-			//cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " <<
-			//current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
+			cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " <<
+			current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
 
 			latest_trip_list_info = sim.main_trip_list;
 		}

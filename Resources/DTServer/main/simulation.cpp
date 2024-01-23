@@ -585,6 +585,8 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 	const int called_floor_index = floor > 0 ? floor+(this->info.underground_floor-1) : floor+(this->info.underground_floor);
 	const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
 
+	const long double tick = 0.1;
+
 	if(d_deceleration >= abs(called_floor_altimeter - current_altimeter))
 	{
 		// IF ELEVATOR CANNOT REACH TARGET FLOOR
@@ -594,7 +596,6 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 		long double accumulated_distance = 0.0;
 		long double t_to_max_acheive_velocity = 0.5 * sqrt((4*abs(called_floor_altimeter - current_altimeter))/acceleration);
 		long double max_acheive_velocity = acceleration * t_to_max_acheive_velocity;
-		const long double tick = 0.1;
 
 	    for (long double t = 0.0; t < t_to_max_acheive_velocity; t += tick) {
 			accumulated_distance = current_velocity * tick + 0.5 * acceleration * std::pow(t, 2);
@@ -614,15 +615,14 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 			{
 				ret.push_back({t_to_max_acheive_velocity+t, max_acheive_velocity - acceleration * t, current_altimeter + accumulated_distance});
 			}
-			//cout << "TIME : " << t << " VELOCITY : " << max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed)) << " ALT : " << current_altimeter + accumulated_distance << endl;
+			//cout << "TIME : " << t << " VELOCITY : " << max_acheive_velocity - acceleration * t << " ALT : " << current_altimeter + accumulated_distance << endl;
         }
-
 	}
 	else
 	{
 		// IF ELEVATOR REACHES DESTINATION WITH ACCELERATE TO MAXIMUM SPEED
 		long double accumulated_distance = 0.0;
-		const long double tick = 0.1;
+		
 
 		long double t_constant_speed = (abs(called_floor_altimeter - current_altimeter) - d_current_to_max_acceleration - d_max_to_zero_acceleration) / max_velocity;
 		long double t_max_to_zero_deceleration = timeToVelocity(max_velocity, zero_velocity, acceleration);

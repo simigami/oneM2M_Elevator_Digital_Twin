@@ -37,7 +37,7 @@ send_oneM2M::send_oneM2M(parse_json::parsed_struct parsed_struct)
 
     if(!device_name.empty())
     {
-	    URL_TO_AE = temp + "/" + device_name;
+	    URL_TO_AE = temp + "/" + buliding_name;
     }
     else
     {
@@ -99,7 +99,6 @@ void send_oneM2M::acp_create(int num, ...)
 	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
         exit(0);
     }
-
 }
 
 void send_oneM2M::acp_create_one_ACP(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...)
@@ -112,23 +111,23 @@ void send_oneM2M::acp_create_one_ACP(const parse_json::parsed_struct& data, vect
     va_list args;
     va_start(args, num);
 
-	if(num>=1)
+    for(int i=1; i<=num; i++)
     {
-        for(int i=1; i<=num; i++)
-        {
-	        auto ret = va_arg(args, const string);
-	        ACP_URL += "/";
-	        ACP_URL += ret;
-        }
-		va_end(args);
+        auto ret = va_arg(args, const string);
+        ACP_URL += "/";
+        ACP_URL += ret;
     }
+
+	va_end(args);
 
     http_client client(utility::conversions::to_string_t(ACP_URL));
 	http_request request(methods::POST) ;
 
-    std::cout << "new ACP : " << "C" + data.building_name << " is Updating Update Under " << ACP_URL << std::endl;
+    std::cout << "new ACP : " << "C" + data.building_name << " is CREATING Under " << ACP_URL << std::endl;
 
     json::value json_data;
+
+    json_data[U("m2m:acp")][U("rn")] = json::value::string(utility::conversions::to_string_t(rn));
 
     json_data[U("m2m:acp")][U("pv")] = json::value::object();
 	json_data[U("m2m:acp")][U("pv")][U("acr")] =  json::value::array();
@@ -163,6 +162,11 @@ void send_oneM2M::acp_create_one_ACP(const parse_json::parsed_struct& data, vect
     {
 	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
         exit(0);
+    }
+    else
+    {
+		utility::string_t response_body_string = response.extract_string().get();
+	    //std::wcout << L"ACP HTTP Response:\n" << response_body_string << std::endl;
     }
 }
 
@@ -232,10 +236,10 @@ void send_oneM2M::acp_update(const parse_json::parsed_struct& data, vector<strin
     }
 }
 
-bool send_oneM2M::acp_validate(int num, ...)
+// return 0 = No ACP, return 1 = Has ACP, but No ACP NAME, 2 = Has ACP, and Has ACP NAME
+int send_oneM2M::acp_validate(string ACP_NAME, int num, ...)
 {
     string originator_name = "CAdmin";
-    string ACOR_NAME = "C";
     string URL = "";
 
     URL += host_protocol;
@@ -255,14 +259,15 @@ bool send_oneM2M::acp_validate(int num, ...)
         for(int i=1; i<=num; i++)
         {
 	        auto ret = va_arg(args, const string);
-	        ACOR_NAME += ret;
+            URL += "/";
+            URL += ret;
         }
 		va_end(args);
-        std::cout << "ACP Name : " << ACOR_NAME << " vaildate on URL : " << URL << std::endl;
+        std::cout << "ACP Name : " << ACP_NAME << " validation on URL : " << URL << std::endl;
     }
     else
     {
-	     std::cout << "Default ACP Validation on URL : " << URL << std::endl;
+        std::cout << "ACP Name : " << ACP_NAME << " validation on URL : " << URL << std::endl;
     }
 
     http_client client(utility::conversions::to_string_t(URL));
@@ -276,39 +281,42 @@ bool send_oneM2M::acp_validate(int num, ...)
     request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	auto response = client.request(request).get();
-	utility::string_t response_str_t = response.to_string();
+    utility::string_t response_body_string = response.extract_string().get();
 
-    //std::wcout << L"ACP HTTP Response:\n" << response.to_string() << std::endl;
+    //std::wcout << L"ACP HTTP Response:\n" << response_body_string << std::endl;
 
 #ifndef oneM2M_tinyIoT
     if(response.status_code() == 404)
     {
-	    return false;
+	    return 0;
     }
     else if(response.status_code() == 200)
     {
-	    return true;
+        if(response_body_string.find(utility::conversions::to_string_t(ACP_NAME)) != utility::string_t::npos)
+        {
+	        return 2;
+        }
+        else
+        {
+	     	return 1;
+        }
     }
 #endif
 
 #ifdef oneM2M_tinyIoT
-    if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
+    if(response_body_string.find(U("m2m:cb")) != utility::string_t::npos)
     {
-	    return false;
+	    return 0;
     }
-    else if(response_str_t.find(U("m2m:acp")) != utility::string_t::npos)
+    else if(response_body_string.find(U("m2m:acp")) != utility::string_t::npos)
     {
-        if(num==0) 
+        if(response_body_string.find(utility::conversions::to_string_t(ACP_NAME)) != utility::string_t::npos)
         {
-	        return true;
-        }
-        else if(response_str_t.find(utility::conversions::to_string_t(ACOR_NAME)) != utility::string_t::npos)
-        {
-        	return true;
+        	return 2;
         }
         else
         {
-	        return false;
+	        return 1;
         }
     }
     else
@@ -318,69 +326,11 @@ bool send_oneM2M::acp_validate(int num, ...)
 #endif
 }
 
-bool send_oneM2M::acp_exists(int num, ...)
-{
-    string originator_name = "CAdmin";
-    string ACOR_NAME = "C";
-    string URL = "";
-
-    URL += host_protocol;
-    URL += host_ip;
-    URL += ":";
-    URL += host_port;
-    URL += "/";
-    URL += DEFAULT_CSE_NAME;
-    URL += "/";
-    URL += DEFAULT_ACP_NAME;
-
-    va_list args;
-    va_start(args, num);
-
-	if(num>=1)
-    {
-        for(int i=1; i<=num; i++)
-        {
-	        auto ret = va_arg(args, const string);
-	        ACOR_NAME += ret;
-        }
-		va_end(args);
-        std::cout << "ACP Name : " << ACOR_NAME << " vaildate on URL : " << URL << std::endl;
-    }
-    else
-    {
-	     std::cout << "Default ACP Validation on URL : " << URL << std::endl;
-    }
-
-    http_client client(utility::conversions::to_string_t(URL));
-	http_request request(methods::GET);
-
-    // Create an HTTP request
-    request.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
-    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
-    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
-
-	auto response = client.request(request).get();
-	utility::string_t response_str_t = response.to_string();
-
-    //std::wcout << L"ACP HTTP Response:\n" << response.to_string() << std::endl;
-    if(response.status_code() == 404)
-    {
-	    return false;
-    }
-    else if(response.status_code() == 200)
-    {
-	    return true;
-    }
-}
-
-void send_oneM2M::ae_create(string AE_NAME, string CNT_NAME)
+void send_oneM2M::ae_create(string AE_NAME)
 {
     string CSE_URL = this->URL_TO_CSE;
 
 	string building_name = AE_NAME;
-    string device_name = CNT_NAME;
 
     string originator = "C" + building_name;
     string api = "NBuilding";
@@ -464,15 +414,15 @@ bool send_oneM2M::ae_validate(const parse_json::parsed_struct& data, int num, ..
     request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	auto response = client.request(request).get();
-	utility::string_t response_str_t = response.to_string();
+	utility::string_t response_body_string = response.extract_string().get();
 
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
-    if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
+    if(response_body_string.find(U("m2m:cb")) != utility::string_t::npos)
     {
 	    return false;
     }
-    else if(response_str_t.find(U("m2m:ae")) != utility::string_t::npos)
+    else if(response_body_string.find(U("m2m:ae")) != utility::string_t::npos)
     {
         return true;
     }
@@ -585,15 +535,15 @@ bool send_oneM2M::cnt_validate(const parse_json::parsed_struct& data, int num, .
     request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
 	auto response = client.request(request).get();
-	utility::string_t response_str_t = response.to_string();
+	utility::string_t response_body_string = response.extract_string().get();
 
     //std::wcout << L"CNT HTTP Response:\n" << response.to_string() << std::endl;
 
-    if(response_str_t.find(U("m2m:cb")) != utility::string_t::npos)
+    if(response_body_string.find(U("m2m:cb")) != utility::string_t::npos)
     {
 	    return false;
     }
-    else if(response_str_t.find(U("m2m:cnt")) != utility::string_t::npos)
+    else if(response_body_string.find(U("m2m:cnt")) != utility::string_t::npos)
     {
         return true;
     }
@@ -633,7 +583,7 @@ void send_oneM2M::cin_create(string originator, string CIN_NAME, string payload,
 
     json::value json_data;
 
-	json_data[U("m2m:cin")][U("rn")] = json::value::string(utility::conversions::to_string_t(CIN_NAME));
+	//json_data[U("m2m:cin")][U("rn")] = json::value::string(utility::conversions::to_string_t(CIN_NAME));
 	//json_data[U("m2m:cin")][U("cnf")] = json::value::string(utility::conversions::to_string_t("application/json"));
     json_data[U("m2m:cin")][U("con")] =json::value::string(utility::conversions::to_string_t(payload));
 
@@ -723,6 +673,98 @@ http_response send_oneM2M::cin_retrieve_la(string originator, int num, ...)
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
     return response;
+}
+
+void send_oneM2M::discovery_retrieve(string originator, int num, ...)
+{
+    //FILTER USAGE MUST SET TO 1 FOR USE DISCOVERY
+    int fu = 1;
+
+    //RETURN ITS RESOURCE THAT HAS TYPE NUMBER
+    int ty = 4;
+
+     //RETURN PARENT RESOURCE THAT HAS CHILD TYPE NUMBER
+    //IF IN NESTED CNT, IT RETURNS ALL OF PARENT CNT, AE, and CSEs
+    int chty = 3;
+
+    //RETURN CHILD RESOURCE THAT HAS PARENT TYPE NUMBER
+    //if AE - CNT1 - CNT2 - CIN1, and pty = 3(CNT) => IT RETURNS CNT2, and CIN1
+    int pty = 3;
+
+    //MAXIMUM NUMBER of RETURNED RESOURCES
+    int lim = 5;
+
+    int drt = 2;
+
+    int rcn = 8;
+    //RETURNS RESOURCE THAT CREATED BEFORE THIS TIMESTAMP
+    string crb = "20240124T012530";
+    
+    //RETURNS RESOURCE THAT CREATED AFTER THIS TIMESTAMP
+    string cra = "20240124T012630";
+
+    va_list args;
+    va_start(args, num);
+
+    string DIS_URL = this->URL_TO_AE;
+
+    for(int i=1; i<=num; i++)
+    {
+        auto ret = va_arg(args, const string);
+        DIS_URL += "/";
+        DIS_URL += ret;
+    }
+	va_end(args);
+    
+    DIS_URL +=
+        "?rcn=" + std::to_string(rcn);
+        //"?fu=" + std::to_string(fu) +
+        "&ty=" + std::to_string(ty) +
+        //"&cra=" + cra +
+        //"&crb=" + crb;
+        //"&lim=" + std::to_string(lim);
+
+#ifndef oneM2M_tinyIoT
+        DIS_URL += "&drt=" + std::to_string(drt);
+#endif
+
+    http_client client(utility::conversions::to_string_t(DIS_URL));
+	http_request request(methods::GET) ;
+
+    std::cout << "RCN DISCOVERY Under : " << DIS_URL << std::endl;
+
+    // Create an HTTP request
+    request.headers().set_content_type(U("application/json"));
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
+#ifndef oneM2M_tinyIoT
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+#endif
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
+
+    // Send the HTTP request and wait for the response
+    auto response = client.request(request).get();
+
+    if(response.status_code() == status_codes::OK)
+    {
+        json::value response_json = response.extract_json().get();
+
+        /*
+         *    	json::array arr = response_json[U("m2m:uril")].as_array();
+
+        std::wcout << L"DISCOVERED RESOURCE :" <<  std::endl;
+        for(const json::value& elem : arr)
+        {
+	        std::wcout << elem.as_string() << endl;
+        } 
+         */
+
+    }
+    // Print the HTTP response
+    else
+    {
+	     std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;   
+    }
 }
 
 void send_oneM2M::grp_create(const parse_json::parsed_struct& data)

@@ -5,7 +5,7 @@
 
 #define acop_all 63
 
-#define oneM2M_tinyIoT
+//#define oneM2M_tinyIoT
 
 #ifdef oneM2M_tinyIoT
 #define DEFAULT_RI "DT_RI"
@@ -30,14 +30,11 @@ public:
     void acp_create(int num, ...);
     void acp_create_one_ACP(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
 	void acp_update(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
-    bool acp_validate(int num, ...);
-    bool acp_exists(int num, ...);
+    int acp_validate(string ACP_NAME, int num, ...);
 
-
-    void ae_create(string AE_NAME, string CNT_NAME);
+    void ae_create(string AE_NAME);
     void ae_retrieve();
     bool ae_validate(const parse_json::parsed_struct& data, int num, ...);
-
 
     //void cnt_create(const parse_json::parsed_struct& data, int num, ...);
     void cnt_create(string originator_string, int num, ...);
@@ -49,6 +46,8 @@ public:
     http_response cin_retrieve_la(string originator, int num, ...);
 
     bool cnt_validate(const string& CNT_NAME);
+
+    void discovery_retrieve(string originator, int num, ...);
 
 
 private:
