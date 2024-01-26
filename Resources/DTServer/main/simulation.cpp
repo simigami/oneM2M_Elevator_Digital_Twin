@@ -1,26 +1,14 @@
 #include "simulation.h"
 #include "elevator.h"
-//#include "matplotlibcpp.h"
 #include <algorithm>
 #include <unordered_set>
 
 using namespace std;
-//using namespace matplotlibcpp;
 
 void simulation::check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction)
 {
-    vector<double> velocity_comparison;
-    vector<double> altimeter_comparison;
-
 	vector<string> button_inside_add;
 	vector<string> button_inside_del;
-
-	vector<vector<int>> button_outside_add;
-	vector<vector<int>> button_outside_del;
-
-    //CHECK VELOCITY DIFFERENCE
-
-	//CHECK ALTIMETER DIFFERENCE
 
 	//CHECK BUTTON INSIDE DIFFERENCE
 	if(previous.button_inside == current.button_inside)
@@ -54,19 +42,20 @@ void simulation::swap_trip_list()
 		if(this->reserved_trip_list_up.size() > this->reserved_trip_list_down.size())
 		{
 			cout << "UP LIST IS BIGGER THAN DOWN LIST, SWAP MAIN LIST TO RESERVED UP..." << endl;
-			this->main_trip_list = vector<int>(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end());
+			this->main_trip_list = vector<vector<int>>(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end());
 			this->reserved_trip_list_up.clear();
 		}
 		else if(this->reserved_trip_list_down.size() > this->reserved_trip_list_up.size())
 		{
 			cout << "DOWN LIST IS BIGGER THAN UP LIST, SWAP MAIN LIST TO RESERVED DOWN..." << endl;
-			this->main_trip_list = vector<int>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
+			this->main_trip_list = vector<vector<int>>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
 			this->reserved_trip_list_down.clear();
 		}
 		else if(this->reserved_trip_list_down.size() == this->reserved_trip_list_up.size() && !this->reserved_trip_list_down.empty())
 		{
 			cout << "BOTH RESERVED HAS SAME SIZE, SWAP MAIN LIST TO RESERVED DOWN..." << endl;
-			this->main_trip_list = vector<int>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
+			this->main_trip_list = vector<vector<int>>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
+			
 			this->reserved_trip_list_down.clear();
 		}
 		else if(this->reserved_trip_list_down.empty() && this->reserved_trip_list_up.empty())
@@ -76,19 +65,37 @@ void simulation::swap_trip_list()
 	}
 }
 
-bool simulation::add_floor_to_main_trip_list(int floor, bool direction)
+bool simulation::bigger(vector<int>& v1, vector<int>& v2)
 {
+	return v1[0] < v2[0];
+}
+
+bool simulation::smaller(vector<int>& v1, vector<int>& v2)
+{
+	return v1[0] > v2[0];
+}
+
+bool simulation::add_floor_to_main_trip_list(int floor, bool direction, bool inout)
+{
+	auto greaterComparator = [](const std::vector<int>& vec1, const std::vector<int>& vec2) {
+        return vec1[0] < vec2[0];
+    };
+
+	auto lesserComparator = [](const std::vector<int>& vec1, const std::vector<int>& vec2) {
+        return vec1[0] > vec2[0];
+    };
+
 	try
 	{
 		if(direction)
 		{
-			this->main_trip_list.push_back(floor);
-			sort(this->main_trip_list.begin(), this->main_trip_list.end());
+			this->main_trip_list.push_back({floor, inout});
+			sort(this->main_trip_list.begin(), this->main_trip_list.end(), greaterComparator);
 		}
 		else
 		{
-			this->main_trip_list.push_back(floor);
-			sort(this->main_trip_list.begin(), this->main_trip_list.end(), greater<int>());
+			this->main_trip_list.push_back({floor, inout});
+			sort(this->main_trip_list.begin(), this->main_trip_list.end(), lesserComparator);
 		}
 		return true;
 	}
@@ -100,19 +107,27 @@ bool simulation::add_floor_to_main_trip_list(int floor, bool direction)
 }
 
 // THIS DIRECTION IS DIRECTION OF CALLED FLOOR, NOT ELEVATOR ITSELF
-bool simulation::add_floor_to_reserve_trip_list(int floor, bool direction)
+bool simulation::add_floor_to_reserve_trip_list(int floor, bool direction, bool inout)
 {
+	auto greaterComparator = [](const std::vector<int>& vec1, const std::vector<int>& vec2) {
+        return vec1[0] < vec2[0];
+    };
+
+	auto lesserComparator = [](const std::vector<int>& vec1, const std::vector<int>& vec2) {
+        return vec1[0] > vec2[0];
+    };
+
 	try
 	{
 		if(direction)
 		{
-			this->reserved_trip_list_up.push_back(floor);
-			sort(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end());
+			this->reserved_trip_list_up.push_back({floor, inout});
+			sort(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), greaterComparator);
 		}
 		else
 		{
-			this->reserved_trip_list_down.push_back(floor);
-			sort(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), greater<int>());
+			this->reserved_trip_list_down.push_back({floor, inout});
+			sort(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), lesserComparator);
 		}
 		return true;
 	}
@@ -123,7 +138,7 @@ bool simulation::add_floor_to_reserve_trip_list(int floor, bool direction)
 	}
 }
 
-vector<int> simulation::pop_floor_of_trip_list(vector<int> trip_list)
+vector<vector<int>> simulation::pop_floor_of_trip_list(vector<vector<int>> trip_list)
 {
 	try
 	{
@@ -136,11 +151,21 @@ vector<int> simulation::pop_floor_of_trip_list(vector<int> trip_list)
 	}
 }
 
-bool simulation::erase_floor_of_trip_list(vector<int> trip_list, int floor)
+bool simulation::erase_floor_of_trip_list(vector<vector<int>> trip_list, int floor)
 {
 	try
 	{
-		trip_list.erase(remove(trip_list.begin(), trip_list.end(), floor), trip_list.end());
+		//trip_list.erase(remove(trip_list.begin(), trip_list.end(), floor), trip_list.end());
+		trip_list.erase(
+			remove_if(
+				trip_list.begin(), trip_list.end(),
+				[floor](const vector<int>& vec)
+				{
+					return !vec.empty() && vec[0] == floor;
+				}
+			),
+			trip_list.end()
+		);
 		return true;
 	}
 	catch (const std::exception& e)
@@ -188,13 +213,13 @@ bool simulation::update_main_trip_list_via_inside_data(vector<string> button_ins
 			flag = check_reachability();
 			if(flag)
 			{
-				add_floor_to_main_trip_list(floor, direction);
+				add_floor_to_main_trip_list(floor, direction, 1);
 				cout << "INSIDE FLOOR : " << floor << " IS REACHABLE, ADDING ON MAIN LIST..." << endl;
 			}
 			else
 			{
 				cout << "FLOOR : " << floor << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
-				add_floor_to_reserve_trip_list(floor, direction);
+				add_floor_to_reserve_trip_list(floor, direction, 1);
 			}
 		}
 
@@ -205,38 +230,38 @@ bool simulation::update_main_trip_list_via_inside_data(vector<string> button_ins
 		else
 		{
 			cout << endl << "Currently_Erased Floor" << endl;
-		}
-		for(const auto& elem : Currently_Erased)
-		{
-			floor = this->string_floor_to_int(elem);
-			auto it = find(this->main_trip_list.begin(), this->main_trip_list.end(), floor);
-			if(it != this->main_trip_list.end())
+			for(const auto& elem : Currently_Erased)
 			{
-				this->main_trip_list.erase(it);
-			}
-			else
-			{
-				it = find(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), floor);
-				if(it != this->reserved_trip_list_up.end())
+				floor = this->string_floor_to_int(elem);
+				auto it = find_if(this->main_trip_list.begin(), this->main_trip_list.end(),[floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
+				if(it != this->main_trip_list.end())
 				{
 					this->main_trip_list.erase(it);
 				}
 				else
 				{
-					it = find(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), floor);
-					if(it != this->reserved_trip_list_down.end())
+					it =  find_if(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), [floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
+					if(it != this->reserved_trip_list_up.end())
 					{
-						this->main_trip_list.erase(it);
+						this->reserved_trip_list_up.erase(it);
 					}
 					else
 					{
-						cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
-						exit(0);
+						it =  find_if(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), [floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
+						if(it != this->reserved_trip_list_down.end())
+						{
+							this->reserved_trip_list_down.erase(it);
+						}
+						else
+						{
+							cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
+							exit(0);
+						}
 					}
 				}
+				//this->main_trip_list.erase(remove(this->main_trip_list.begin(), this->main_trip_list.end(), floor), this->main_trip_list.end());
+				cout << "INSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << endl;
 			}
-			//this->main_trip_list.erase(remove(this->main_trip_list.begin(), this->main_trip_list.end(), floor), this->main_trip_list.end());
-			cout << "INSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << endl;
 		}
 		this->prev_button_inside_data = button_inside;
 
@@ -283,19 +308,19 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 			{
 				if(direction == req_direction)
 				{
-					add_floor_to_main_trip_list(req_floor, direction);
+					add_floor_to_main_trip_list(req_floor, direction, 0);
 					cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << endl;
 				}
 				else
 				{
-					add_floor_to_reserve_trip_list(req_floor, req_direction);
+					add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
 					cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION, ADDING ON RESERVED LIST..." << endl;
 				}
 			}
 			else
 			{
 				cout << "OUTSIDE FLOOR : " << req_floor << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
-				add_floor_to_reserve_trip_list(req_floor, req_direction);
+				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
 			}
 			cout << endl;
 		}
@@ -303,21 +328,21 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 		for(const vector<int>& elem : Currently_Erased)
 		{
 			int floor = elem[0];
-			auto it = find(this->main_trip_list.begin(), this->main_trip_list.end(), floor);
+			auto it = find_if(this->main_trip_list.begin(), this->main_trip_list.end(),[floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
 			if(it != this->main_trip_list.end())
 			{
 				this->main_trip_list.erase(it);
 			}
 			else
 			{
-				it = find(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), floor);
+				it = find_if(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(),[floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
 				if(it != this->reserved_trip_list_up.end())
 				{
 					this->reserved_trip_list_up.erase(it);
 				}
 				else
 				{
-					it = find(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), floor);
+					it = find_if(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(),[floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
 					if(it != this->reserved_trip_list_down.end())
 					{
 						this->reserved_trip_list_down.erase(it);
@@ -334,7 +359,6 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 		this->prev_button_outside_data = button_outside;
 
 		return true;
-
 	}
 	catch (const std::exception& e)
 	{
@@ -347,7 +371,7 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 {
 	bool flag;
-	int size = button_inside.size();
+	size_t size = button_inside.size();
 	vector<int> button_inside_int;
 
 	for(const auto& elem : button_inside)
@@ -358,15 +382,15 @@ bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 	{
 		if(direction)
 		{
-			for(int index = 0; index < size; index++)
+			for(auto index = 0; index < size; index++)
 			{
-				if(this->main_trip_list[index] != button_inside_int[index])
+				if(this->main_trip_list[index][0] != button_inside_int[index])
 				{
 					//CHECK IF NEW TRIP IS REACHABLE
 					flag = check_reachability();
 					if(flag)
 					{
-						add_floor_to_main_trip_list(button_inside_int[index], direction);
+						add_floor_to_main_trip_list(button_inside_int[index], direction, 1);
 						cout << "FLOOR : " << button_inside_int[index] << " IS MISSING, ADDING ON MAIN LIST..." << endl;
 
 						return true;
@@ -374,7 +398,7 @@ bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 					else
 					{
 						cout << "FLOOR : " << button_inside_int[index] << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
-						add_floor_to_reserve_trip_list(button_inside_int[index], direction);
+						add_floor_to_reserve_trip_list(button_inside_int[index], direction, 1);
 					}
 				}
 			}
@@ -383,15 +407,15 @@ bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 		}
 		else
 		{
-			for(int index = 0; index < size; index++)
+			for(auto index = 0; index < size; index++)
 			{
-				if(this->main_trip_list[size-1-index] != button_inside_int[index])
+				if(this->main_trip_list[size-1-index][0] != button_inside_int[index])
 				{
 					//CHECK IF NEW TRIP IS REACHABLE
 					flag = check_reachability();
 					if(flag)
 					{
-						add_floor_to_main_trip_list(button_inside_int[index], direction);
+						add_floor_to_main_trip_list(button_inside_int[index], direction, 1);
 						cout << "FLOOR : " << button_inside_int[index] << " IS MISSING, ADDING ON MAIN LIST..." << endl;
 
 						return true;
@@ -399,7 +423,7 @@ bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 					else
 					{
 						cout << "FLOOR : " << button_inside_int[index] << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
-						add_floor_to_reserve_trip_list(button_inside_int[index], direction);
+						add_floor_to_reserve_trip_list(button_inside_int[index], direction, 1);
 					}
 				}
 			}
@@ -446,21 +470,30 @@ const void simulation::dev_print_trip_list()
 	cout << endl << "MAIN TRIP LIST IS : ";
 	for(auto elem : this->main_trip_list)
 	{
-		cout << " " << elem;
+		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
+		cout << " " << elem[0] << " FROM " << temp;
 	}
 	cout << endl;
 	cout << "RESERVE TRIP UP LIST IS : ";
 	for(auto elem : this->reserved_trip_list_up)
 	{
-		cout << " " << elem;
+		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
+		cout << " " << elem[0] << " FROM " << temp;
 	}
 	cout << endl;
 	cout << "RESERVE TRIP DOWN LIST IS : ";
 	for(auto elem : this->reserved_trip_list_down)
 	{
-		cout << " " << elem;
+		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
+		cout << " " << elem[0] << " FROM " << temp;
 	}
 	cout << endl;
+}
+
+const void simulation::dev_print_stopped_floor()
+{
+	cout << "Elevator Stopped At : " << this->main_trip_list[0][0] << endl;
+	return void();
 }
 
 int simulation::string_floor_to_int(const string& floor)
@@ -479,6 +512,11 @@ int simulation::string_floor_to_int(const string& floor)
 	}
 }
 
+string simulation::int_floor_to_string(const int& floor)
+{
+	return floor > 0 ? std::to_string(floor) : "B"+std::to_string(floor*-1);
+}
+
 physics::physics(int underground_floor, int ground_floor, vector<double> altimeter_of_each_floor)
 {
 	this->info.underground_floor = underground_floor;
@@ -486,7 +524,7 @@ physics::physics(int underground_floor, int ground_floor, vector<double> altimet
 	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
 
 	this->current_velocity = 0.0;
-	this->current_altimeter = -55;
+	this->current_altimeter = -41;
 
 	this->current_direction = NULL;
 }
@@ -560,10 +598,18 @@ long double physics::distanceDuringAcceleration(long double initial_velocity, lo
     return distance_during_acceleration;
 }
 
+const void physics::swap_direction()
+{
+	this->current_direction = !this->current_direction;
+	return void();
+}
+
 vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 {
 	vector<long double> each_tick_time_velocity_altimeter;
 	vector<vector<long double>> ret;
+
+	int direction = this->current_direction ? 1 : -1;
 
 	long double current_altimeter = this->current_altimeter;
 
@@ -598,14 +644,14 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 		long double max_acheive_velocity = acceleration * t_to_max_acheive_velocity;
 
 	    for (long double t = 0.0; t < t_to_max_acheive_velocity; t += tick) {
-			accumulated_distance = current_velocity * tick + 0.5 * acceleration * std::pow(t, 2);
+			accumulated_distance = (current_velocity * tick + 0.5 * acceleration * std::pow(t, 2)) * direction;
 
 			ret.push_back({t, zero_velocity + acceleration * t, current_altimeter + accumulated_distance});
 			//cout << "TIME : " << t << " VELOCITY : " << current_velocity + acceleration * t << " ALT : " << current_altimeter + accumulated_distance << endl;
 	    }
 
 		for (long double t = 0.0; t < t_to_max_acheive_velocity; t += tick) {
-			accumulated_distance += (t_to_max_acheive_velocity - (t * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2));
+			accumulated_distance += ((t_to_max_acheive_velocity - (t * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2))) * direction;
 
 			if(abs(max_acheive_velocity - acceleration * t) < 1e-10)
 			{
@@ -633,7 +679,7 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 		cout << "t_to_max_velocity : " << t_to_max_velocity << " t_constant_speed : " << t_constant_speed << " t_max_to_zero_deceleration : " << t_max_to_zero_deceleration << endl;
         // Acceleration phase
         for (long double t = 0.0; t < t_to_max_velocity; t += tick) {
-			accumulated_distance = current_velocity * tick + 0.5 * acceleration * std::pow(t, 2);
+			accumulated_distance = (current_velocity * tick + 0.5 * acceleration * std::pow(t, 2)) * direction;
 
 			ret.push_back({t, current_velocity + acceleration * t, current_altimeter + accumulated_distance});
 			//cout << "TIME : " << t << " VELOCITY : " << current_velocity + acceleration * t << " ALT : " << current_altimeter + accumulated_distance << endl;
@@ -641,7 +687,7 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 
         // Constant speed phase
         for (long double t = t_to_max_velocity; t < t_to_max_velocity + t_constant_speed; t += tick) {
-			accumulated_distance += max_velocity * tick;
+			accumulated_distance += (max_velocity * tick) * direction;
 
         	ret.push_back({t, max_velocity, current_altimeter + accumulated_distance});
 			//cout << "TIME : " << t << " VELOCITY : " << max_velocity << " ALT : " << current_altimeter + accumulated_distance << endl;
@@ -651,7 +697,7 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
         for (long double t = t_to_max_velocity + t_constant_speed; t < t_to_max_velocity + t_constant_speed + t_max_to_zero_deceleration; t += tick) {
 			const double delta = t - (t_to_max_velocity + t_constant_speed);
 
-			accumulated_distance += (max_velocity - (delta * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2));
+			accumulated_distance += ((max_velocity - (delta * acceleration)) * tick + (-0.5 * acceleration * std::pow(tick, 2))) * direction;
 
 			if(abs(max_velocity - acceleration * (t - (t_to_max_velocity + t_constant_speed))) < 1e-10)
 			{

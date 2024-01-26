@@ -14,11 +14,11 @@ server_port = 10050
 
 def get_sensor_datas():
     building_name = "SejongAI"
-    device_name = "EV2"
+    device_name = "EV1"
     altimeter = None
     temperature = None
     velocity = -10
-    button_detected_elevator_inside = ['1', '6', '7']
+    button_detected_elevator_inside = ['10']
 
     underground_floor = 5
     ground_floor = 12

@@ -1,6 +1,7 @@
 #include <cstdarg>
 #include <cpprest/http_client.h>
 #include <cpprest/filestream.h>
+#include "nlohmann/json.hpp"
 
 #include "send_oneM2M.h"
 #include "main.h"
@@ -694,20 +695,20 @@ void send_oneM2M::discovery_retrieve(string originator, int num, ...)
     //MAXIMUM NUMBER of RETURNED RESOURCES
     int lim = 5;
 
-    int drt = 2;
-
-    int rcn = 8;
     //RETURNS RESOURCE THAT CREATED BEFORE THIS TIMESTAMP
     string crb = "20240124T012530";
     
     //RETURNS RESOURCE THAT CREATED AFTER THIS TIMESTAMP
     string cra = "20240124T012630";
 
+    int drt = 2;
+
     va_list args;
     va_start(args, num);
 
     string DIS_URL = this->URL_TO_AE;
 
+	auto start = system_clock::now();
     for(int i=1; i<=num; i++)
     {
         auto ret = va_arg(args, const string);
@@ -717,21 +718,20 @@ void send_oneM2M::discovery_retrieve(string originator, int num, ...)
 	va_end(args);
     
     DIS_URL +=
-        "?rcn=" + std::to_string(rcn);
-        //"?fu=" + std::to_string(fu) +
-        "&ty=" + std::to_string(ty) +
+        "?fu=" + std::to_string(fu) +
+        "&ty=" + std::to_string(ty);
         //"&cra=" + cra +
         //"&crb=" + crb;
         //"&lim=" + std::to_string(lim);
 
-#ifndef oneM2M_tinyIoT
+#ifndef oneM2M_tinyIoT 
         DIS_URL += "&drt=" + std::to_string(drt);
 #endif
 
     http_client client(utility::conversions::to_string_t(DIS_URL));
 	http_request request(methods::GET) ;
 
-    std::cout << "RCN DISCOVERY Under : " << DIS_URL << std::endl;
+    std::cout << "DISCOVERY Under : " << DIS_URL << std::endl;
 
     // Create an HTTP request
     request.headers().set_content_type(U("application/json"));
@@ -745,25 +745,94 @@ void send_oneM2M::discovery_retrieve(string originator, int num, ...)
     // Send the HTTP request and wait for the response
     auto response = client.request(request).get();
 
+    std::chrono::duration<double> interval = system_clock::now() - start;;
+	cout << URL_TO_AE << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
+
     if(response.status_code() == status_codes::OK)
     {
         json::value response_json = response.extract_json().get();
 
-        /*
-         *    	json::array arr = response_json[U("m2m:uril")].as_array();
+    	json::array arr = response_json[U("m2m:uril")].as_array();
 
         std::wcout << L"DISCOVERED RESOURCE :" <<  std::endl;
         for(const json::value& elem : arr)
         {
 	        std::wcout << elem.as_string() << endl;
-        } 
-         */
-
+        }  
     }
     // Print the HTTP response
     else
     {
 	     std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;   
+    }
+}
+
+void send_oneM2M::result_content_retrieve(string originator, int num, ...)
+{
+    //RETURN ITS RESOURCE THAT HAS TYPE NUMBER
+    int ty = 4;
+
+     //RETURN PARENT RESOURCE THAT HAS CHILD TYPE NUMBER
+    //IF IN NESTED CNT, IT RETURNS ALL OF PARENT CNT, AE, and CSEs
+    int chty = 3;
+
+    //RETURN CHILD RESOURCE THAT HAS PARENT TYPE NUMBER
+    //if AE - CNT1 - CNT2 - CIN1, and pty = 3(CNT) => IT RETURNS CNT2, and CIN1
+    int pty = 3;
+
+    int rcn = 8;
+
+    va_list args;
+    va_start(args, num);
+
+    auto start = system_clock::now();
+    string RCN_URL = this->URL_TO_AE;
+
+    for(int i=1; i<=num; i++)
+    {
+        auto ret = va_arg(args, const string);
+        RCN_URL += "/";
+        RCN_URL += ret;
+    }
+	va_end(args);
+    
+    RCN_URL +=
+        "?rcn=" + std::to_string(rcn) +
+        "&ty=" + std::to_string(ty);
+
+    http_client client(utility::conversions::to_string_t(RCN_URL));
+	http_request request(methods::GET) ;
+
+    std::cout << "RCN RETRIEVE Under : " << RCN_URL << std::endl;
+
+    // Create an HTTP request
+    request.headers().set_content_type(U("application/json"));
+    request.headers().add(U("User-Agent"),U("cpprestsdk"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
+#ifndef oneM2M_tinyIoT
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+#endif
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
+
+    // Send the HTTP request and wait for the response
+    auto response = client.request(request).get();
+
+    std::chrono::duration<double> interval = system_clock::now() - start;;
+	cout << URL_TO_AE << " RCN TIME : " << interval.count()<< " seconds..." << endl;
+
+    if(response.status_code() == status_codes::OK)
+    {
+        json::value response_json = response.extract_json().get();
+        std::wstring json_str = response_json.serialize();
+
+		// Parse the string using jsoncpp
+		nlohmann::json j = nlohmann::json::parse(json_str);
+
+    	std::cout << "HTTP Response:\n" << j.dump(4) << std::endl;   
+    }
+    else
+    {
+	     std::wcerr << L"HTTP ERROR :\n" << response.status_code() << std::endl;   
     }
 }
 

@@ -172,10 +172,6 @@ bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct pa
         std::chrono::duration<double> delta = system_clock::now() - start;
         std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
 
-		Default_PHYSICS_CNTs .clear();
-		Default_INSIDE_CNTs .clear();
-		Default_OUTSIDE_CNTs .clear();
-
         return true;
     }
     catch (const std::exception& e)
@@ -266,9 +262,6 @@ bool socket_oneM2M::create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_st
 	    std::chrono::duration<double> delta = system_clock::now() - start;
 	    std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
 
-		Default_PHYSICS_CNTs .clear();
-		Default_INSIDE_CNTs .clear();
-		Default_OUTSIDE_CNTs .clear();
         return true;
 	}
 	catch (const std::exception& e)
@@ -338,19 +331,26 @@ vector<vector<string>> socket_oneM2M::retrieve_oneM2M_cins(vector<int> floor_inf
 
             //CIN RETRIEVE OF BUTTON INSIDE
             res = s.cin_retrieve_la(originator_name, 3, device_name, this->Default_CNTs[1], this->Default_INSIDE_CNTs[0]);
-
-            //DISASSEMBLE CON
             response_json = res.extract_json().get();
-			con = response_json[U("m2m:cin")][U("con")].as_string();
-
-            con_string.assign(con.begin(), con.end());
-            //std::cout << "BUTTON INSIDE CON IS : " << con_string << std::endl;
-
-            std::istringstream iss(con_string);
-            string value;
-            while(iss >> value)
+            //CHECK IF BUTTON INSIDE IS EMPTY
+            if(response_json.has_field(U("m2m:cin")) && response_json[U("m2m:cin")].has_field(U("con")))
             {
-	            ret_bin.push_back(value);
+	            //DISASSEMBLE CON
+				con = response_json[U("m2m:cin")][U("con")].as_string();
+
+	            con_string.assign(con.begin(), con.end());
+	            //std::cout << "BUTTON INSIDE CON IS : " << con_string << std::endl;
+
+	            std::istringstream iss(con_string);
+	            string value;
+	            while(iss >> value)
+	            {
+		            ret_bin.push_back(value);
+	            }
+            }
+            else
+            {
+            	ret_bin = {};
             }
 
             for(int i = floor_info[0] ; i>=1 ; i--)

@@ -16,8 +16,7 @@ public:
     vector<long double> current_goTo_Floor_single_info;
     vector<vector<long double>>::iterator it;
 
-    vector<vector<string>> latest_RETRIEVE_info;
-    vector<int> latest_trip_list_info;
+    vector<vector<int>> latest_trip_list_info;
     vector<int> floor_info;
 
     long double Elevator_current_time, Elevator_current_velocity, Elevator_current_altimeter;
@@ -31,6 +30,7 @@ public:
 
     void dev_print();
 
+    void update_latest_info(int floor, int inout, simulation* s);
     void start_thread();
     void stop_thread();
     void run();

@@ -7,7 +7,7 @@ p(parsed_struct.underground_floor, parsed_struct.ground_floor, {
     })
 {
 	this->isRunning = true;
-	this->RETRIEVE_interval_millisecond = 100;
+	this->RETRIEVE_interval_millisecond = 10;
 
 	this->Elevator_opcode = 0;
 	this->go_To_Floor = 0;
@@ -23,6 +23,40 @@ p(parsed_struct.underground_floor, parsed_struct.ground_floor, {
 Elevator::~Elevator()
 {
 	stop_thread();
+}
+
+void Elevator::update_latest_info(int floor, int inout, simulation* s)
+{
+	//BUTTON INSIDE MODIFY
+	if(inout)
+	{
+		string temp = this->p.s.int_floor_to_string(floor);
+		this->latest.button_inside.erase(remove(this->latest.button_inside.begin(), this->latest.button_inside.end(), temp), this->latest.button_inside.end());
+		s->prev_button_inside_data.erase(remove(s->prev_button_inside_data.begin(), s->prev_button_inside_data.end(), temp), s->prev_button_inside_data.end());
+	}
+	//BUTTON OUTSIDE MODIFY
+	else
+	{
+		this->latest.button_outside.erase(
+			std::remove_if
+			(
+                this->latest.button_outside.begin(),
+                this->latest.button_outside.end(),
+                [floor](const std::vector<int>& vec) { return !vec.empty() && vec[0] == floor; }
+            ),
+            this->latest.button_outside.end()
+		);
+
+		s->prev_button_outside_data.erase(
+			std::remove_if
+			(
+                s->prev_button_outside_data.begin(),
+                s->prev_button_outside_data.end(),
+                [floor](const std::vector<int>& vec) { return !vec.empty() && vec[0] == floor; }
+            ),
+            s->prev_button_outside_data.end()
+		);
+	}
 }
 
 void Elevator::start_thread()
@@ -43,13 +77,13 @@ void Elevator::run()
 	vector<vector<long double>> temp2;
 
     system_clock::time_point start;
-    //chrono::duration<double> interval;
+    chrono::duration<double> interval;
 
 	socket_oneM2M s = this->sock;
 	physics p = this->p;
 	simulation sim = this->p.s;
 
-	vector<int> main_trip_list = sim.main_trip_list;
+	vector<vector<int>> main_trip_list = sim.main_trip_list;
 	vector<vector<int>> outside_button_list;
 
 	std::chrono::steady_clock::time_point free_time;
@@ -62,9 +96,9 @@ void Elevator::run()
 		//GET RETRIEVED INFORMATIONS
 		retrieved_string = this->RETRIEVE_from_oneM2M();
 
-		//interval = system_clock::now() - start;
-		//cout << device_name << " RETRIEVE TIME : " << interval.count()<< " seconds..." << endl;
-		//start = system_clock::now();
+		interval = system_clock::now() - start;
+		cout << device_name << " RETRIEVE TIME : " << interval.count()<< " seconds..." << endl;
+		start = system_clock::now();
 
 		//SET or MODIFY MAIN TRIP LIST
 		flag = this->latest.empty;
@@ -96,9 +130,11 @@ void Elevator::run()
 				}
 				sim.update_main_trip_list_via_inside_data(this->latest.button_inside, p.current_direction);
 			}
-			cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0] << endl;
+			cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0][0] << endl;
+			sim.dev_print_trip_list();
+
 			//CHANGE V_T Graph
-			current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0]);
+			current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
 			it = current_goTo_Floor_vector_info.begin();
 			current_goTo_Floor_single_info = *it;
@@ -114,19 +150,18 @@ void Elevator::run()
 			latest_RETRIEVE_STRUCT current = this->parse_oneM2M_RETRIEVE_to_STRUCT(retrieved_string);
 
 			sim.check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(this->latest, current, p.current_direction);
-			this->latest_RETRIEVE_info = retrieved_string;
+			this->latest = current;
 
 			//CHECK LATEST TRIP INFO WITH MODIFIED TRIP LIST
 			if(!latest_trip_list_info.empty() && !sim.main_trip_list.empty())
 			{
-				//cout << "CHECK TRIP LIST IS MODIFIED..." << endl;
-
 				//IF CLOSEST goTo Floor is Changed
-				if(latest_trip_list_info[0] != sim.main_trip_list[0])
+				if(latest_trip_list_info[0][0] != sim.main_trip_list[0][0])
 				{
-					cout << "goTo Floor is Changed " << latest_trip_list_info[0] << " to " << sim.main_trip_list[0] << endl;
+					cout << "goTo Floor is Changed " << latest_trip_list_info[0][0] << " to " << sim.main_trip_list[0][0] << endl;
+					sim.dev_print_trip_list();
 					//CHANGE V_T Graph
-					current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0]);
+					current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
 					it = current_goTo_Floor_vector_info.begin();
 					current_goTo_Floor_single_info = *it;
@@ -143,6 +178,7 @@ void Elevator::run()
 				{
 					p.lock = false;
 					//3 Second LOCK
+					sim.dev_print_stopped_floor();
 					free_time = std::chrono::steady_clock::now() + std::chrono::seconds(3);
 				}
 				else
@@ -150,19 +186,50 @@ void Elevator::run()
 					if(std::chrono::steady_clock::now() >= free_time)
 					{
 						p.lock = true;
-						if(sim.main_trip_list.size() == 1)
+						//IF REACHED FLOOR IS FROM INSIDE BUTTON
+						if(sim.main_trip_list[0][1] == 1)
 						{
+							update_latest_info(sim.main_trip_list[0][0], 1, &sim);
+
+							if(sim.main_trip_list.size() >= 2 && sim.main_trip_list[0][0] == sim.main_trip_list[1][0])
+							{
+								sim.main_trip_list = sim.pop_floor_of_trip_list(sim.main_trip_list);
+							}
 							sim.main_trip_list = sim.pop_floor_of_trip_list(sim.main_trip_list);
+
+							//DELETE THIS FLOOR ON oneM2M - FOR DUBUG
+							string payload;
+							for(const auto& elem : sim.main_trip_list)
+							{
+								if(elem != sim.main_trip_list.front())
+								{
+									payload += " " + std::to_string(elem[0]);
+									sim.prev_button_inside_data.push_back(std::to_string(elem[0]));
+								}
+							}
+							s.socket.cin_create(s.originator_name, "button_inside", payload, 3, device_name, s.Default_CNTs[1], s.Default_INSIDE_CNTs[0]);
+						}
+						//IF REACHED FLOOR IS FROM OUTSIDE BUTTON
+						else
+						{
+							string temp = sim.main_trip_list[0][0] > 0 ? std::to_string(sim.main_trip_list[0][0]) : "B"+std::to_string(sim.main_trip_list[0][0] * -1);
+							string payload = "None";
+							s.socket.cin_create(s.originator_name, "status", payload, 3, device_name, s.Default_CNTs[2], temp);
+
+							update_latest_info(sim.main_trip_list[0][0], 0, &sim);
+							sim.main_trip_list = sim.pop_floor_of_trip_list(sim.main_trip_list);
+						}
+
+						if(sim.main_trip_list.empty())
+						{
+							sim.prev_button_inside_data.clear();
 							sim.swap_trip_list();
 
-							if(sim.main_trip_list.empty())
+							if(!sim.main_trip_list.empty())
 							{
-								cout << "ALL TRIP LIST IS ENDED, SHUTTING DOWN ELEVATOR..." << endl;
-								isRunning = false;
-							}
-							else
-							{
-								current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0]);
+								p.swap_direction();
+								sim.dev_print_trip_list();
+								current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
 								it = current_goTo_Floor_vector_info.begin();
 								current_goTo_Floor_single_info = *it;
@@ -170,13 +237,8 @@ void Elevator::run()
 						}
 						else
 						{
-							if(sim.main_trip_list.size() >= 2 && sim.main_trip_list[0] == sim.main_trip_list[1])
-							{
-								sim.main_trip_list = sim.pop_floor_of_trip_list(sim.main_trip_list);
-							}
-							sim.main_trip_list = sim.pop_floor_of_trip_list(sim.main_trip_list);
-
-							current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0]);
+							sim.dev_print_trip_list();
+							current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
 							it = current_goTo_Floor_vector_info.begin();
 							current_goTo_Floor_single_info = *it;

@@ -24,10 +24,13 @@ public:
 	void check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction);
 	void swap_trip_list();
 
-	bool add_floor_to_main_trip_list(int floor, bool direction);
-	bool add_floor_to_reserve_trip_list(int floor, bool direction);
-	vector<int> pop_floor_of_trip_list(vector<int> trip_list);
-	bool erase_floor_of_trip_list(vector<int> trip_list, int floor);
+	bool bigger(vector<int>& v1, vector<int>& v2);
+	bool smaller(vector<int>& v1, vector<int>& v2);
+
+	bool add_floor_to_main_trip_list(int floor, bool direction, bool inout);
+	bool add_floor_to_reserve_trip_list(int floor, bool direction, bool inout);
+	vector<vector<int>> pop_floor_of_trip_list(vector<vector<int>> trip_list);
+	bool erase_floor_of_trip_list(vector<vector<int>> trip_list, int floor);
 
 	bool update_main_trip_list_via_inside_data(vector<string> button_inside, bool direction);
 	bool update_main_trip_list_via_outside_data(vector<vector<int>> button_outside, bool direction);
@@ -39,12 +42,14 @@ public:
 	bool check_reachability();
 
 	const void dev_print_trip_list();
+	const void dev_print_stopped_floor();
 
 	int string_floor_to_int(const string& floor);
+	string int_floor_to_string(const int& floor);
 
-	vector<int> main_trip_list;
-	vector<int> reserved_trip_list_up;
-	vector<int> reserved_trip_list_down;
+	vector<vector<int>> main_trip_list;
+	vector<vector<int>> reserved_trip_list_up;
+	vector<vector<int>> reserved_trip_list_down;
 
 	vector<string> prev_button_inside_data;
 	vector<vector<int>> prev_button_outside_data;
@@ -76,6 +81,8 @@ public:
 	long double current_velocity; 
 	long double current_altimeter;
 
+	const void swap_direction();
+
 	bool set_initial_elevator_direction(vector<string> button_inside);
 	bool set_initial_elevator_direction(vector<vector<int>> button_outside);
 
@@ -83,4 +90,6 @@ public:
 	long double distanceDuringAcceleration(long double initial_velocity, long double final_velocity, long double acceleration);
 
 	vector<vector<long double>> draw_vt_on_single_floor(int floor);
+
+private:
 };

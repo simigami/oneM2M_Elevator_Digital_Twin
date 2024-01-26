@@ -48,7 +48,7 @@ public:
     bool cnt_validate(const string& CNT_NAME);
 
     void discovery_retrieve(string originator, int num, ...);
-
+    void result_content_retrieve(string originator, int num, ...);
 
 private:
     int numbering = 1;

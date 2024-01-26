@@ -145,8 +145,14 @@ void DTServer::Running()
 
             class_of_all_Buildings.push_back(temp);
 
+            //DISCOVERY TEST
+		    //this_Building_Elevator->sock.socket.discovery_retrieve(this_Building_Elevator->sock.originator_name, 0);
+
+            //RCN TEST
+            //this_Building_Elevator->sock.socket.result_content_retrieve(this_Building_Elevator->sock.originator_name, 0);
+
+            //THREADING
             this_Building_Elevator->start_thread();
-            //this_Building_Elevator.RETRIEVE_from_oneM2M(parsed_struct);
         }
         else
         {
@@ -167,10 +173,10 @@ void DTServer::Running()
                 This_Elevator.sock.create_oneM2M_under_CNTs(parsed_struct);
 
                 //DISCOVERY TEST
-                //auto start = system_clock::now();
 		        //This_Elevator.sock.socket.discovery_retrieve(This_Elevator.sock.originator_name, 0);
-		        //std::chrono::duration<double> interval = system_clock::now() - start;;
-				//cout << CNT_NAME << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
+
+                //RCN TEST
+                //This_Elevator.sock.socket.result_content_retrieve(This_Elevator.sock.originator_name, 0);
             }
             else
             {
@@ -184,9 +190,13 @@ void DTServer::Running()
 
 	            class_of_all_Buildings.push_back(temp);
 
-	            this_Building_Elevator->start_thread();
+                //DISCOVERY TEST
+				//this_Building_Elevator->sock.socket.discovery_retrieve(this_Building_Elevator->sock.originator_name, 0);
 
-				//this_Building_Elevator.RETRIEVE_from_oneM2M(parsed_struct);
+	            //RCN TEST
+	            //this_Building_Elevator->sock.socket.result_content_retrieve(this_Building_Elevator->sock.originator_name, 0);
+                
+	            //this_Building_Elevator->start_thread();
             }
         }
     }
