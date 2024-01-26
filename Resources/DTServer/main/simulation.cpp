@@ -65,6 +65,16 @@ void simulation::swap_trip_list()
 	}
 }
 
+const void simulation::clear_data()
+{
+	main_trip_list.clear();
+	reserved_trip_list_up.clear();
+	reserved_trip_list_down.clear();
+
+	prev_button_inside_data.clear();
+	prev_button_outside_data.clear();
+}
+
 bool simulation::bigger(vector<int>& v1, vector<int>& v2)
 {
 	return v1[0] < v2[0];
@@ -581,6 +591,18 @@ bool physics::set_initial_elevator_direction(vector<vector<int>> button_outside)
 			return false;
 		}
 	}
+}
+
+const void physics::clear_data()
+{
+	physics* p = this;
+
+	p->s.clear_data();
+
+	p->init =true;
+	p->lock = true;
+	p->current_direction = NULL;
+	p->current_velocity = NULL; 
 }
 
 long double physics::timeToVelocity(long double initial_velocity, long double final_velocity, long double acceleration)

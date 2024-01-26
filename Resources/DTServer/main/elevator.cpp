@@ -106,39 +106,47 @@ void Elevator::run()
 		//IF FIRST ON OPERATION
 		if(flag)
 		{
-			cout << this->building_name << " -> " << this->device_name  << " : latest RETRIEVE info is EMPTY. SAVING..." << endl;
 			this->latest = this->parse_oneM2M_RETRIEVE_to_STRUCT(retrieved_string);
 
-			if(!this->latest.button_outside.empty())
+			if(this->latest.button_outside.empty() && this->latest.button_inside.empty())
 			{
-				//VERY FIRST REQUEST FROM DATA -> DEFINE ELEVATOR DIRECTION
-				//SET INITIAL DIRECTION
-				if(p.init == true)
-				{
-					p.init = false;
-					p.set_initial_elevator_direction(this->latest.button_outside);
-				}
-				sim.update_main_trip_list_via_outside_data(this->latest.button_outside, p.current_direction);
+				cout << this->building_name << " -> " << this->device_name  << " : latest RETRIEVE info is EMPTY..." << endl;
+				continue;
 			}
-
-			if(!this->latest.button_inside.empty())
+			else
 			{
-				if(p.init == true)
+				cout << this->building_name << " -> " << this->device_name  << " : RECEIVED FIRST DATA..." << endl;
+				this->latest.empty = false;
+				if(!this->latest.button_outside.empty())
 				{
-					p.init = false;
-					p.set_initial_elevator_direction(this->latest.button_inside);
+					//VERY FIRST REQUEST FROM DATA -> DEFINE ELEVATOR DIRECTION
+					//SET INITIAL DIRECTION
+					if(p.init == true)
+					{
+						p.init = false;
+						p.set_initial_elevator_direction(this->latest.button_outside);
+					}
+					sim.update_main_trip_list_via_outside_data(this->latest.button_outside, p.current_direction);
 				}
-				sim.update_main_trip_list_via_inside_data(this->latest.button_inside, p.current_direction);
+
+				if(!this->latest.button_inside.empty())
+				{
+					if(p.init == true)
+					{
+						p.init = false;
+						p.set_initial_elevator_direction(this->latest.button_inside);
+					}
+					sim.update_main_trip_list_via_inside_data(this->latest.button_inside, p.current_direction);
+				}
+				cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0][0] << endl;
+				sim.dev_print_trip_list();
+
+				//CHANGE V_T Graph
+				current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
+
+				it = current_goTo_Floor_vector_info.begin();
+				current_goTo_Floor_single_info = *it;
 			}
-			cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0][0] << endl;
-			sim.dev_print_trip_list();
-
-			//CHANGE V_T Graph
-			current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
-
-			it = current_goTo_Floor_vector_info.begin();
-			current_goTo_Floor_single_info = *it;
-
 			//interval = system_clock::now() - start;
 			//cout << device_name <<  "FIRST OPERTAION TIME : " << interval.count()<< " seconds..." << endl;
 			//start = system_clock::now();
@@ -150,6 +158,7 @@ void Elevator::run()
 			latest_RETRIEVE_STRUCT current = this->parse_oneM2M_RETRIEVE_to_STRUCT(retrieved_string);
 
 			sim.check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(this->latest, current, p.current_direction);
+			current.empty = this->latest.empty;
 			this->latest = current;
 
 			//CHECK LATEST TRIP INFO WITH MODIFIED TRIP LIST
@@ -212,6 +221,7 @@ void Elevator::run()
 						//IF REACHED FLOOR IS FROM OUTSIDE BUTTON
 						else
 						{
+							//DELETE THIS FLOOR ON oneM2M - FOR DUBUG
 							string temp = sim.main_trip_list[0][0] > 0 ? std::to_string(sim.main_trip_list[0][0]) : "B"+std::to_string(sim.main_trip_list[0][0] * -1);
 							string payload = "None";
 							s.socket.cin_create(s.originator_name, "status", payload, 3, device_name, s.Default_CNTs[2], temp);
@@ -220,6 +230,7 @@ void Elevator::run()
 							sim.main_trip_list = sim.pop_floor_of_trip_list(sim.main_trip_list);
 						}
 
+						//IF MAIN TRIP LIST IS EMPTY
 						if(sim.main_trip_list.empty())
 						{
 							sim.prev_button_inside_data.clear();
@@ -233,6 +244,12 @@ void Elevator::run()
 
 								it = current_goTo_Floor_vector_info.begin();
 								current_goTo_Floor_single_info = *it;
+							}
+							//IF MAIN, RESERVE TRIP LIST IS EMPTY = No Button Signal From this Elevator
+							else
+							{
+								this->latest = latest_RETRIEVE_STRUCT();
+								p.clear_data();
 							}
 						}
 						else
@@ -260,8 +277,7 @@ void Elevator::run()
 
 		if(sim.main_trip_list.empty() && sim.reserved_trip_list_up.empty() && sim.reserved_trip_list_down.empty())
 		{
-			cout << "ALL TRIP LIST IS ENDED, SHUTTING DOWN ELEVATOR..." << endl;
-			isRunning = false;
+			cout << this->device_name << " : Operation Finished, Change Status To IDLE..." << endl;
 		}
 		else
 		{
@@ -286,8 +302,6 @@ latest_RETRIEVE_STRUCT Elevator::parse_oneM2M_RETRIEVE_to_STRUCT(vector<vector<s
 	int floor_int, direction_int;
 
 	latest_RETRIEVE_STRUCT temp;
-
-	temp.empty = false;
 
 	temp.velocity = stod(ret[0][0]);
 	temp.altimeter = stod(ret[1][0]);

@@ -190,6 +190,9 @@ void DTServer::Running()
 
 	            class_of_all_Buildings.push_back(temp);
 
+                //THREADING
+				this_Building_Elevator->start_thread();
+
                 //DISCOVERY TEST
 				//this_Building_Elevator->sock.socket.discovery_retrieve(this_Building_Elevator->sock.originator_name, 0);
 
@@ -208,14 +211,6 @@ int main()
     {
     	DTServer digital_twin_server;
     	digital_twin_server.Running();
-        /*while(true)
-        {
-            int num;
-	        cin >> num;
-            my_class* temp = new my_class(num);
-            cout << "MEM ADDR : " << &temp << endl;
-            temp->t_run();
-        }*/
     }
     catch (std::exception& e)
     {
@@ -223,111 +218,3 @@ int main()
     }
     return 0;
 }
-/*
- *         int u = 5;
-        int g = 12;
-        vector<double> arr = {
-        	-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1
-        };
-
-        physics p(u, g, arr);
-
-        ifstream inputFile("testlog_temp.txt");
-        string line;
-        string inout;
-        string temp;
-
-        int outside_called_floor;
-        bool outside_called_direction;
-        vector<string> inside_called_floor;
-        vector<vector<int>> outside;
-        string elem;
-
-        if (!inputFile.is_open()) {
-	        std::cerr << "Error opening file." << std::endl;
-	        return 1;
-	    }
-
-	    while (std::getline(inputFile, line)) {
-	        if (!line.empty()) {
-                istringstream iss(line);
-                iss >> inout;
-
-                if(inout == "Out")
-                {
-	                std::cout << "SERVER RECEIVED OUT SIGNAL..." << endl;
-                    getline(inputFile, line);
-                    istringstream iss_floor(line);
-                    iss_floor >> outside_called_floor;
-
-                    getline(inputFile, line);
-                    istringstream iss_direction(line);
-                    iss_direction >> temp;
-                    if(temp == "Up")
-                    {
-	                    outside_called_direction = true;
-                    }
-                    else
-                    {
-	                    outside_called_direction = false;
-                    }
-                    //std::cout << "CALLED FLOOR : " << outside_called_floor << " WITH DIRECTION : " << outside_called_direction << endl;
-
-                    outside.push_back({outside_called_floor, outside_called_direction});
-                    if(p.s.is_main_trip_list_empty())
-                    {
-	                    p.current_direction = p.set_initial_elevator_direction(outside);
-                        p.s.update_main_trip_list_via_outside_data(outside, p.current_direction);
-                        p.draw_vt();
-                    }
-                    else
-                    {
-	                    p.s.update_main_trip_list_via_outside_data(outside, p.current_direction);
-                    }
-
-                    outside.clear();
-                }
-                else if(inout == "In")
-                {
-	                std::cout << "SERVER RECEIVED IN SIGNAL..." << endl;
-                    getline(inputFile, line); // SKIP PREVIOUS BUTTON PANEL
-                    getline(inputFile, line);
-                    istringstream iss_panel(line);
-                    while(iss_panel >> elem)
-                    {
-                        if(elem != "None")
-                        {
-	                     	inside_called_floor.push_back(elem);   
-                        }
-                    }
-
-                    //std::cout << "BUTTON PANEL LIST : " ;
-                    //for(const auto& elem : inside_called_floor)
-                    //{
-	                //    cout << elem << " ";
-                    //}
-                    //cout << endl;
-
-                    if(p.s.is_main_trip_list_empty())
-                    {
-	                    p.current_direction = p.set_initial_elevator_direction(inside_called_floor);
-                        p.s.update_main_trip_list_via_inside_data(inside_called_floor, p.current_direction);
-
-                        //DRAW V_T GRAPH
-
-                    }
-                    else
-                    {
-	                    p.s.update_main_trip_list_via_inside_data(inside_called_floor, p.current_direction);
-
-                        //DRAW V_T GRAPH
-                    }
-
-                    inside_called_floor.clear();
-                }
-
-                p.s.dev_print_trip_list();
-	        }
-	    }
-	    inputFile.close();
- */

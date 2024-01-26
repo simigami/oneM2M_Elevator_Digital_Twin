@@ -23,6 +23,7 @@ class simulation
 public:
 	void check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction);
 	void swap_trip_list();
+	const void clear_data();
 
 	bool bigger(vector<int>& v1, vector<int>& v2);
 	bool smaller(vector<int>& v1, vector<int>& v2);
@@ -82,6 +83,7 @@ public:
 	long double current_altimeter;
 
 	const void swap_direction();
+	const void clear_data();
 
 	bool set_initial_elevator_direction(vector<string> button_inside);
 	bool set_initial_elevator_direction(vector<vector<int>> button_outside);

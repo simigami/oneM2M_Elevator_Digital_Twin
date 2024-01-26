@@ -18,7 +18,7 @@ def get_sensor_datas():
     altimeter = None
     temperature = None
     velocity = -10
-    button_detected_elevator_inside = ['10']
+    button_detected_elevator_inside = ['B4']
 
     underground_floor = 5
     ground_floor = 12
