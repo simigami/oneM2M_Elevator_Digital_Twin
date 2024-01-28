@@ -534,7 +534,7 @@ physics::physics(int underground_floor, int ground_floor, vector<double> altimet
 	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
 
 	this->current_velocity = 0.0;
-	this->current_altimeter = -41;
+	this->current_altimeter = -55;
 
 	this->current_direction = NULL;
 }
@@ -620,6 +620,23 @@ long double physics::distanceDuringAcceleration(long double initial_velocity, lo
     return distance_during_acceleration;
 }
 
+bool physics::set_direction(int floor)
+{
+	const int called_floor = floor;
+	const int called_floor_index = called_floor > 0 ? called_floor+(this->info.underground_floor-1) : called_floor+(this->info.underground_floor);
+	const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
+	if(this->current_altimeter < called_floor_altimeter)
+	{
+		this->current_direction = true;
+		return true;
+	}
+	else
+	{
+		this->current_direction = false;
+		return false;
+	}
+}
+
 const void physics::swap_direction()
 {
 	this->current_direction = !this->current_direction;
@@ -631,7 +648,7 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 	vector<long double> each_tick_time_velocity_altimeter;
 	vector<vector<long double>> ret;
 
-	int direction = this->current_direction ? 1 : -1;
+	int direction;
 
 	long double current_altimeter = this->current_altimeter;
 
@@ -654,6 +671,10 @@ vector<vector<long double>> physics::draw_vt_on_single_floor(int floor)
 	const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
 
 	const long double tick = 0.1;
+
+	// SET DIRECTION
+	this->current_direction = set_direction(floor);
+	direction = this->current_direction ? 1 : -1;
 
 	if(d_deceleration >= abs(called_floor_altimeter - current_altimeter))
 	{

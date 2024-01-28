@@ -91,10 +91,10 @@ socket_oneM2M DTServer::get_oneM2M_socket_based_on_AE_ID(vector<Elevator> elevat
     for(auto each_elevator_class : elevator_array)
     {
         socket_oneM2M socket = each_elevator_class.sock;
-        std::cout << "Socket Name : " << socket.socket_name << std::endl;
+        //std::cout << "Socket Name : " << socket.socket_name << std::endl;
 	    if(socket.socket_name == AE_ID)
 	    {
-		    std::cout << "Found Socket " << AE_ID << std::endl;
+		    //std::cout << "Found Socket " << AE_ID << std::endl;
             return socket;
 	    }
     }

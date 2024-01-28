@@ -96,10 +96,6 @@ void Elevator::run()
 		//GET RETRIEVED INFORMATIONS
 		retrieved_string = this->RETRIEVE_from_oneM2M();
 
-		interval = system_clock::now() - start;
-		cout << device_name << " RETRIEVE TIME : " << interval.count()<< " seconds..." << endl;
-		start = system_clock::now();
-
 		//SET or MODIFY MAIN TRIP LIST
 		flag = this->latest.empty;
 
@@ -183,6 +179,7 @@ void Elevator::run()
 			//IF CURRENT TRIP LIST IS ENDED -> CHANGE ELEVATOR STATUS
 			if(current_goTo_Floor_single_info == current_goTo_Floor_vector_info.back())
 			{
+				cout << building_name << " : " << device_name << " -> REACHED " << go_To_Floor << endl;
 				if(p.lock)
 				{
 					p.lock = false;
@@ -277,16 +274,17 @@ void Elevator::run()
 
 		if(sim.main_trip_list.empty() && sim.reserved_trip_list_up.empty() && sim.reserved_trip_list_down.empty())
 		{
-			cout << this->device_name << " : Operation Finished, Change Status To IDLE..." << endl;
+			//cout << this->device_name << " : Operation Finished, Change Status To IDLE..." << endl;
 		}
 		else
 		{
-			cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " <<
-			current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
-
+			cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " << current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
 			latest_trip_list_info = sim.main_trip_list;
 		}
-		std::this_thread::sleep_for(std::chrono::milliseconds(this->RETRIEVE_interval_millisecond));
+
+		//std::this_thread::sleep_for(std::chrono::milliseconds(this->RETRIEVE_interval_millisecond));
+		interval = system_clock::now() - start;
+		//cout << device_name << " TOTAL TICK TIME : " << interval.count()<< " seconds..." << endl;
 	}
 }
 

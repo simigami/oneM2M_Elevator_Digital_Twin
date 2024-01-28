@@ -87,6 +87,7 @@ public:
 
 	bool set_initial_elevator_direction(vector<string> button_inside);
 	bool set_initial_elevator_direction(vector<vector<int>> button_outside);
+	bool set_direction(int floor);
 
 	long double timeToVelocity(long double initial_velocity, long double final_velocity, long double acceleration);
 	long double distanceDuringAcceleration(long double initial_velocity, long double final_velocity, long double acceleration);

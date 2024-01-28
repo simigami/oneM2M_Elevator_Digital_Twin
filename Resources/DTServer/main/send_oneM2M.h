@@ -5,7 +5,7 @@
 
 #define acop_all 63
 
-//#define oneM2M_tinyIoT
+#define oneM2M_tinyIoT
 
 #ifdef oneM2M_tinyIoT
 #define DEFAULT_RI "DT_RI"

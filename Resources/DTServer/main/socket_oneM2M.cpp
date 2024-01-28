@@ -23,26 +23,26 @@ socket_oneM2M::socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<str
     {
         this->socket_name = building_name;
 
-        cout << "CHECK This Building ACP..."  << endl;
+        //cout << "CHECK This Building ACP..."  << endl;
         flag = socket.acp_validate(building_name, 0);
 
         if(flag == 0)
         {
 	        //ACP NOT EXISTS
-            cout << "ACP RESOURCE NOT EXISTS..."  << endl;
+            //cout << "ACP RESOURCE NOT EXISTS..."  << endl;
 	        socket.acp_create_one_ACP(parsed_struct, ACP_NAMES, 0);
             socket.ae_create(this->building_name);
         }
         else if(flag == 1)
         {
 	        //ACP EXISTS BUT BUILDING NAME NOT EXISTS
-            cout << "ACOR : " << "C" + this->building_name << " NOT EXISTS..."  << endl;
+            //cout << "ACOR : " << "C" + this->building_name << " NOT EXISTS..."  << endl;
             socket.acp_update(parsed_struct, ACP_NAMES, 0);
             socket.ae_create(this->building_name);
         }
         else
         {
-            cout << "ELEVATOR : " << this->device_name << " NOT EXISTS..."  << endl;
+            //cout << "ELEVATOR : " << this->device_name << " NOT EXISTS..."  << endl;
         }
         //ACP and BUILDING NAME EXISTS BUT ELEVATOR NOT EXISTS
 	    socket.cnt_create(originator_name, 1, this->device_name);
@@ -115,12 +115,41 @@ bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct pa
         for(int i = parsed_struct.underground_floor ; i>=1 ; i--)
         {
             s.cnt_create(originator_name, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
-            s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
+			bool flag = true;
+            for(const vector<int> each_floor : parsed_struct.button_outside)
+            {
+	            int floor = each_floor[0];
+                if(i == floor*-1)
+                {
+                    //DO NOT MAKE NONE CIN
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag)
+            {
+            	s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
+            }
         }
+
         for(int i = 1 ; i<=parsed_struct.ground_floor ; i++)
         {
             s.cnt_create(originator_name, 3, device_name, Default_CNTs[2], std::to_string(i));
-            s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], std::to_string(i));
+            bool flag = true;
+            for(const vector<int> each_floor : parsed_struct.button_outside)
+            {
+	            int floor = each_floor[0];
+                if(i == floor)
+                {
+                    //DO NOT MAKE NONE CIN
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag)
+            {
+        		s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], std::to_string(i));
+            }
         }
 
 		// Create or Update Velocity, Altimeter, Temperature
@@ -170,7 +199,7 @@ bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct pa
         }
 
         std::chrono::duration<double> delta = system_clock::now() - start;
-        std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
+        //std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
 
         return true;
     }
@@ -233,11 +262,40 @@ bool socket_oneM2M::create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_st
         payload = "None";
         for(int i = parsed_struct.underground_floor ; i>=1 ; i--)
         {
-            s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
+            bool flag = true;
+            for(const vector<int> each_floor : parsed_struct.button_outside)
+            {
+	            int floor = each_floor[0];
+                if(i == floor*-1)
+                {
+                    //DO NOT MAKE NONE CIN
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag)
+            {
+            	s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], "B"+std::to_string(i));
+            }
         }
+
         for(int i = 1 ; i<=parsed_struct.ground_floor ; i++)
         {
-            s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], std::to_string(i));
+            bool flag = true;
+            for(const vector<int> each_floor : parsed_struct.button_outside)
+            {
+	            int floor = each_floor[0];
+                if(i == floor)
+                {
+                    //DO NOT MAKE NONE CIN
+                    flag = false;
+                    break;
+                }
+            }
+            if(flag)
+            {
+				s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], std::to_string(i));
+            }
         }
 
         if(!parsed_struct.button_outside.empty())
@@ -260,7 +318,7 @@ bool socket_oneM2M::create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_st
 	        }
         }
 	    std::chrono::duration<double> delta = system_clock::now() - start;
-	    std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
+	    //std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
 
         return true;
 	}
