@@ -1,4 +1,6 @@
 #pragma once
+#include "send_UnrealEngine.h"
+#include "socket_UnrealEngine.h"
 #include "socket_oneM2M.h"
 #include "simulation.h"
 
@@ -7,6 +9,8 @@ class Elevator
 public:
     socket_oneM2M sock;
 	physics p;
+    socket_UnrealEngine UEsock;
+
     latest_RETRIEVE_STRUCT latest;
 
     string building_name;
@@ -38,6 +42,7 @@ public:
 private:
     int RETRIEVE_interval_millisecond;
 
+    UE_Info wrap_for_UE_socket(int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity);
     vector<vector<string>> RETRIEVE_from_oneM2M();
     latest_RETRIEVE_STRUCT parse_oneM2M_RETRIEVE_to_STRUCT(vector<vector<string>> ret);
 

@@ -1,4 +1,4 @@
-SejongAI EV1 5 12 3 -99 -55 21 [] [[3,True]]
+SejongAI EV1 5 12 1 -99 -55 21 [] [[3,True]]
 SejongAI EV1 5 12 8 -99 -55 21 [] [[3,True].[8,False]]
 SejongAI EV1 5 12 16 -99 -55 21 ['7'] [[8,False]]
 SejongAI EV1 5 12 27 -99 -55 21 ['B1'] []

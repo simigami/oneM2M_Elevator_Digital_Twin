@@ -36,6 +36,12 @@
     <ClCompile Include="test.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="send_UnrealEngine.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="socket_UnrealEngine.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -57,6 +63,12 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="test.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="send_UnrealEngine.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="socket_UnrealEngine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

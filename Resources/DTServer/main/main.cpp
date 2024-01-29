@@ -39,7 +39,7 @@ bool DTServer::exists_elevator(class_of_one_Building one_building, string device
 {
 	try
 	{
-		for(auto elem : one_building.class_of_all_Elevators)
+		for(const Elevator& elem : one_building.class_of_all_Elevators)
 	    {
 		    if(elem.device_name == device_name)
 		    {

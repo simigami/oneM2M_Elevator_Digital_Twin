@@ -4,7 +4,8 @@ Elevator::Elevator(parse_json::parsed_struct parsed_struct, vector<string> ACP_N
 sock(parsed_struct, ACP_NAMES),
 p(parsed_struct.underground_floor, parsed_struct.ground_floor, {
         -55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1
-    })
+    }),
+UEsock(parsed_struct.building_name, parsed_struct.device_name, parsed_struct.underground_floor, parsed_struct.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, 1.25, 2.5)
 {
 	this->isRunning = true;
 	this->RETRIEVE_interval_millisecond = 10;
@@ -77,9 +78,10 @@ void Elevator::run()
 	vector<vector<long double>> temp2;
 
     system_clock::time_point start;
-    chrono::duration<double> interval;
+    std::chrono::duration<double> interval;
 
 	socket_oneM2M s = this->sock;
+	socket_UnrealEngine us = this->UEsock;
 	physics p = this->p;
 	simulation sim = this->p.s;
 
@@ -89,6 +91,8 @@ void Elevator::run()
 	std::chrono::steady_clock::time_point free_time;
 
 	bool flag;
+
+	us.send_data_to_UE5(us.sock.UE_info);
 
 	while(isRunning)
 	{
@@ -135,7 +139,10 @@ void Elevator::run()
 					sim.update_main_trip_list_via_inside_data(this->latest.button_inside, p.current_direction);
 				}
 				cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0][0] << endl;
+				go_To_Floor = sim.main_trip_list[0][0];
 				sim.dev_print_trip_list();
+				//SEND MODIFY goTo Floor Data To Unreal Engine
+				UE_Info temp = wrap_for_UE_socket(p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
 
 				//CHANGE V_T Graph
 				current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
@@ -164,6 +171,7 @@ void Elevator::run()
 				if(latest_trip_list_info[0][0] != sim.main_trip_list[0][0])
 				{
 					cout << "goTo Floor is Changed " << latest_trip_list_info[0][0] << " to " << sim.main_trip_list[0][0] << endl;
+					go_To_Floor = sim.main_trip_list[0][0];
 					sim.dev_print_trip_list();
 					//CHANGE V_T Graph
 					current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
@@ -286,6 +294,18 @@ void Elevator::run()
 		interval = system_clock::now() - start;
 		//cout << device_name << " TOTAL TICK TIME : " << interval.count()<< " seconds..." << endl;
 	}
+}
+
+UE_Info Elevator::wrap_for_UE_socket(int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity)
+{
+	UE_Info temp;
+	temp.underground_floor = underground_floor;
+	temp.ground_floor = ground_floor;
+	temp.each_floor_altimeter = each_floor_altimeter;
+	temp.acceleration = acceleration;
+	temp.max_velocity = max_velocity;
+
+	return temp;
 }
 
 vector<vector<string>> Elevator::RETRIEVE_from_oneM2M()
