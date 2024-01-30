@@ -8,7 +8,7 @@ p(parsed_struct.underground_floor, parsed_struct.ground_floor, {
 UEsock(parsed_struct.building_name, parsed_struct.device_name, parsed_struct.underground_floor, parsed_struct.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, 1.25, 2.5)
 {
 	this->isRunning = true;
-	this->RETRIEVE_interval_millisecond = 10;
+	this->RETRIEVE_interval_millisecond = 50;
 
 	this->Elevator_opcode = 0;
 	this->go_To_Floor = 0;
@@ -92,7 +92,8 @@ void Elevator::run()
 
 	bool flag;
 
-	us.send_data_to_UE5(us.sock.UE_info);
+	us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+	us.send_data_to_UE5(this->UEsock.sock.UE_info);
 
 	while(isRunning)
 	{
@@ -139,10 +140,12 @@ void Elevator::run()
 					sim.update_main_trip_list_via_inside_data(this->latest.button_inside, p.current_direction);
 				}
 				cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0][0] << endl;
-				go_To_Floor = sim.main_trip_list[0][0];
 				sim.dev_print_trip_list();
+
 				//SEND MODIFY goTo Floor Data To Unreal Engine
-				UE_Info temp = wrap_for_UE_socket(p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+				us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+				us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
+				us.send_data_to_UE5(us.sock.UE_info);
 
 				//CHANGE V_T Graph
 				current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
@@ -171,8 +174,13 @@ void Elevator::run()
 				if(latest_trip_list_info[0][0] != sim.main_trip_list[0][0])
 				{
 					cout << "goTo Floor is Changed " << latest_trip_list_info[0][0] << " to " << sim.main_trip_list[0][0] << endl;
-					go_To_Floor = sim.main_trip_list[0][0];
 					sim.dev_print_trip_list();
+
+					//SEND MODIFY goTo Floor Data To Unreal Engine
+					us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+					us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
+					us.send_data_to_UE5(us.sock.UE_info);
+
 					//CHANGE V_T Graph
 					current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
@@ -244,6 +252,12 @@ void Elevator::run()
 							if(!sim.main_trip_list.empty())
 							{
 								p.swap_direction();
+
+								//SEND NEXT FLOOR TO UE5
+								us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+								us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
+								us.send_data_to_UE5(us.sock.UE_info);
+
 								sim.dev_print_trip_list();
 								current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
@@ -259,6 +273,11 @@ void Elevator::run()
 						}
 						else
 						{
+							//SEND NEXT FLOOR TO UE5
+							us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+							us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
+							us.send_data_to_UE5(us.sock.UE_info);
+
 							sim.dev_print_trip_list();
 							current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
 
@@ -296,9 +315,11 @@ void Elevator::run()
 	}
 }
 
-UE_Info Elevator::wrap_for_UE_socket(int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity)
+UE_Info Elevator::wrap_for_UE_socket(string building_name, string device_name, int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity)
 {
 	UE_Info temp;
+	temp.building_name = building_name;
+	temp.device_name = device_name;
 	temp.underground_floor = underground_floor;
 	temp.ground_floor = ground_floor;
 	temp.each_floor_altimeter = each_floor_altimeter;

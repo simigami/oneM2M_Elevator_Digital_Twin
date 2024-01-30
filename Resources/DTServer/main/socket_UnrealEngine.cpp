@@ -112,6 +112,11 @@ void socket_UnrealEngine::send_data_to_UE5(const UE_Info& info)
 #endif
 }
 
+void socket_UnrealEngine::set_goTo_Floor(int floor)
+{
+	this->sock.UE_info.goToFloor = floor;
+}
+
 void socket_UnrealEngine::accept_con()
 {
 }

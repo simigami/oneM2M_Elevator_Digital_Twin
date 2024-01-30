@@ -42,7 +42,7 @@ public:
 private:
     int RETRIEVE_interval_millisecond;
 
-    UE_Info wrap_for_UE_socket(int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity);
+    UE_Info wrap_for_UE_socket(string building_name, string device_name, int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity);
     vector<vector<string>> RETRIEVE_from_oneM2M();
     latest_RETRIEVE_STRUCT parse_oneM2M_RETRIEVE_to_STRUCT(vector<vector<string>> ret);
 
