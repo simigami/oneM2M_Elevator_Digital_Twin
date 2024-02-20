@@ -42,6 +42,12 @@
     <ClCompile Include="socket_UnrealEngine.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="elevator2.h">
+      <Filter>헤더 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="elevator2.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">

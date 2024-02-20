@@ -16,6 +16,10 @@ std::string send_UnrealEngine::struct_to_json(const UE_Info& info)
     jsonObj["each_floor_altimeter"] = info.each_floor_altimeter;
     jsonObj["goToFloor"] = info.goToFloor;
 
+    jsonObj["tta"] = info.tta;
+    jsonObj["ttm"] = info.ttm;
+    jsonObj["ttd"] = info.ttd;
+
     jsonObj["acceleration"] = info.acceleration;
     jsonObj["max_velocity"] = info.max_velocity;
 

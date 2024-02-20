@@ -17,6 +17,6 @@ public:
 	vector<double> set_sock_altimeter_offsets();
 
 	void send_data_to_UE5(const UE_Info& info);
-	void set_goTo_Floor(int floor);
+	void set_goTo_Floor(int floor, double tta, double ttm, double ttd);
 	void accept_con();
 };

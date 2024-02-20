@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.props" Condition="Exists('packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.props')" />
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
       <Configuration>Debug</Configuration>
@@ -71,11 +72,18 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>C:\boost_1_84_0;$(IncludePath)</IncludePath>
+    <IncludePath>C:\vcpkg\vcpkg\installed\x64-windows\include;C:\boost_1_84_0;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Label="Vcpkg" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <VcpkgTriplet>x64-windows-static</VcpkgTriplet>
     <VcpkgUseStatic>false</VcpkgUseStatic>
+    <VcpkgConfiguration>Release</VcpkgConfiguration>
+  </PropertyGroup>
+  <PropertyGroup Label="Vcpkg">
+    <VcpkgEnabled>true</VcpkgEnabled>
+    <VcpkgEnableManifest>false</VcpkgEnableManifest>
+    <VcpkgManifestInstall>true</VcpkgManifestInstall>
+    <VcpkgAutoLink>true</VcpkgAutoLink>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -136,7 +144,18 @@
   <ItemGroup>
     <ClCompile Include="ASIO.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.targets" Condition="Exists('packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>이 프로젝트는 이 컴퓨터에 없는 NuGet 패키지를 참조합니다. 해당 패키지를 다운로드하려면 NuGet 패키지 복원을 사용하십시오. 자세한 내용은 http://go.microsoft.com/fwlink/?LinkID=322105를 참조하십시오. 누락된 파일은 {0}입니다.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.props')" Text="$([System.String]::Format('$(ErrorText)', 'packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.props'))" />
+    <Error Condition="!Exists('packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\vcpkg.C.vcpkg.vcpkg.1.0.0\build\native\vcpkg.C.vcpkg.vcpkg.targets'))" />
+  </Target>
 </Project>

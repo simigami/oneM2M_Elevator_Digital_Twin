@@ -142,6 +142,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="elevator.cpp" />
+    <ClCompile Include="elevator2.cpp" />
+    <ClCompile Include="elevator2.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parse_json.cpp" />
     <ClCompile Include="send_oneM2M.cpp" />

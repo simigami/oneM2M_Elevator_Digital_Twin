@@ -41,6 +41,8 @@ public:
     void cnt_retrieve();
     bool cnt_validate(const parse_json::parsed_struct& data, int num, ...);
 
+	void sub_create(string originator_string, int num, ...);
+
     void cin_create(string originator, string CIN_NAME, string payload, int num, ...);
     void cin_update(const parse_json::parsed_struct& data, int num, ...);
     http_response cin_retrieve_la(string originator, int num, ...);
@@ -53,6 +55,10 @@ public:
 private:
     int numbering = 1;
     const std::string server_url;
+
+	std::string nu_URL;
+	std::string ae_poa_URL;
+
     std::string URL_TO_CSE;
     std::string URL_TO_AE;
     std::string URL_TO_CNT;

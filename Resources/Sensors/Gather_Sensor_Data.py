@@ -12,8 +12,10 @@ import Camera_Sensor
 import Detect_Button_Elevator_Inside
 
 #server_ip = "192.168.0.134"
-server_ip = "127.0.0.1"
+#server_ip = "127.0.0.1"
+server_ip = "192.168.0.134"
 server_port = 10050
+#server_port = 10053
 
 
 def dev_sensor_data(timestamp, file_path):

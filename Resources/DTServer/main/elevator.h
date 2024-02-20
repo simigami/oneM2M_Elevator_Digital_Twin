@@ -1,4 +1,4 @@
-#pragma once
+/*#pragma once
 #include "send_UnrealEngine.h"
 #include "socket_UnrealEngine.h"
 #include "socket_oneM2M.h"
@@ -32,9 +32,12 @@ public:
     Elevator(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES);
     ~Elevator();
 
+    //void startListening(const std::string& address, unsigned int port);
+    //void analyze_notification(http_response response);
     void dev_print();
 
     void update_latest_info(int floor, int inout, simulation* s);
+    void reset();
     void start_thread();
     void stop_thread();
     void run();
@@ -48,3 +51,4 @@ private:
 
     // oneM2M retrieve를 통해 값이 들어왔을 때, 파싱 후 physics나, simulator에 역할을 수행하게끔 하기
 };
+*/

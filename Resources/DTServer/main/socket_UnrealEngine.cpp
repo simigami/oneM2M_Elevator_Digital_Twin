@@ -60,28 +60,6 @@ vector<double> socket_UnrealEngine::set_sock_altimeter_offsets()
 void socket_UnrealEngine::send_data_to_UE5(const UE_Info& info)
 {
 #ifdef UE5_IP
-	/*
-	 *
-	 *	//MAKE ASIO SERVICE
-	boost::asio::io_service io_service;
-
-	//MAKE ASIO SOCKET
-	boost::asio::ip::tcp::socket sock(io_service);
-
-	//MAKE ENDPOINT and ERROR HANDLER FOR ASIO SOCKET
-	boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(UE5_IP), UE5_PORT);
-	boost::system::error_code ec;
-
-	//SERIALIZE UE_Info Structure to oarchive
-	std::string json = this->sock.struct_to_json(info);
-
-	//CONNECT Socket and Send Data
-	sock.connect(ep, ec);
-	boost::asio::async_write(sock, boost::asio::buffer(json), &on_send_completed);
-
-	io_service.run();
-	 */
-
 	try {
         // Server address and port
         const std::string SERVER_ADDRESS = "127.0.0.1";
@@ -103,7 +81,27 @@ void socket_UnrealEngine::send_data_to_UE5(const UE_Info& info)
 
         boost::asio::async_write(socket, boost::asio::buffer(json), handle_write);
 
-		io_context.run();
+		boost::asio::streambuf response;
+        boost::asio::read_until(socket, response, '\n');
+
+        // Extract response content
+        std::istream response_stream(&response);
+        std::string response_content;
+        std::getline(response_stream, response_content);
+
+        // Check response content and exit function if successful
+        if (response_content == "Data Received") 
+		{
+            // Data received successfully, exit function
+            return;
+        }
+		else 
+		{
+            // Handle response error (e.g., print error message)
+            std::cerr << "Error: Invalid response from UE5 server." << std::endl;
+        }
+
+		//io_context.run();
     }
 	catch (std::exception& e) {
         std::cerr << "Error: " << e.what() << std::endl;
@@ -112,9 +110,13 @@ void socket_UnrealEngine::send_data_to_UE5(const UE_Info& info)
 #endif
 }
 
-void socket_UnrealEngine::set_goTo_Floor(int floor)
+void socket_UnrealEngine::set_goTo_Floor(int floor, double tta, double ttm, double ttd)
 {
 	this->sock.UE_info.goToFloor = floor;
+
+	this->sock.UE_info.tta = tta;
+	this->sock.UE_info.ttm = ttm;
+	this->sock.UE_info.ttd = ttd;
 }
 
 void socket_UnrealEngine::accept_con()

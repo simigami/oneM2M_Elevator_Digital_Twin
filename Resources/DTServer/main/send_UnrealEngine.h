@@ -20,6 +20,10 @@ struct UE_Info
 	double acceleration;
 	double max_velocity;
 
+	double tta;
+	double ttm;
+	double ttd;
+
 	friend class boost::serialization::access;
 
 	template<typename Archive>
@@ -29,7 +33,6 @@ struct UE_Info
 class send_UnrealEngine
 {
 public:
-
 	UE_Info UE_info;
 
 	string struct_to_json(const UE_Info& info);
@@ -44,4 +47,7 @@ inline void UE_Info::serialize(Archive& ar, const unsigned int version)
 	ar & ground_floor;
 	ar & max_velocity;
 	ar & acceleration;
+	ar & tta;
+	ar & ttm;
+	ar & ttd;
 }

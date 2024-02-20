@@ -1,4 +1,9 @@
-#include "elevator.h"
+/*#include "elevator.h"
+
+#define INIT_ALT -55
+
+using namespace boost::asio;
+using ip::tcp;
 
 Elevator::Elevator(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES) :
 sock(parsed_struct, ACP_NAMES),
@@ -8,7 +13,7 @@ p(parsed_struct.underground_floor, parsed_struct.ground_floor, {
 UEsock(parsed_struct.building_name, parsed_struct.device_name, parsed_struct.underground_floor, parsed_struct.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, 1.25, 2.5)
 {
 	this->isRunning = true;
-	this->RETRIEVE_interval_millisecond = 50;
+	this->RETRIEVE_interval_millisecond = 10;
 
 	this->Elevator_opcode = 0;
 	this->go_To_Floor = 0;
@@ -60,6 +65,37 @@ void Elevator::update_latest_info(int floor, int inout, simulation* s)
 	}
 }
 
+void Elevator::reset()
+{
+	current_goTo_Floor_single_info.clear();
+	current_goTo_Floor_vector_info.clear();
+
+	this->latest.empty = true;
+
+	this->latest.velocity = 0.0;
+	this->latest.altimeter = 0.0;
+
+	this->latest.und = 0;
+	this->latest.gnd = 0;
+
+	this->latest.each_floor_altimeter.clear();
+	this->latest.button_inside.clear();
+	this->latest.button_outside.clear();
+
+	this->p.init = true;
+	this->p.lock = true;
+	this->p.current_direction = true;
+	this->p.current_velocity = 0.0;
+	this->p.current_altimeter = 0.0;
+
+	this->p.s.main_trip_list.clear();
+	this->p.s.reserved_trip_list_up.clear();
+	this->p.s.reserved_trip_list_down.clear();
+
+	this->p.s.prev_button_inside_data.clear();
+	this->p.s.prev_button_outside_data.clear();
+}
+
 void Elevator::start_thread()
 {
 	thread temp(&Elevator::run, this);
@@ -98,6 +134,9 @@ void Elevator::run()
 	while(isRunning)
 	{
 		start = system_clock::now();
+		//FOR DUBBUGING
+		//this->startListening("192.168.0.134", 10053);
+
 		//GET RETRIEVED INFORMATIONS
 		retrieved_string = this->RETRIEVE_from_oneM2M();
 
@@ -117,6 +156,10 @@ void Elevator::run()
 			else
 			{
 				cout << this->building_name << " -> " << this->device_name  << " : RECEIVED FIRST DATA..." << endl;
+				if(this->device_name == "EV2")
+				{
+					cout << endl;
+				}
 				this->latest.empty = false;
 				if(!this->latest.button_outside.empty())
 				{
@@ -127,7 +170,7 @@ void Elevator::run()
 						p.init = false;
 						p.set_initial_elevator_direction(this->latest.button_outside);
 					}
-					sim.update_main_trip_list_via_outside_data(this->latest.button_outside, p.current_direction);
+					sim.update_main_trip_list_via_outside_data(this->latest.button_outside, p.current_direction, INIT_ALT, this->latest.each_floor_altimeter, p.info.underground_floor, p.info.ground_floor);
 				}
 
 				if(!this->latest.button_inside.empty())
@@ -140,15 +183,15 @@ void Elevator::run()
 					sim.update_main_trip_list_via_inside_data(this->latest.button_inside, p.current_direction);
 				}
 				cout << "goTo Floor is Changed None to : "  << sim.main_trip_list[0][0] << endl;
-				sim.dev_print_trip_list();
-
-				//SEND MODIFY goTo Floor Data To Unreal Engine
-				us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
-				us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
-				us.send_data_to_UE5(us.sock.UE_info);
+				//sim.dev_print_trip_list();
 
 				//CHANGE V_T Graph
 				current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
+
+				//SEND MODIFY goTo Floor Data To Unreal Engine
+				us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+				us.set_goTo_Floor(sim.main_trip_list[0][0], p.t_to_max_velocity, p.t_constant_speed, p.t_max_to_zero_deceleration);
+				us.send_data_to_UE5(us.sock.UE_info);
 
 				it = current_goTo_Floor_vector_info.begin();
 				current_goTo_Floor_single_info = *it;
@@ -162,6 +205,8 @@ void Elevator::run()
 		else
 		{
 			latest_RETRIEVE_STRUCT current = this->parse_oneM2M_RETRIEVE_to_STRUCT(retrieved_string);
+			//FOR DEBUGGING
+			current.altimeter = current_goTo_Floor_single_info[2];
 
 			sim.check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(this->latest, current, p.current_direction);
 			current.empty = this->latest.empty;
@@ -173,16 +218,16 @@ void Elevator::run()
 				//IF CLOSEST goTo Floor is Changed
 				if(latest_trip_list_info[0][0] != sim.main_trip_list[0][0])
 				{
-					cout << "goTo Floor is Changed " << latest_trip_list_info[0][0] << " to " << sim.main_trip_list[0][0] << endl;
+					cout << "goTo Floor is Changed" << endl; //<< latest_trip_list_info[0][0] << " to " << sim.main_trip_list[0][0] << endl;
 					sim.dev_print_trip_list();
-
-					//SEND MODIFY goTo Floor Data To Unreal Engine
-					us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
-					us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
-					us.send_data_to_UE5(us.sock.UE_info);
 
 					//CHANGE V_T Graph
 					current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
+
+					//SEND MODIFY goTo Floor Data To Unreal Engine
+					us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+					us.set_goTo_Floor(sim.main_trip_list[0][0], p.t_to_max_velocity, p.t_constant_speed, p.t_max_to_zero_deceleration);
+					us.send_data_to_UE5(us.sock.UE_info);
 
 					it = current_goTo_Floor_vector_info.begin();
 					current_goTo_Floor_single_info = *it;
@@ -195,10 +240,11 @@ void Elevator::run()
 			//IF CURRENT TRIP LIST IS ENDED -> CHANGE ELEVATOR STATUS
 			if(current_goTo_Floor_single_info == current_goTo_Floor_vector_info.back())
 			{
-				cout << building_name << " : " << device_name << " -> REACHED " << go_To_Floor << endl;
 				if(p.lock)
 				{
 					p.lock = false;
+					cout << building_name << " : " << device_name << " -> REACHED " << go_To_Floor << endl;
+
 					//3 Second LOCK
 					sim.dev_print_stopped_floor();
 					free_time = std::chrono::steady_clock::now() + std::chrono::seconds(3);
@@ -253,13 +299,13 @@ void Elevator::run()
 							{
 								p.swap_direction();
 
-								//SEND NEXT FLOOR TO UE5
-								us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
-								us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
-								us.send_data_to_UE5(us.sock.UE_info);
-
 								sim.dev_print_trip_list();
 								current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
+
+								//SEND NEXT FLOOR TO UE5
+								us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+								us.set_goTo_Floor(sim.main_trip_list[0][0], p.t_to_max_velocity, p.t_constant_speed, p.t_max_to_zero_deceleration);
+								us.send_data_to_UE5(us.sock.UE_info);
 
 								it = current_goTo_Floor_vector_info.begin();
 								current_goTo_Floor_single_info = *it;
@@ -274,12 +320,12 @@ void Elevator::run()
 						else
 						{
 							//SEND NEXT FLOOR TO UE5
-							us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
-							us.sock.UE_info.goToFloor = sim.main_trip_list[0][0];
-							us.send_data_to_UE5(us.sock.UE_info);
-
 							sim.dev_print_trip_list();
 							current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim.main_trip_list[0][0]);
+
+							us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
+							us.set_goTo_Floor(sim.main_trip_list[0][0], p.t_to_max_velocity, p.t_constant_speed, p.t_max_to_zero_deceleration);
+							us.send_data_to_UE5(us.sock.UE_info);
 
 							it = current_goTo_Floor_vector_info.begin();
 							current_goTo_Floor_single_info = *it;
@@ -302,14 +348,18 @@ void Elevator::run()
 		if(sim.main_trip_list.empty() && sim.reserved_trip_list_up.empty() && sim.reserved_trip_list_down.empty())
 		{
 			//cout << this->device_name << " : Operation Finished, Change Status To IDLE..." << endl;
+
+			//FOR DEBUGGING
+			//exit(0);
+			this->reset();
 		}
 		else
 		{
-			cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " << current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
+			//cout << "CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " << current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
 			latest_trip_list_info = sim.main_trip_list;
 		}
 
-		//std::this_thread::sleep_for(std::chrono::milliseconds(this->RETRIEVE_interval_millisecond));
+		std::this_thread::sleep_for(std::chrono::milliseconds(this->RETRIEVE_interval_millisecond));
 		interval = system_clock::now() - start;
 		//cout << device_name << " TOTAL TICK TIME : " << interval.count()<< " seconds..." << endl;
 	}
@@ -360,17 +410,132 @@ latest_RETRIEVE_STRUCT Elevator::parse_oneM2M_RETRIEVE_to_STRUCT(vector<vector<s
 		temp.button_outside.push_back({floor_int, direction_int});
 	}
 
+	temp.und = 5;
+	temp.gnd = 12;
+	temp.each_floor_altimeter = {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1};
 	return temp;
 }
 
+/*
+void Elevator::analyze_notification(http_response response)
+{
+    // Modify the value of "sur" to "/"
+	wstring sur;
+    string sur_string;
+    web::json::value response_json = response.extract_json().get();
+
+    sur = response_json[U("m2m:sgn")][U("nev")][U("sur")].as_string();
+    sur_string.assign(sur.begin(), sur.end());
+
+    // Extract values except the last one into a vector<string>
+    vector<string> sur_values;
+    string delimiter = "/";
+    size_t pos = 0;
+
+    while ((pos = sur_string.find(delimiter)) != string::npos) 
+    {
+        sur_values.push_back(sur_string.substr(0, pos));
+        sur.erase(0, pos + delimiter.length());
+    }
+
+	string building_name = sur_values[1];
+	string device_name = sur_values[2];
+
+    string last_index_value = sur_values[sur_values.size()-1];
+    string second_last_index_value = sur_values[sur_values.size()-2];
+
+	if(second_last_index_value == building_name || last_index_value == device_name)
+	{
+		cout << "ERROR OCCURRED ON Elevator::analyze_notification. index value overlapped..." << endl;
+		exit(0);
+	}
+	else
+	{
+		if(this->building_name != building_name)
+		{
+			//NO NEED TO GET THIS NOTIFICATION
+			return ;
+		}
+		else if(this->device_name != device_name)
+		{
+			//NO NEED TO GET THIS NOTIFICATION
+			return ;
+		}
+		else if(this->building_name == building_name && this->device_name == device_name)
+		{
+			if(second_last_index_value == "Elevator_physics")
+		    {
+			    if(last_index_value == "Velocity")
+			    {
+				    //THIS NOTIFICATION IS ABOUT VELOCITY CHANGE
+		            double con = response_json[U("m2m:sgn")][U("nev")][U("rep")][U("con")].as_double();
+			    }
+    			else if(last_index_value == "Altimeter")
+		        {
+				    //THIS NOTIFICATION IS ABOUT ALTIMETER CHANGE
+		            double con = response_json[U("m2m:sgn")][U("nev")][U("rep")][U("con")].as_double();
+			    }
+		    }
+
+		    else if(second_last_index_value == "Elevator_button_inside")
+		    {
+			    if(last_index_value == "Button_List")
+			    {
+				    //THIS NOTIFICATION IS ABOUT BUTTON INSIDE LIST CHANGE
+		            web::json::array con = response_json[U("m2m:sgn")][U("nev")][U("rep")][U("con")].as_array();
+		            vector<int> button_inside_array;
+
+		            for(const auto& v : con)
+		            {
+			            button_inside_array.push_back(v.as_integer());
+		            }
+
+
+			    }
+		        else if(last_index_value == "goTo")
+		        {
+			        int con = response_json[U("m2m:sgn")][U("nev")][U("rep")][U("con")].as_integer();
+		        }
+		    }
+
+		    else if(second_last_index_value == "Elevator_button_outside")
+		    {
+			    wstring con = response_json[U("m2m:sgn")][U("nev")][U("rep")][U("con")].as_string();
+		        int called_floor;
+		        bool direction;
+
+		        if(con == L"Up")
+		        {
+			        direction = true;
+		        }
+		        else
+		        {
+			        direction = false;
+		        }
+
+				if(!last_index_value.empty() && last_index_value[0] == 'B')
+		        {
+			        called_floor = (last_index_value[last_index_value.size()-1] - '0') * -1;
+		        }
+		        else
+		        {
+			        called_floor = stoi(last_index_value);
+		        }
+			}
+		}
+	}
+}
+*/
+
+/*
 void Elevator::dev_print()
 {
 	cout << "ELEVATOR : " << this << " DEV PRINT" << endl;
-	cout << "SOCK : " << this->sock.socket_name << endl;
 	cout << "PHYSICS : " << this->p.current_velocity << endl;
 	cout << "BUILDING NAME : " << this->building_name << endl;
 	cout << "DEVICE NAME : " << this->device_name << endl;
 }
+*/
 
 /*
  * 			string first_goTo_floor = this->latest_RETRIEVE_info[2].front();
