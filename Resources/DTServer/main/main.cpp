@@ -4,7 +4,6 @@
 #include "socket_oneM2M.h"
 #include "simulation.h"
 #include "elevator.h"
-#include "elevator2.h"
 #include "test.h"
 
 #define PORT_EMBEDDED 10050
@@ -15,14 +14,11 @@
 #define oneM2M_CSE_Server "192.168.0.178"
 #define oneM2M_CSE_Port "10051"
 
-
 using namespace boost::asio;
 using ip::tcp;
 using std::string;
 using std::vector;
 using std::chrono::system_clock;
-
-int cin_numbering = 1;
 
 void print_elapsed_time()
 {
@@ -39,15 +35,13 @@ DTServer::DTServer()
 {
 }
 
-bool DTServer::exists_elevator(class_of_one_Building one_building, string device_name)
+bool DTServer::existsElevator(class_of_one_Building one_building, string device_name)
 {
-	try
+    try
 	{
-		//for(const Elevator& elem : one_building.class_of_all_Elevators)
-		for(const Elevator2* elem : one_building.class_of_all_Elevators)
+		for(const Elevator* elem : one_building.classOfAllElevators)
 	    {
-		    //if(elem.device_name == device_name)
-		    if(elem->elevatorStatus->device_name == device_name)
+		    if(elem->device_name == device_name)
 		    {
 			    return true;
 		    }
@@ -73,16 +67,15 @@ class_of_one_Building* DTServer::get_building_vector(string ACOR_NAME)
     return NULL;
 }
 
-//Elevator DTServer::get_elevator(class_of_one_Building class_of_one_building, string device_name)
-Elevator2* DTServer::get_elevator(class_of_one_Building* class_of_one_building, string device_name)
+Elevator* DTServer::getElevator(class_of_one_Building* class_of_one_building, string device_name)
 {
-	try
+    try
 	{
-        for(int i = 0; i<class_of_one_building->class_of_all_Elevators.size(); i++)
+        for(size_t i = 0; i < class_of_one_building->classOfAllElevators.size(); i++)
         {
-	        if(class_of_one_building->class_of_all_Elevators[i]->elevatorStatus->device_name == device_name)
+	        if(class_of_one_building->classOfAllElevators[i]->device_name == device_name)
 	        {
-		        return class_of_one_building->class_of_all_Elevators[i];
+		        return class_of_one_building->classOfAllElevators[i];
 	        }
         }
 	}
@@ -93,321 +86,18 @@ Elevator2* DTServer::get_elevator(class_of_one_Building* class_of_one_building, 
 	}
 }
 
-socket_oneM2M DTServer::get_oneM2M_socket_based_on_AE_ID(vector<Elevator2*> elevator_array, const string AE_ID)
+socket_oneM2M DTServer::get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const string AE_ID)
 {
-    for(Elevator2* each_elevator_class : elevator_array)
+    for(const Elevator* each_elevator_class : elevator_array)
     {
         socket_oneM2M socket = *(each_elevator_class->sock);
-        //std::cout << "Socket Name : " << socket.socket_name << std::endl;
 	    if(socket.building_name == AE_ID)
 	    {
-		    //std::cout << "Found Socket " << AE_ID << std::endl;
             return socket;
 	    }
     }
-    std::cout << "Error occured in Class DTServer::get_oneM2M_socket_based_on_AE_ID -> AE_ID Not Found : " << AE_ID << std::endl;
+    std::cout << "Error occurred in Class DTServer::get_oneM2M_socket_based_on_AE_ID -> AE_ID Not Found : " << AE_ID << std::endl;
     exit(0);
-}
-
-void DTServer::Running_Embedded(const std::string& httpResponse)
-{
-    //std::cout << "Received EMBEDDED response: " << httpResponse << std::endl;
-
-    parse_json c;
-    auto parsed_struct = c.parsing(httpResponse);
-    string ACOR_NAME = parsed_struct.building_name;
-
-    string AE_NAME = parsed_struct.building_name;
-    string CNT_NAME = parsed_struct.device_name;
-
-    int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
-
-    Elevator2* this_Building_Elevator;
-
-    // CHECK THIS ACP Exists
-    if(ACP_FLAG == 0 || ACP_FLAG == 1)
-    {
-        this->ACP_NAMES.push_back(ACOR_NAME);
-
-        // Create THIS AE(Building) Class
-        class_of_one_Building* temp = new class_of_one_Building;
-
-        // Create THIS CNT(Building's Elevator) Class
-        this_Building_Elevator = new Elevator2(parsed_struct, this->ACP_NAMES);
-
-        temp->class_of_all_Elevators.push_back(this_Building_Elevator);
-        temp->ACP_NAME = ACOR_NAME;
-
-        class_of_all_Buildings.push_back(temp);
-
-        //THREADING
-        this_Building_Elevator->start_thread();
-        this_Building_Elevator->sock->create_oneM2M_SUBs(parsed_struct);
-        this_Building_Elevator->sock->create_oneM2M_CINs(parsed_struct);
-
-        //DISCOVERY TEST
-	    //this_Building_Elevator->sock.socket.discovery_retrieve(this_Building_Elevator->sock.originator_name, 0);
-
-        //RCN TEST
-        //this_Building_Elevator->sock.socket.result_content_retrieve(this_Building_Elevator->sock.originator_name, 0);
-    }
-    else
-    {
-        std::cout << "Building Exists, Check Elevator " << CNT_NAME << " Exists..." << std::endl;
-        // GET THIS BUILDING CLASS
-        class_of_one_Building* temp = this->get_building_vector(ACOR_NAME);
-
-        // CHECK THIS CNT(Device Name) Exists
-        bool flag = this->exists_elevator(*temp, CNT_NAME);
-
-        if(flag)
-        {
-            // THIS CNT Exists
-            //Elevator This_Elevator = this->get_elevator(*temp, CNT_NAME);
-            Elevator2* This_Elevator = this->get_elevator(temp, CNT_NAME);
-
-            if(This_Elevator->isRunning)
-            {
-	            // Update CIN Value
-	            std::cout << "Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
-	            This_Elevator->sock->create_oneM2M_CINs(parsed_struct);
-            }
-
-            else
-            {
-	            std::cout << "Elevator Wake Up from IDLE, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
-                This_Elevator->isRunning = true;
-            	This_Elevator->start_thread();
-            	This_Elevator->sock->create_oneM2M_CINs(parsed_struct);
-            }
-
-            //DISCOVERY TEST
-	        //This_Elevator.sock.socket.discovery_retrieve(This_Elevator.sock.originator_name, 0);
-
-            //RCN TEST
-            //This_Elevator.sock.socket.result_content_retrieve(This_Elevator.sock.originator_name, 0);
-        }
-        else
-        {
-            // THIS CNT NOT Exists
-            std::cout << "Elevator Not Found, Creating New Elevator : " << CNT_NAME << std::endl;
-
-            // Create THIS CNT(Building's Elevator) Class
-	        this_Building_Elevator = new Elevator2(parsed_struct, this->ACP_NAMES);
-
-	        temp->class_of_all_Elevators.push_back(this_Building_Elevator);
-	        temp->ACP_NAME = ACOR_NAME;
-
-	        class_of_all_Buildings.push_back(temp);
-
-	        //THREADING
-	        this_Building_Elevator->start_thread();
-	        this_Building_Elevator->sock->create_oneM2M_SUBs(parsed_struct);
-	        this_Building_Elevator->sock->create_oneM2M_CINs(parsed_struct);
-        }
-    }
-}
-
-void DTServer::Running_Notification(const std::string& httpResponse)
-{
-    try
-	{
-		auto json_body = nlohmann::json::parse(httpResponse);
-
-		if (json_body.contains("m2m:sgn")) 
-		{
-            auto nev = json_body["m2m:sgn"]["nev"];
-
-            // Check if "rep" object exists within "nev"
-            if (nev.contains("rep")) 
-			{
-                auto rep_json = nlohmann::json::parse(nev["rep"].get<std::string>());
-
-                // Check if "m2m:sub" object exists within "rep"
-                if (rep_json.contains("m2m:sub")) 
-				{
-                    //std::cout << "m2m:sub field exists." << std::endl;
-					return ;
-                }
-            	else
-				{
-                    //std::cout << "Received HTTP response: " << httpResponse << std::endl;
-                    //START ANALYZE
-					std::string sur_string = json_body["m2m:sgn"]["sur"];
-					std::stringstream ss(sur_string);
-
-                    std::vector<std::string> sur_values;
-                    std::string item;
-
-                    while (std::getline(ss, item, '/')) 
-					{
-                        sur_values.push_back(item);
-                    }
-
-					string building_name = sur_values[1];
-					string device_name = sur_values[2];
-					string majorCNTName = sur_values[3];
-
-                    class_of_one_Building* this_building = this->get_building_vector(building_name);
-                    Elevator2* this_elevator = this->get_elevator(this_building, device_name);
-
-					this_elevator->each_notification_string = new notification_strings;
-					string con;
-					std::string rep_value_str = json_body["m2m:sgn"]["nev"]["rep"];
-
-			        // Parse the value of "rep" as JSON
-					nlohmann::json rep_value_json = nlohmann::json::parse(rep_value_str);
-
-					if(majorCNTName == "Elevator_physics")
-					{
-						string minorCNTName = sur_values[4];
-
-						if(minorCNTName.find("Velocity") != string::npos)
-						{
-							con = rep_value_json["m2m:cin"]["con"].get<string>();
-							this_elevator->each_notification_string->velocity = stod(con);
-						}
-						else if(minorCNTName.find("Altimeter") != string::npos)
-						{
-							con = rep_value_json["m2m:cin"]["con"].get<string>();
-							this_elevator->each_notification_string->altimeter = stod(con);
-						}
-					}
-					else if(majorCNTName == "Elevator_button_inside")
-					{
-						string minorCNTName = sur_values[4];
-
-						if(minorCNTName.find("Button_List") != string::npos)
-						{
-				            con = rep_value_json["m2m:cin"]["con"].get<string>();
-
-							std::vector<int> integers;
-							std::istringstream iss(con);
-						    std::string token;
-						    while (iss >> token) 
-							{
-                                // Convert each token (integer string) to an integer and store it in the vector
-                                if(token[0] == 'B')
-                                {
-	                                integers.push_back(-1 * stoi(token.substr(1)));
-                                }
-                                else
-                                {
-	                                integers.push_back(stoi(token));
-                                }
-							}
-							this_elevator->each_notification_string->button_inside_list = integers;
-						}
-						else if(minorCNTName.find("goTo") != string::npos)
-						{
-					        con = rep_value_json["m2m:cin"]["con"].get<string>();
-							this_elevator->each_notification_string->goTo = stoi(con);
-						}
-                        this_elevator->updateElevatorTick();
-					}
-					else if(majorCNTName == "Elevator_button_outside")
-					{
-						string minorCNTName = sur_values[4];
-						con = rep_value_json["m2m:cin"]["con"].get<string>();
-
-				        int called_floor;
-				        bool direction;
-
-                        //가정 1. 바깥에 누른 층은 한번 누르면 끝
-						if(con == "None") //바깥의 층에 도달하여 자연스럽게 사라진 경우 None
-						{
-							return ;
-						}
-				        else if(con == "Up")
-				        {
-					        direction = true;
-				        }
-				        else
-				        {
-					        direction = false;
-				        }
-						if(!minorCNTName.empty() && minorCNTName[0] == 'B')
-				        {
-					        called_floor = (minorCNTName[minorCNTName.size()-1] - '0') * -1;
-							this_elevator->each_notification_string->added_button_outside_altimeter = this_elevator->p->info.altimeter_of_each_floor[called_floor+this_elevator->p->info.underground_floor];
-				        }
-				        else
-				        {
-					        called_floor = stoi(minorCNTName);
-							this_elevator->each_notification_string->added_button_outside_altimeter = this_elevator->p->info.altimeter_of_each_floor[called_floor+this_elevator->p->info.underground_floor-1];
-				        }
-						this_elevator->each_notification_string->added_button_outside_direction = direction;
-						this_elevator->each_notification_string->added_button_outside_floor = called_floor;
-
-                        this_elevator->updateElevatorTick();
-					}
-                }
-            }
-			else 
-			{
-                std::cout << "rep field does not exist within nev." << std::endl;
-				exit(0);
-            }
-        }
-		else 
-		{
-            std::cout << "m2m:sgn field does not exist." << std::endl;
-			exit(0);
-        }
-	}
-	catch (std::exception e)
-	{
-		std::cerr << "Error in DTServer::Running_Notification : " << e.what() << std::endl;
-	}
-}
-
-void DTServer::handleConnection(boost::asio::ip::tcp::socket& socket, int port)
-{
-    boost::asio::streambuf receiveBuffer(BUFFER_SIZE);
-    boost::system::error_code error;
-    std::string httpRequest;
-
-    if(port == PORT_NOTIFICATION)
-    {
-	    //boost::asio::read_until(socket, receiveBuffer, "\0", error);
-        boost::asio::read(socket, receiveBuffer, error);
-
-        std::istream inputStream(&receiveBuffer);
-        std::ostringstream httpBodyStream;
-
-        // Read the HTTP headers
-        while (std::getline(inputStream, httpRequest) && httpRequest != "\r") {
-            // Process or ignore HTTP headers as needed
-        }
-
-        // Read the HTTP body (JSON string)
-        if (inputStream.peek() != EOF) {
-            std::getline(inputStream, httpRequest); // Read the empty line after the headers
-        }
-    }
-    else
-    {
-	    boost::asio::read_until(socket, receiveBuffer, "\n");
-
-        std::istream inputStream(&receiveBuffer);
-        std::getline(inputStream, httpRequest);
-    }
-    if (!error) 
-    {
-        if (port == PORT_EMBEDDED)
-        {
-            this->Running_Embedded(httpRequest);
-        }
-    	else if (port == PORT_NOTIFICATION) 
-        {
-            this->Running_Notification(httpRequest);
-        }
-    }
-	else
-    {
-        std::cerr << "Error in DTServer::handleConnection : " << error.message() << std::endl;
-        exit(0);
-    }
 }
 
 void DTServer::Run()
@@ -485,6 +175,361 @@ void DTServer::startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, boost
     });
 }
 
+void DTServer::handleConnection(boost::asio::ip::tcp::socket& socket, int port)
+{
+    boost::asio::streambuf receiveBuffer(BUFFER_SIZE);
+    boost::system::error_code error;
+    std::string httpRequest;
+
+    if(port == PORT_NOTIFICATION)
+    {
+	    //boost::asio::read_until(socket, receiveBuffer, "\0", error);
+        boost::asio::read(socket, receiveBuffer, error);
+
+        std::istream inputStream(&receiveBuffer);
+        std::ostringstream httpBodyStream;
+
+        // Read the HTTP headers
+        while (std::getline(inputStream, httpRequest) && httpRequest != "\r") {
+            // Process or ignore HTTP headers as needed
+        }
+
+        // Read the HTTP body (JSON string)
+        if (inputStream.peek() != EOF) {
+            std::getline(inputStream, httpRequest); // Read the empty line after the headers
+        }
+    }
+    else
+    {
+	    boost::asio::read_until(socket, receiveBuffer, "\n");
+
+        std::istream inputStream(&receiveBuffer);
+        std::getline(inputStream, httpRequest);
+    }
+    if (!error) 
+    {
+        if (port == PORT_EMBEDDED)
+        {
+            this->Running_Embedded(httpRequest);
+        }
+    	else if (port == PORT_NOTIFICATION) 
+        {
+            this->Running_Notification(httpRequest);
+        }
+    }
+	else
+    {
+        std::cerr << "Error in DTServer::handleConnection : " << error.message() << std::endl;
+        exit(0);
+    }
+}
+
+void DTServer::Running_Embedded(const std::string& httpResponse)
+{
+    Elevator* thisBuildingElevator;
+
+    parse_json c;
+    const parse_json::parsed_struct parsedStruct = c.parsing(httpResponse);
+
+    string ACOR_NAME = parsedStruct.building_name;
+    string AE_NAME = parsedStruct.building_name;
+    string CNT_NAME = parsedStruct.device_name;
+
+    int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
+
+    // CHECK THIS ACP Exists
+    if(ACP_FLAG == 0 || ACP_FLAG == 1)
+    {
+        this->ACP_NAMES.push_back(ACOR_NAME);
+
+        // Create THIS AE(Building) Class
+        class_of_one_Building* temp = new class_of_one_Building;
+
+        int algNumber;
+
+        //cout <<  "SET THIS ELEVATOR ALGORITHM : 1, 2 = ";
+        //cin >> algNumber;
+
+        // TEST
+        if(CNT_NAME == "EV1")
+        {
+	        algNumber = 1;
+        }
+        else
+        {
+	        algNumber = 2;
+        }
+
+        // Create THIS CNT(Building's Elevator) Class
+        thisBuildingElevator = new Elevator(parsedStruct, this->ACP_NAMES, algNumber);
+
+        temp->classOfAllElevators.push_back(thisBuildingElevator);
+        temp->ACP_NAME = ACOR_NAME;
+
+        class_of_all_Buildings.push_back(temp);
+
+		thisBuildingElevator->runElevator();
+        thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+        thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+
+        //DISCOVERY TEST
+	    //this_Building_Elevator->sock.socket.discovery_retrieve(this_Building_Elevator->sock.originator_name, 0);
+
+        //RCN TEST
+        //this_Building_Elevator->sock.socket.result_content_retrieve(this_Building_Elevator->sock.originator_name, 0);
+    }
+    else
+    {
+        std::cout << "Building Exists, Check Elevator " << CNT_NAME << " Exists..." << std::endl;
+
+        // GET THIS BUILDING CLASS and CHECK THIS CNT(Device Name) Exists
+        class_of_one_Building* temp = this->get_building_vector(ACOR_NAME);
+
+        // if TEMP == NULL, It means oneM2M Resource Tree Exists, But Server Restarted
+        if(temp == NULL)
+        {
+	        this->ACP_NAMES.push_back(ACOR_NAME);
+
+	        // Create THIS AE(Building) Class
+	        class_of_one_Building* temp = new class_of_one_Building;
+
+            int algNumber;
+            //cout <<  "SET THIS ELEVATOR ALGORITHM : 1, 2 = ";
+			//cin >> algNumber;
+
+            if(CNT_NAME == "EV1")
+	        {
+		        algNumber = 1;
+	        }
+	        else
+	        {
+		        algNumber = 2;
+	        }
+
+	        // Create THIS CNT(Building's Elevator) Class
+	        thisBuildingElevator = new Elevator(parsedStruct, this->ACP_NAMES, algNumber);
+
+	        temp->classOfAllElevators.push_back(thisBuildingElevator);
+	        temp->ACP_NAME = ACOR_NAME;
+
+	        class_of_all_Buildings.push_back(temp);
+
+			thisBuildingElevator->runElevator();
+        	thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+        }
+
+        else
+        {
+	        bool flag = this->existsElevator(*temp, CNT_NAME);
+
+	        if(flag)
+	        {
+	            // THIS CNT Exists
+	            Elevator* thisBuildingElevator = this->getElevator(temp, CNT_NAME);
+
+	            // Update CIN Value
+	            std::cout << "Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
+	            thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+	            //DISCOVERY TEST
+		        //This_Elevator.sock.socket.discovery_retrieve(This_Elevator.sock.originator_name, 0);
+
+	            //RCN TEST
+	            //This_Elevator.sock.socket.result_content_retrieve(This_Elevator.sock.originator_name, 0);
+	        }
+	        else
+	        {
+	            // THIS CNT NOT Exists
+	            std::cout << "Elevator Not Found, Creating New Elevator : " << CNT_NAME << std::endl;
+
+                int algNumber;
+	            //cout <<  "SET THIS ELEVATOR ALGORITHM : 1, 2 = ";
+				//cin >> algNumber;
+
+                if(CNT_NAME == "EV1")
+		        {
+			        algNumber = 1;
+		        }
+		        else
+		        {
+			        algNumber = 2;
+		        }
+
+	            // Create THIS CNT(Building's Elevator) Class
+		        thisBuildingElevator = new Elevator(parsedStruct, this->ACP_NAMES, algNumber);
+
+		        temp->classOfAllElevators.push_back(thisBuildingElevator);
+		        temp->ACP_NAME = ACOR_NAME;
+
+		        class_of_all_Buildings.push_back(temp);
+
+		        //THREADING
+		        thisBuildingElevator->runElevator();
+		        thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+		        thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+	        }
+        }
+    }
+}
+
+void DTServer::Running_Notification(const std::string& httpResponse)
+{
+    try
+	{
+		auto json_body = nlohmann::json::parse(httpResponse);
+
+		if (json_body.contains("m2m:sgn")) 
+		{
+            auto nev = json_body["m2m:sgn"]["nev"];
+
+            // Check if "rep" object exists within "nev"
+            if (nev.contains("rep")) 
+			{
+                auto rep_json = nlohmann::json::parse(nev["rep"].get<std::string>());
+
+                if (rep_json.contains("m2m:sub")) 
+				{
+					return ;
+                }
+            	else
+				{
+                    //START ANALYZE
+					std::string sur_string = json_body["m2m:sgn"]["sur"];
+					std::stringstream ss(sur_string);
+
+                    std::vector<std::string> sur_values;
+                    std::string item;
+
+                    while (std::getline(ss, item, '/')) 
+					{
+                        sur_values.push_back(item);
+                    }
+
+					string building_name = sur_values[1];
+					string device_name = sur_values[2];
+					string majorCNTName = sur_values[3];
+
+                    class_of_one_Building* this_building = this->get_building_vector(building_name);
+                    Elevator* thisElevator = this->getElevator(this_building, device_name);
+
+					string con;
+					std::string rep_value_str = json_body["m2m:sgn"]["nev"]["rep"];
+
+			        // Parse the value of "rep" as JSON
+					nlohmann::json rep_value_json = nlohmann::json::parse(rep_value_str);
+
+                    tempContentMoveToAlgorithm = new notificationContent;
+
+					if(majorCNTName == "Elevator_physics")
+					{
+						string minorCNTName = sur_values[4];
+
+						if(minorCNTName.find("Velocity") != string::npos)
+						{
+							con = rep_value_json["m2m:cin"]["con"].get<string>();
+                            tempContentMoveToAlgorithm->velocity = stod(con);
+						}
+						else if(minorCNTName.find("Altimeter") != string::npos)
+						{
+							con = rep_value_json["m2m:cin"]["con"].get<string>();
+							tempContentMoveToAlgorithm->altimeter = stod(con);
+						}
+                        thisElevator->setNotificationContent(tempContentMoveToAlgorithm);
+					}
+					else if(majorCNTName == "Elevator_button_inside")
+					{
+						string minorCNTName = sur_values[4];
+
+						if(minorCNTName.find("Button_List") != string::npos)
+						{
+				            con = rep_value_json["m2m:cin"]["con"].get<string>();
+
+							std::vector<int> integers;
+							std::istringstream iss(con);
+						    std::string token;
+						    while (iss >> token) 
+							{
+                                // Convert each token (integer string) to an integer and store it in the vector
+                                if(token[0] == 'B')
+                                {
+	                                integers.push_back(-1 * stoi(token.substr(1)));
+                                }
+
+                                else
+                                {
+	                                integers.push_back(stoi(token));
+                                }
+							}
+                            if(integers[0] == -1)
+                            {
+	                            cout << "" <<endl;
+                            }
+							tempContentMoveToAlgorithm->button_inside_list = integers;
+						}
+						else if(minorCNTName.find("goTo") != string::npos)
+						{
+					        con = rep_value_json["m2m:cin"]["con"].get<string>();
+							tempContentMoveToAlgorithm->goTo = stoi(con);
+						}
+
+                        thisElevator->setNotificationContent(tempContentMoveToAlgorithm);
+                        thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
+					}
+					else if(majorCNTName == "Elevator_button_outside")
+					{
+						string minorCNTName = sur_values[4];
+						con = rep_value_json["m2m:cin"]["con"].get<string>();
+
+				        int called_floor;
+				        bool direction;
+
+                        //가정 1. 바깥에 누른 층은 한번 누르면 끝
+						if(con == "None") //바깥의 층에 도달하여 자연스럽게 사라진 경우 None
+						{
+							return ;
+						}
+				        else if(con == "Up")
+				        {
+					        direction = true;
+				        }
+				        else
+				        {
+					        direction = false;
+				        }
+						if(!minorCNTName.empty() && minorCNTName[0] == 'B')
+				        {
+					        called_floor = (minorCNTName[minorCNTName.size()-1] - '0') * -1;
+							tempContentMoveToAlgorithm->added_button_outside_altimeter = thisElevator->p->info.altimeter_of_each_floor[called_floor+thisElevator->p->info.underground_floor];
+				        }
+				        else
+				        {
+					        called_floor = stoi(minorCNTName);
+							tempContentMoveToAlgorithm->added_button_outside_altimeter = thisElevator->p->info.altimeter_of_each_floor[called_floor+thisElevator->p->info.underground_floor-1];
+				        }
+						tempContentMoveToAlgorithm->added_button_outside_floor = called_floor;
+						tempContentMoveToAlgorithm->added_button_outside_direction = direction;
+
+                        thisElevator->setNotificationContent(tempContentMoveToAlgorithm);
+                        thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
+					}
+                }
+            }
+			else 
+			{
+                std::cout << "rep field does not exist within nev." << std::endl;
+				exit(0);
+            }
+        }
+		else 
+		{
+            std::cout << "m2m:sgn field does not exist." << std::endl;
+			exit(0);
+        }
+	}
+	catch (std::exception e)
+	{
+		std::cerr << "Error in DTServer::Running_Notification : " << e.what() << std::endl;
+	}
+}
 
 int main()
 {

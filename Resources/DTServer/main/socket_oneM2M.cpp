@@ -18,41 +18,48 @@ socket_oneM2M::socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<str
 
     try
     {
-        //cout << "CHECK This Building ACP..."  << endl;
         flag = socket.acp_validate(building_name, 0);
 
         if(flag == 0)
         {
 	        //ACP NOT EXISTS
-            //cout << "ACP RESOURCE NOT EXISTS..."  << endl;
 	        socket.acp_create_one_ACP(parsed_struct, ACP_NAMES, 0);
             socket.ae_create(this->building_name);
         }
         else if(flag == 1)
         {
 	        //ACP EXISTS BUT BUILDING NAME NOT EXISTS
-            //cout << "ACOR : " << "C" + this->building_name << " NOT EXISTS..."  << endl;
             socket.acp_update(parsed_struct, ACP_NAMES, 0);
             socket.ae_create(this->building_name);
         }
+
+	    if(socket.cnt_validate(originator_name, 1, device_name))
+	    {
+	        //ELEVATOR EXIST, so DO NOT MAKE ANY CNTs
+            Default_CNTs.emplace_back("Elevator_physics");
+	        Default_CNTs.emplace_back("Elevator_button_inside");
+	        Default_CNTs.emplace_back("Elevator_button_outside");
+
+            Default_PHYSICS_CNTs.emplace_back(device_name +"_Velocity");
+	        Default_PHYSICS_CNTs.emplace_back(device_name +"_Altimeter");
+	        Default_PHYSICS_CNTs.emplace_back(device_name +"_Temperature");
+	        Default_PHYSICS_CNTs.emplace_back(device_name +"_Trip");
+	        Default_PHYSICS_CNTs.emplace_back(device_name +"_Distance");
+
+	        Default_INSIDE_CNTs.emplace_back(device_name +"_Button_List");
+	        Default_INSIDE_CNTs.emplace_back(device_name +"_GoTo");
+	    }
         else
         {
-            //cout << "ELEVATOR : " << this->device_name << " NOT EXISTS..."  << endl;
+            //ACP and BUILDING NAME EXISTS CHECK IF ELEVATOR EXISTS
+		    socket.cnt_create(originator_name, 1, this->device_name);
+
+	        Default_CNTs.emplace_back("Elevator_physics");
+	        Default_CNTs.emplace_back("Elevator_button_inside");
+	        Default_CNTs.emplace_back("Elevator_button_outside");
+
+	        auto res = create_oneM2M_CNTs(parsed_struct);
         }
-        //ACP and BUILDING NAME EXISTS BUT ELEVATOR NOT EXISTS
-	    socket.cnt_create(originator_name, 1, this->device_name);
-
-        Default_CNTs.emplace_back("Elevator_physics");
-        Default_CNTs.emplace_back("Elevator_button_inside");
-        Default_CNTs.emplace_back("Elevator_button_outside");
-
-        auto res = create_oneM2M_CNTs(parsed_struct);
-
-        //DISCOVERY TESTING
-        //auto start = system_clock::now();
-        //socket.discovery_retrieve(originator_name, 0);
-        //chrono::duration<double> interval = system_clock::now() - start;;
-		//cout << device_name << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
     }
     catch(const std::exception& e)
     {
@@ -106,10 +113,6 @@ bool socket_oneM2M::create_oneM2M_under_device_name(parse_json::parsed_struct pa
 
             s.cnt_create(originator_name, 3, device_name, Default_CNTs[1], CNT_NAME);
             s.sub_create(originator_name, 4, device_name, Default_CNTs[1], CNT_NAME, sub_name);
-        }
-        for(const string& CNT_NAME : Default_OUTSIDE_CNTs)
-        {
-            s.cnt_create(originator_name, 3, device_name, Default_CNTs[2], CNT_NAME);
         }
 
         string payload = "None";
@@ -377,10 +380,6 @@ bool socket_oneM2M::create_oneM2M_CNTs(parse_json::parsed_struct parsed_struct)
             s.cnt_create(originator_name, 3, device_name, Default_CNTs[1], CNT_NAME);
             //s.sub_create(originator_name, 4, device_name, Default_CNTs[1], CNT_NAME, sub_name);
         }
-        for(const string& CNT_NAME : Default_OUTSIDE_CNTs)
-        {
-            s.cnt_create(originator_name, 3, device_name, Default_CNTs[2], CNT_NAME);
-        }
 
         for(int i = parsed_struct.underground_floor ; i>=1 ; i--)
         {
@@ -559,6 +558,25 @@ bool socket_oneM2M::create_oneM2M_CINs(parse_json::parsed_struct parsed_struct)
         std::cerr << "Exception Caught : " << e.what() << std::endl;
         return false;
 	}
+}
+
+bool socket_oneM2M::check_oneM2M_CNT(parse_json::parsed_struct parsed_struct)
+{
+    try
+    {
+        system_clock::time_point start = system_clock::now();
+
+        send_oneM2M s = this->socket;
+		string originator_name = "C" + this->building_name;
+		string device_name = this->device_name;
+
+        return s.cnt_validate(originator_name, 1, device_name);
+    }
+    catch (const std::exception& e)
+    {
+	    std::cerr << "Exception caught on socket_oneM2M::create_oneM2M_CNTs: " << e.what() << std::endl;
+        exit(0);
+    }
 }
 
 vector<vector<string>> socket_oneM2M::retrieve_oneM2M_cins(vector<int> floor_info)

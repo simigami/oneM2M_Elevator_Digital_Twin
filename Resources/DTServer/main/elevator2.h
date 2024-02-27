@@ -74,6 +74,4 @@ public:
 
 private:
     int RETRIEVE_interval_millisecond;
-
-    UE_Info wrap_for_UE_socket(string building_name, string device_name, int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity);
 };

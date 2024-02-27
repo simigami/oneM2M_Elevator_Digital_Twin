@@ -64,7 +64,7 @@ void Elevator2::run()
 	std::chrono::steady_clock::time_point start_time;
 	std::chrono::steady_clock::time_point end_time;
 
-	us->sock.UE_info = wrap_for_UE_socket(building_name, device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
+	us->sock.UE_info = us->wrap_for_UE_socket(building_name, device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
 	us->send_data_to_UE5(this->UEsock->sock.UE_info);
 	
 	while(isRunning)
@@ -172,7 +172,7 @@ void Elevator2::run()
 								current_goTo_Floor_vector_info = p->draw_vt_on_single_floor(sim->main_trip_list[0][0]);
 
 								//SEND NEXT FLOOR TO UE5
-								us->sock.UE_info = wrap_for_UE_socket(this->elevatorStatus->building_name, this->elevatorStatus->device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
+								us->sock.UE_info = us->wrap_for_UE_socket(this->elevatorStatus->building_name, this->elevatorStatus->device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
 								us->set_goTo_Floor(sim->main_trip_list[0][0], p->t_to_max_velocity, p->t_constant_speed, p->t_max_to_zero_deceleration);
 								us->send_data_to_UE5(us->sock.UE_info);
 
@@ -195,7 +195,7 @@ void Elevator2::run()
 							sim->dev_print_trip_list();
 							current_goTo_Floor_vector_info = p->draw_vt_on_single_floor(sim->main_trip_list[0][0]);
 
-							us->sock.UE_info = wrap_for_UE_socket(this->elevatorStatus->building_name, this->elevatorStatus->device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
+							us->sock.UE_info = us->wrap_for_UE_socket(this->elevatorStatus->building_name, this->elevatorStatus->device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
 							us->set_goTo_Floor(sim->main_trip_list[0][0], p->t_to_max_velocity, p->t_constant_speed, p->t_max_to_zero_deceleration);
 							us->send_data_to_UE5(us->sock.UE_info);
 
@@ -257,7 +257,7 @@ void Elevator2::updateElevatorTick()
 		this->go_To_Floor = sim->main_trip_list[0][0];
 
 		//SEND MODIFY goTo Floor Data To Unreal Engine
-		us->sock.UE_info = wrap_for_UE_socket(this->elevatorStatus->building_name, this->elevatorStatus->device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
+		us->sock.UE_info = us->wrap_for_UE_socket(this->elevatorStatus->building_name, this->elevatorStatus->device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
 		us->set_goTo_Floor(sim->main_trip_list[0][0], p->t_to_max_velocity, p->t_constant_speed, p->t_max_to_zero_deceleration);
 		us->send_data_to_UE5(us->sock.UE_info);
 
@@ -265,43 +265,7 @@ void Elevator2::updateElevatorTick()
 		current_goTo_Floor_single_info = *it;
 	}
 	else
-	{ /*
-		latest_RETRIEVE_STRUCT current = this->parse_oneM2M_RETRIEVE_to_STRUCT(retrieved_string);
-		//FOR DEBUGGING
-		current.altimeter = current_goTo_Floor_single_info[2];
-
-		sim->check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(this->latest, current, p.current_direction);
-		current.empty = this->latest.empty;
-		this->latest = current;
-
-		//CHECK LATEST TRIP INFO WITH MODIFIED TRIP LIST
-		if(!latest_trip_list_info.empty() && !sim->main_trip_list.empty())
-		{
-			//IF CLOSEST goTo Floor is Changed
-			if(latest_trip_list_info[0][0] != sim->main_trip_list[0][0])
-			{
-				cout << "goTo Floor is Changed" << endl; //<< latest_trip_list_info[0][0] << " to " << sim->main_trip_list[0][0] << endl;
-				sim->dev_print_trip_list();
-
-				//CHANGE V_T Graph
-				current_goTo_Floor_vector_info = p.draw_vt_on_single_floor(sim->main_trip_list[0][0]);
-
-				//SEND MODIFY goTo Floor Data To Unreal Engine
-				us.sock.UE_info = wrap_for_UE_socket(this->building_name, this->device_name, p.info.underground_floor, p.info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p.info.acceleration, p.info.max_velocity);
-				us.set_goTo_Floor(sim->main_trip_list[0][0], p.t_to_max_velocity, p.t_constant_speed, p.t_max_to_zero_deceleration);
-				us.send_data_to_UE5(us.sock.UE_info);
-
-				it = current_goTo_Floor_vector_info.begin();
-				current_goTo_Floor_single_info = *it;
-			}
-			else
-			{
-				//cout << "goTo Floor is NOT Changed "  << endl;
-			}
-		}
-		//IF CURRENT TRIP LIST IS ENDED -> CHANGE ELEVATOR STATUS
-		*/
-
+	{
 		if(temp->velocity != 0.0)
 		{
 			
@@ -341,32 +305,4 @@ void Elevator2::updateElevatorTick()
 			}
 		}
 	}
-}
-
-UE_Info Elevator2::wrap_for_UE_socket(string building_name, string device_name, int underground_floor, int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity)
-{
-	UE_Info temp;
-	temp.building_name = building_name;
-	temp.device_name = device_name;
-	temp.underground_floor = underground_floor;
-	temp.ground_floor = ground_floor;
-
-	if(each_floor_altimeter[0] < 0)
-	{
-		for(auto elem : each_floor_altimeter)
-		{
-			temp.each_floor_altimeter.push_back(elem+abs(each_floor_altimeter[0]));
-		}
-	}
-	else if(each_floor_altimeter[0] > 0)
-	{
-		for(auto elem : each_floor_altimeter)
-		{
-			temp.each_floor_altimeter.push_back(elem-abs(each_floor_altimeter[0]));
-		}
-	}
-	temp.acceleration = acceleration;
-	temp.max_velocity = max_velocity;
-
-	return temp;
 }

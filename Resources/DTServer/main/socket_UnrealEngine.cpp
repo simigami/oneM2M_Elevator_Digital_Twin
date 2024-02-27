@@ -2,7 +2,6 @@
 #include <boost/archive/text_oarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/serialization/serialization.hpp>
 #include "socket_UnrealEngine.h"
 #include "send_UnrealEngine.h"
 
@@ -33,6 +32,10 @@ socket_UnrealEngine::socket_UnrealEngine(string building_name, string device_nam
 	this->sock.UE_info.max_velocity = max_velocity;
 
 	this->sock.UE_info.each_floor_altimeter = set_sock_altimeter_offsets();
+
+	this->sock.UE_info.tta = 0;
+	this->sock.UE_info.ttm = 0;
+	this->sock.UE_info.ttd = 0;
 }
 
 vector<double> socket_UnrealEngine::set_sock_altimeter_offsets()
@@ -121,4 +124,33 @@ void socket_UnrealEngine::set_goTo_Floor(int floor, double tta, double ttm, doub
 
 void socket_UnrealEngine::accept_con()
 {
+}
+
+UE_Info socket_UnrealEngine::wrap_for_UE_socket(string building_name, string device_name, int underground_floor,
+	int ground_floor, vector<double> each_floor_altimeter, double acceleration, double max_velocity)
+{
+	UE_Info temp;
+	temp.building_name = building_name;
+	temp.device_name = device_name;
+	temp.underground_floor = underground_floor;
+	temp.ground_floor = ground_floor;
+
+	if(each_floor_altimeter[0] < 0)
+	{
+		for(auto elem : each_floor_altimeter)
+		{
+			temp.each_floor_altimeter.push_back(elem+abs(each_floor_altimeter[0]));
+		}
+	}
+	else if(each_floor_altimeter[0] > 0)
+	{
+		for(auto elem : each_floor_altimeter)
+		{
+			temp.each_floor_altimeter.push_back(elem-abs(each_floor_altimeter[0]));
+		}
+	}
+	temp.acceleration = acceleration;
+	temp.max_velocity = max_velocity;
+
+	return temp;
 }

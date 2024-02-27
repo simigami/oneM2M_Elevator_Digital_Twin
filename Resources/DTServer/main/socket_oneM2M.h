@@ -35,5 +35,7 @@ public:
 
 	bool create_oneM2M_CINs(parse_json::parsed_struct parsed_struct);
 
+	bool check_oneM2M_CNT(parse_json::parsed_struct parsed_struct);
+
 	vector<vector<string>> retrieve_oneM2M_cins(vector<int> floor_info);
 };

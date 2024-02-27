@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="리소스 파일\Deprecate">
+      <UniqueIdentifier>{f0de80b0-830f-4220-910d-5d87ca183f55}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="헤더 파일\Deprecate">
+      <UniqueIdentifier>{f0681a10-03a3-4686-acf0-8f906287b0fb}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,10 +48,19 @@
     <ClCompile Include="socket_UnrealEngine.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="elevator2.h">
-      <Filter>헤더 파일</Filter>
+    <ClCompile Include="elevatorAlgorithmDefault.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="elevatorAlgorithmSingle.cpp">
+      <Filter>리소스 파일</Filter>
     </ClCompile>
     <ClCompile Include="elevator2.cpp">
+      <Filter>리소스 파일\Deprecate</Filter>
+    </ClCompile>
+    <ClCompile Include="elevator2.h">
+      <Filter>헤더 파일\Deprecate</Filter>
+    </ClCompile>
+    <ClCompile Include="elevatorAlgorithmMultiple.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -75,6 +90,15 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="socket_UnrealEngine.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="elevatorAlgorithmDefault.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="elevatorAlgorithmSingle.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="elevatorAlgorithmMultiple.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

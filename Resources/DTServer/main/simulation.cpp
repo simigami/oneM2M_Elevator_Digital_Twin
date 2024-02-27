@@ -75,6 +75,11 @@ const void simulation::clear_data()
 	prev_button_outside_data.clear();
 }
 
+bool simulation::bCheckAllListEmpty()
+{
+	return !(this->main_trip_list.empty() && this->reserved_trip_list_up.empty() && this->reserved_trip_list_down.empty());
+}
+
 bool simulation::bigger(vector<int>& v1, vector<int>& v2)
 {
 	return v1[0] < v2[0];
@@ -411,6 +416,91 @@ void simulation::check_and_set_trip_list(int req_floor, bool direction, bool req
 	}
 }
 
+void simulation::check_and_set_trip_list_Nearest_N(
+	int req_floor, 
+	bool direction, bool req_direction,
+	double current_altimeter, double req_altimeter,
+	double currentDestFloorAltimeter,
+	double currentAltRatio, double intervalMAX)
+{
+	if(1.0 <= currentAltRatio && currentAltRatio <= 2.0)
+	{
+		currentAltRatio -= 1;
+	}
+
+	if(direction)
+	{
+		if(req_direction == direction)
+		{
+			if(current_altimeter < req_altimeter)
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			else if(static_cast<double>(req_floor) <= currentAltRatio - intervalMAX)
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			else
+			{
+				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+			}
+		}
+		else
+		{
+			if(this->main_trip_list.empty())
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			// 방향이 다르지만, 호출한 방향으로의 최악으로 많이 간 경우가, 현재 이동하는 Trip Dest보다 작을 때는 이득임
+			else if(abs(each_floor_altimeter.front() - current_altimeter) < abs(currentDestFloorAltimeter - current_altimeter))
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			else
+			{
+				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);	
+			}
+			//cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << endl;
+		}
+	}
+	else
+	{
+		if(req_direction == direction)
+		{
+			if(current_altimeter > req_altimeter)
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+				//cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << endl;
+			}
+			else if(static_cast<double>(req_floor) <= currentAltRatio + intervalMAX)
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			else
+			{
+				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+				//cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << endl;
+			}
+		}
+		else
+		{
+			if(this->main_trip_list.empty())
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			else if(abs(each_floor_altimeter.back() - current_altimeter) < abs(currentDestFloorAltimeter - current_altimeter))
+			{
+				add_floor_to_main_trip_list(req_floor, direction, 0);
+			}
+			else
+			{
+				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);	
+			}
+			//cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << endl;
+		}
+	}
+}
+
 bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> button_outside, bool direction, double current_altimeter, vector<double> each_floor_altimeter, int und, int gnd)
 {
 	try
@@ -503,6 +593,22 @@ bool simulation::update_main_trip_list_via_outside_data2(bool current_direction,
 	bool req_direction = outside_direction;
 
 	check_and_set_trip_list(req_floor, current_direction, req_direction, current_altimeter, req_altimeter);
+
+	return true;
+}
+
+bool simulation::update_main_trip_list_via_outside_data_Nearest_N(
+	bool current_direction, long double current_altimeter,
+	int outside_floor, bool outside_direction, double outside_altimeter,
+	double currentDestFloorAltimeter,
+	double currentAltRatio, 
+	double intervalMAX)
+{
+	int req_floor = outside_floor;
+	double req_altimeter = outside_altimeter;
+	bool req_direction = outside_direction;
+
+	check_and_set_trip_list_Nearest_N(req_floor, current_direction, req_direction, current_altimeter, req_altimeter, currentDestFloorAltimeter, currentAltRatio, intervalMAX);
 
 	return true;
 }
@@ -665,7 +771,9 @@ physics::physics(int underground_floor, int ground_floor, vector<double> altimet
 
 	this->info.underground_floor = underground_floor;
 	this->info.ground_floor = ground_floor;
+
 	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
+	this->s->each_floor_altimeter = altimeter_of_each_floor;
 
 	this->current_velocity = 0.0;
 	this->current_altimeter = -55;
@@ -769,6 +877,41 @@ long double physics::distanceDuringAcceleration(long double initial_velocity, lo
                                           (0.5 * (final_velocity >= initial_velocity ? 1 : -1) * acceleration * std::pow(t_to_final_velocity, 2));
 
     return distance_during_acceleration;
+}
+
+double physics::altimeterToFloorRatio(double altimeter, vector<double> eachFloorAltimeter)
+{
+    size_t i = 0;
+
+	// 예외 처리: eachFloorAltimeter가 비어있는 경우 또는 altimeter가 범위를 벗어난 경우
+    if (eachFloorAltimeter.empty() || altimeter < eachFloorAltimeter.front() || altimeter > eachFloorAltimeter.back()) {
+        std::cerr << "Error: Altitude out of range or eachFloorAltimeter is empty." << std::endl;
+        exit(0);
+    }
+
+    while (i < eachFloorAltimeter.size() - 1 && altimeter > eachFloorAltimeter[i + 1]) {
+        i++;
+    }
+
+    // 해당 위치의 인덱스와 해당 위치에서의 비율 계산
+    double ratio = (altimeter - eachFloorAltimeter[i]) / (eachFloorAltimeter[i + 1] - eachFloorAltimeter[i]);
+	ratio = round(ratio * 10) / 10;
+
+	if(i <= this->info.underground_floor-1)
+	{
+		i = i + (-1)  * this->info.underground_floor;
+	}
+	else
+	{
+		i -= (this->info.underground_floor-1);
+	}
+
+    return i + ratio; // 인덱스와 비율을 더하여 반환
+}
+
+double physics::floorToAltimeter(int floor, vector<double> eachFloorAltimeter) const
+{
+	return floor > 0 ? eachFloorAltimeter[this->info.underground_floor-1+floor] : eachFloorAltimeter[this->info.underground_floor+floor];
 }
 
 bool physics::set_direction(int floor)

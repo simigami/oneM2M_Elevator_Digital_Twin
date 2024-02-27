@@ -144,6 +144,9 @@
     <ClCompile Include="elevator.cpp" />
     <ClCompile Include="elevator2.cpp" />
     <ClCompile Include="elevator2.h" />
+    <ClCompile Include="elevatorAlgorithmDefault.cpp" />
+    <ClCompile Include="elevatorAlgorithmMultiple.cpp" />
+    <ClCompile Include="elevatorAlgorithmSingle.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parse_json.cpp" />
     <ClCompile Include="send_oneM2M.cpp" />
@@ -155,6 +158,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="elevator.h" />
+    <ClInclude Include="elevatorAlgorithmDefault.h" />
+    <ClInclude Include="elevatorAlgorithmMultiple.h" />
+    <ClInclude Include="elevatorAlgorithmSingle.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="parse_json.h" />
     <ClInclude Include="send_oneM2M.h" />

@@ -323,7 +323,7 @@ int send_oneM2M::acp_validate(string ACP_NAME, int num, ...)
 #endif
 
 #ifdef oneM2M_tinyIoT
-    if(response_body_string.find(U("m2m:cb")) != utility::string_t::npos || response.status_code() == 404)
+    if(response.status_code() == 404)
     {
 	    return 0;
     }
@@ -519,62 +519,54 @@ void send_oneM2M::cnt_create(string originator_string, int num, ...)
 
 }
 
-void send_oneM2M::cnt_retrieve()
+void send_oneM2M::cnt_retrieve(string originator, int num, ...)
 {
-
 }
 
-bool send_oneM2M::cnt_validate(const parse_json::parsed_struct& data, int num, ...)
+bool send_oneM2M::cnt_validate(string originator, int num, ...)
 {
-    string originator_name = "C" + data.building_name;
-    string CNT_ID = data.device_name;
-
-    string URL = this->URL_TO_CSE;
-
-    va_list args;
+	va_list args;
     va_start(args, num);
 
-	if(num>=1)
+    string CNT_URL = this->URL_TO_AE;
+
+    if(num>=1)
     {
         for(int i=1; i<=num; i++)
         {
 	        auto ret = va_arg(args, const string);
-	        URL += "/";
-	        URL += ret;
+	        CNT_URL += "/";
+	        CNT_URL += ret;
         }
 		va_end(args);
     }
-    URL += "/";
-	URL += CNT_ID;
 
-    std::cout << "CNT Name : " << CNT_ID << " vaildate on URL : " << URL << std::endl;
-    http_client client(utility::conversions::to_string_t(URL));
-	http_request request(methods::GET);
+    http_client client(utility::conversions::to_string_t(CNT_URL));
+	http_request request(methods::GET) ;
+
+    std::cout << "CNT RETRIEVE Under : " << CNT_URL << std::endl;
 
     // Create an HTTP request
+    request.headers().set_content_type(U("application/json"));
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
-    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator_name));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
+#ifndef oneM2M_tinyIoT
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+#endif
     request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(RVI));
 
-	auto response = client.request(request).get();
-	utility::string_t response_body_string = response.extract_string().get();
+    // Send the HTTP request and wait for the response
+    auto response = client.request(request).get();
+    utility::string_t response_body_string = response.extract_string().get();
 
-    //std::wcout << L"CNT HTTP Response:\n" << response.to_string() << std::endl;
-
-    if(response_body_string.find(U("m2m:cb")) != utility::string_t::npos)
-    {
-	    return false;
-    }
-    else if(response_body_string.find(U("m2m:cnt")) != utility::string_t::npos)
+    if(response.status_code() == status_codes::OK && response_body_string.find(U("m2m:cnt")) != utility::string_t::npos)
     {
         return true;
     }
     else
     {
-	    return false;
-    }
-    return false;
+        return false;
+	}
 }
 
 void send_oneM2M::sub_create(string originator_string, int num, ...)

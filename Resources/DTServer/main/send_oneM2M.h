@@ -38,16 +38,14 @@ public:
 
     //void cnt_create(const parse_json::parsed_struct& data, int num, ...);
     void cnt_create(string originator_string, int num, ...);
-    void cnt_retrieve();
-    bool cnt_validate(const parse_json::parsed_struct& data, int num, ...);
+    void cnt_retrieve(string originator, int num, ...);
+    bool cnt_validate(string originator, int num, ...);
 
 	void sub_create(string originator_string, int num, ...);
 
     void cin_create(string originator, string CIN_NAME, string payload, int num, ...);
     void cin_update(const parse_json::parsed_struct& data, int num, ...);
     http_response cin_retrieve_la(string originator, int num, ...);
-
-    bool cnt_validate(const string& CNT_NAME);
 
     void discovery_retrieve(string originator, int num, ...);
     void result_content_retrieve(string originator, int num, ...);
