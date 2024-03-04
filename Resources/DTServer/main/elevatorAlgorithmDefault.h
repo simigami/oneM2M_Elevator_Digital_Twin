@@ -14,6 +14,8 @@ struct elevatorStatus
     const double acceleration = 1.25;
     const double time_to_reach_max = 2.0;
 
+    double totalMoveDistance = 0.0;
+
     int goTo = 0;
 
     vector<int>* button_inside = new vector<int>;

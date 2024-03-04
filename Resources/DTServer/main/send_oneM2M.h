@@ -50,14 +50,14 @@ public:
     void discovery_retrieve(string originator, int num, ...);
     void result_content_retrieve(string originator, int num, ...);
 
+    std::string URL_TO_CSE;
+    std::string URL_TO_AE;
+    std::string URL_TO_CNT;
+
 private:
     int numbering = 1;
     const std::string server_url;
 
 	std::string nu_URL;
 	std::string ae_poa_URL;
-
-    std::string URL_TO_CSE;
-    std::string URL_TO_AE;
-    std::string URL_TO_CNT;
 };

@@ -23,8 +23,25 @@ using namespace web::http::client;
 
 struct class_of_one_Building
 {
+	int outsideButtonMod = 0;
+
 	vector<Elevator*> classOfAllElevators;
-	string ACP_NAME;
+	string ACP_NAME = "";
+};
+
+class Building
+{
+public:
+	Building(int buttonMod);
+
+	class_of_one_Building* buildingElevatorInfo;
+	vector<vector<int>>* currentButtonOutsideInfos;
+
+	int getButtonMod();
+	void getWhichElevatorToGetButtonOutside(vector<vector<int>> button_outside);
+
+	vector<vector<int>> getCurrentElevatorsButtonOutsideLists();
+	vector<vector<int>> getDiffBetweenCurrentAndEmbedded(vector<vector<int>> newList, vector<vector<int>> oldList);
 };
 
 class DTServer
@@ -40,16 +57,16 @@ public:
 	void Running_Embedded(const std::string& httpResponse);
 	void Running_Notification(const std::string& httpResponse);
 
-	bool existsElevator(class_of_one_Building one_building, string device_name);
+	bool existsElevator(Building* one_building, string device_name);
 
-	class_of_one_Building* get_building_vector(string ACOR_NAME);
-	Elevator* getElevator(class_of_one_Building* class_of_one_building, string device_name);
+	Building* get_building_vector(string ACOR_NAME);
+	Elevator* getElevator(Building* class_of_one_building, string device_name);
 	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const string AE_ID);
 
 	//MAIN 함수에서 알고리즘에 전달할 notificationContent 구조체
     notificationContent* tempContentMoveToAlgorithm;
 
-	vector<class_of_one_Building*> class_of_all_Buildings; //THIS WILL BE USED
+	vector<Building*> allBuildingInfo; //THIS WILL BE USED
 	vector<thread> one_building_threads;
 	vector<string> ACP_NAMES;
 

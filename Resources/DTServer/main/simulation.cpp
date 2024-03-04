@@ -60,7 +60,7 @@ void simulation::swap_trip_list()
 		}
 		else if(this->reserved_trip_list_down.empty() && this->reserved_trip_list_up.empty())
 		{
-			cout << "ALL LIST IS EMPTY CHANGE ELEVATOR TO RTD..." << endl;
+			return;
 		}
 	}
 }
@@ -90,7 +90,7 @@ bool simulation::smaller(vector<int>& v1, vector<int>& v2)
 	return v1[0] > v2[0];
 }
 
-bool simulation::add_floor_to_main_trip_list(int floor, bool direction, bool inout)
+bool simulation::add_floor_to_main_trip_list(int floor, bool direction, bool inout) // inout 1 = inside, 0 = outside
 {
 	auto greaterComparator = [](const std::vector<int>& vec1, const std::vector<int>& vec2) {
         return vec1[0] < vec2[0];
@@ -215,7 +215,7 @@ bool simulation::update_main_trip_list_via_inside_data(vector<string> button_ins
 
 		if(Newly_Added.empty())
 		{
-			cout << "Newly Added Floor is Empty" << endl;
+			//cout << "Newly Added Floor is Empty" << endl;
 		}
 		else
 		{
@@ -240,7 +240,7 @@ bool simulation::update_main_trip_list_via_inside_data(vector<string> button_ins
 
 		if(Currently_Erased.empty())
 		{
-			cout << "Currently_Erased Floor is Empty" << endl;
+			//cout << "Currently_Erased Floor is Empty" << endl;
 		}
 		else
 		{
@@ -436,7 +436,7 @@ void simulation::check_and_set_trip_list_Nearest_N(
 			{
 				add_floor_to_main_trip_list(req_floor, direction, 0);
 			}
-			else if(static_cast<double>(req_floor) <= currentAltRatio - intervalMAX)
+			else if(static_cast<double>(req_floor) >= currentAltRatio - intervalMAX)
 			{
 				add_floor_to_main_trip_list(req_floor, direction, 0);
 			}
@@ -775,6 +775,7 @@ physics::physics(int underground_floor, int ground_floor, vector<double> altimet
 	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
 	this->s->each_floor_altimeter = altimeter_of_each_floor;
 
+	this->totalMoveDistance = 0.0;
 	this->current_velocity = 0.0;
 	this->current_altimeter = -55;
 

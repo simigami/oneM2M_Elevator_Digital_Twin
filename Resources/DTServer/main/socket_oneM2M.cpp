@@ -560,6 +560,103 @@ bool socket_oneM2M::create_oneM2M_CINs(parse_json::parsed_struct parsed_struct)
 	}
 }
 
+bool socket_oneM2M::create_oneM2M_CIN_Except_Button_Outside(parse_json::parsed_struct parsed_struct)
+{
+	try
+	{
+        system_clock::time_point start = system_clock::now();
+
+        send_oneM2M s = this->socket;
+
+        const string building_name = this->building_name;
+		const string originator_name = "C" + this->building_name;
+        const string device_name = this->device_name;
+
+	    string payload = "None";
+		// Create or Update Velocity, Altimeter, Temperature
+	    if(parsed_struct.velocity != -1)
+	    {
+	        payload = std::to_string(parsed_struct.velocity);
+	        s.cin_create(originator_name, "velocity", payload, 3, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[0]);
+	    }
+	    if(parsed_struct.altimeter != -1)
+	    {
+	        payload = std::to_string(parsed_struct.altimeter);
+	        s.cin_create(originator_name, "altimeter", payload, 3, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[1]);
+	    }
+	    if(parsed_struct.temperature != -1)
+	    {
+	        payload = std::to_string(parsed_struct.temperature);
+	        s.cin_create(originator_name, "temperature", payload, 3, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[2]);
+	    }
+
+	    if(!parsed_struct.button_inside.empty())
+	    {
+	        payload = "";
+	        for(string temp : parsed_struct.button_inside)
+	        {
+	            payload += " " + temp;
+	        }
+	        s.cin_create(originator_name, "button_inside", payload, 3, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
+	    }
+        
+	    std::chrono::duration<double> delta = system_clock::now() - start;
+	    //std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
+
+        return true;
+	}
+	catch (const std::exception& e)
+	{
+        std::cerr << "Exception Caught : " << e.what() << std::endl;
+        return false;
+	}
+}
+
+bool socket_oneM2M::create_oneM2M_CIN_Only_Button_Outside(vector<vector<int>> button_outside)
+{
+	try
+	{
+        system_clock::time_point start = system_clock::now();
+
+        send_oneM2M s = this->socket;
+
+        const string building_name = this->building_name;
+		const string originator_name = "C" + this->building_name;
+        const string device_name = this->device_name;
+
+	    string payload;
+		// Create or Update Velocity, Altimeter, Temperature
+        if(!button_outside.empty())
+        {
+	        for(const vector<int> each_floor : button_outside)
+	        {
+                string floor = each_floor[0] < 0 ? "B"+std::to_string((each_floor[0]*-1)) : std::to_string(each_floor[0]);
+                int direction = each_floor[1];
+
+                if(direction)
+                {
+                    string payload = "Up";
+	                s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], floor);
+                }
+                else
+                {
+	                string payload = "Down";
+                    s.cin_create(originator_name, "status", payload, 3, device_name, Default_CNTs[2], floor);
+                }
+	        }
+        }
+	    std::chrono::duration<double> delta = system_clock::now() - start;
+	    //std::cout << "Time Spend on DT_SERVER is : "  << delta.count() << " s"<< std::endl;
+
+        return true;
+	}
+	catch (const std::exception& e)
+	{
+        std::cerr << "Exception Caught : " << e.what() << std::endl;
+        return false;
+	}
+}
+
 bool socket_oneM2M::check_oneM2M_CNT(parse_json::parsed_struct parsed_struct)
 {
     try

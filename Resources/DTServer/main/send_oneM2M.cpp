@@ -87,7 +87,7 @@ void send_oneM2M::acp_create(int num, ...)
     http_client client(utility::conversions::to_string_t(ACP_URL));
 	http_request request(methods::POST) ;
 
-    std::cout << "Default ACP Create Under " << ACP_URL << std::endl;
+    //std::cout << "Default ACP Create Under " << ACP_URL << std::endl;
 
     json::value json_data;
     json_data[U("m2m:acp")][U("rn")] = json::value::string(utility::conversions::to_string_t(rn));
@@ -142,7 +142,7 @@ void send_oneM2M::acp_create_one_ACP(const parse_json::parsed_struct& data, vect
     http_client client(utility::conversions::to_string_t(ACP_URL));
 	http_request request(methods::POST) ;
 
-    std::cout << "new ACP : " << "C" + data.building_name << " is CREATING Under " << ACP_URL << std::endl;
+    //std::cout << "new ACP : " << "C" + data.building_name << " is CREATING Under " << ACP_URL << std::endl;
 
     json::value json_data;
 
@@ -215,7 +215,7 @@ void send_oneM2M::acp_update(const parse_json::parsed_struct& data, vector<strin
     http_client client(utility::conversions::to_string_t(ACP_URL));
 	http_request request(methods::PUT) ;
 
-    std::cout << "new ACP : " << "C" + data.building_name << " is Updating Update Under " << ACP_URL << std::endl;
+    //std::cout << "new ACP : " << "C" + data.building_name << " is Updating Update Under " << ACP_URL << std::endl;
 
     json::value json_data;
 
@@ -282,11 +282,11 @@ int send_oneM2M::acp_validate(string ACP_NAME, int num, ...)
             URL += ret;
         }
 		va_end(args);
-        std::cout << "ACP Name : " << ACP_NAME << " validation on URL : " << URL << std::endl;
+        //std::cout << "FROM EMBEDDED -> oneM2M : ACP " << ACP_NAME << " validation on URL : " << URL << std::endl;
     }
     else
     {
-        std::cout << "ACP Name : " << ACP_NAME << " validation on URL : " << URL << std::endl;
+        //std::cout << "FROM EMBEDDED -> oneM2M : ACP " << ACP_NAME << " validation on URL : " << URL << std::endl;
     }
 
     http_client client(utility::conversions::to_string_t(URL));
@@ -359,7 +359,7 @@ void send_oneM2M::ae_create(string AE_NAME)
 	http_request request(methods::POST) ;
 
     //Add POA BODY
-    std::cout << "AE : " <<  building_name << " Create Under " << CSE_URL << std::endl;
+    //std::cout << "AE : " <<  building_name << " Create Under " << CSE_URL << std::endl;
 
     json::value json_data;
     json_data[U("m2m:ae")][U("rn")] = json::value::string(utility::conversions::to_string_t(ri));
@@ -426,7 +426,7 @@ bool send_oneM2M::ae_validate(const parse_json::parsed_struct& data, int num, ..
         URL += AE_ID;
     }
 
-    std::cout << "AE Name : " << AE_ID << " vaildate on URL : " << URL << std::endl;
+    //std::cout << "AE Name : " << AE_ID << " vaildate on URL : " << URL << std::endl;
     http_client client(utility::conversions::to_string_t(URL));
 	http_request request(methods::GET);
 
@@ -544,7 +544,7 @@ bool send_oneM2M::cnt_validate(string originator, int num, ...)
     http_client client(utility::conversions::to_string_t(CNT_URL));
 	http_request request(methods::GET) ;
 
-    std::cout << "CNT RETRIEVE Under : " << CNT_URL << std::endl;
+    //std::cout << "CNT RETRIEVE Under : " << CNT_URL << std::endl;
 
     // Create an HTTP request
     request.headers().set_content_type(U("application/json"));
@@ -763,7 +763,7 @@ http_response send_oneM2M::cin_retrieve_la(string originator, int num, ...)
 	    json::value response_json = response.extract_json().get();
         std::wstring ri = response_json[U("m2m:cin")][U("ri")].as_string();
 
-        std::wcout  << L"RI is : " << ri << std::endl;
+        //std::wcout  << L"RI is : " << ri << std::endl;
     }
     // Print the HTTP response
     //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
@@ -826,7 +826,7 @@ void send_oneM2M::discovery_retrieve(string originator, int num, ...)
     http_client client(utility::conversions::to_string_t(DIS_URL));
 	http_request request(methods::GET) ;
 
-    std::cout << "DISCOVERY Under : " << DIS_URL << std::endl;
+    //std::cout << "DISCOVERY Under : " << DIS_URL << std::endl;
 
     // Create an HTTP request
     request.headers().set_content_type(U("application/json"));
@@ -841,7 +841,7 @@ void send_oneM2M::discovery_retrieve(string originator, int num, ...)
     auto response = client.request(request).get();
 
     std::chrono::duration<double> interval = system_clock::now() - start;;
-	cout << URL_TO_AE << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
+	//cout << URL_TO_AE << " DISCOVERY TIME : " << interval.count()<< " seconds..." << endl;
 
     if(response.status_code() == status_codes::OK)
     {
@@ -849,7 +849,7 @@ void send_oneM2M::discovery_retrieve(string originator, int num, ...)
 
     	json::array arr = response_json[U("m2m:uril")].as_array();
 
-        std::wcout << L"DISCOVERED RESOURCE :" <<  std::endl;
+        //std::wcout << L"DISCOVERED RESOURCE :" <<  std::endl;
         for(const json::value& elem : arr)
         {
 	        std::wcout << elem.as_string() << endl;
@@ -898,7 +898,7 @@ void send_oneM2M::result_content_retrieve(string originator, int num, ...)
     http_client client(utility::conversions::to_string_t(RCN_URL));
 	http_request request(methods::GET) ;
 
-    std::cout << "RCN RETRIEVE Under : " << RCN_URL << std::endl;
+    //std::cout << "RCN RETRIEVE Under : " << RCN_URL << std::endl;
 
     // Create an HTTP request
     request.headers().set_content_type(U("application/json"));
@@ -913,7 +913,7 @@ void send_oneM2M::result_content_retrieve(string originator, int num, ...)
     auto response = client.request(request).get();
 
     std::chrono::duration<double> interval = system_clock::now() - start;;
-	cout << URL_TO_AE << " RCN TIME : " << interval.count()<< " seconds..." << endl;
+	//cout << URL_TO_AE << " RCN TIME : " << interval.count()<< " seconds..." << endl;
 
     if(response.status_code() == status_codes::OK)
     {
@@ -923,11 +923,11 @@ void send_oneM2M::result_content_retrieve(string originator, int num, ...)
 		// Parse the string using jsoncpp
 		nlohmann::json j = nlohmann::json::parse(json_str);
 
-    	std::cout << "HTTP Response:\n" << j.dump(4) << std::endl;   
+    	//std::cout << "HTTP Response:\n" << j.dump(4) << std::endl;   
     }
     else
     {
-	     std::wcerr << L"HTTP ERROR :\n" << response.status_code() << std::endl;   
+	     //std::wcerr << L"HTTP ERROR :\n" << response.status_code() << std::endl;   
     }
 }
 

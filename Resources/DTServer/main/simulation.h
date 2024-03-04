@@ -106,6 +106,7 @@ public:
 	bool current_direction;
 	long double current_velocity; 
 	long double current_altimeter;
+	long double totalMoveDistance;
 
 	double t_to_max_velocity; 
 	double t_constant_speed;

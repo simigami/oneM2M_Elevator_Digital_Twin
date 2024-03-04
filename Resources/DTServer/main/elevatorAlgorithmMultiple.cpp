@@ -1,6 +1,7 @@
 #include "elevatorAlgorithmMultiple.h"
 
-#define TICK 100
+#define SECOND 1000.0
+#define TICK 100.0
 
 elevatorAlgorithmMultiple::elevatorAlgorithmMultiple(string buildingName, string deviceName) : elevatorAlgorithmDefault(buildingName, deviceName)
 {
@@ -35,7 +36,9 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 	simulation* sim = p->s;
 
 	elevatorStatus* thisElevatorStatus = getElevatorStatus();
+
 	flags* thisElevatorFlag = getElevatorFlag();
+
 	notificationContent* notiContent = this->thisNotificationContent;
 
 	vector<vector<int>> main_trip_list = sim->main_trip_list;
@@ -51,10 +54,10 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 	while(thisElevatorFlag->isRunning)
 	{
 		startTime = std::chrono::steady_clock::now();
-		if(!(thisElevatorFlag->firstOperation || thisElevatorFlag->IDLEFlag || sim->bCheckAllListEmpty()))
+		if(!(thisElevatorFlag->firstOperation || !thisElevatorFlag->IDLEFlag || sim->bCheckAllListEmpty()))
 		{
 			//ELEVATOR TURN STATE TO IDLE
-			cout << "ELEVATOR " << this->device_name << " TURNS TO IDLE..." << endl;
+			cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << " TURNS TO IDLE..." << " TOTAL MOVE DISTANCE : " << p->totalMoveDistance << endl;
 
 			thisElevatorFlag->isRunning = true;
 			thisElevatorFlag->firstOperation = true;
@@ -62,16 +65,20 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 		}
 		else if(!current_goTo_Floor_single_info.empty())
 		{
-			cout << device_name << " : CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " << current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
+			//cout << "IN " <<  this->building_name << " -> " << this->device_name << " : CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " << current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
+
+			p->totalMoveDistance += current_goTo_Floor_single_info[1] * ((int)(TICK)/(SECOND));
 			p->current_velocity = current_goTo_Floor_single_info[1];
 			p->current_altimeter = current_goTo_Floor_single_info[2];
 
 			thisElevatorStatus->velocity = p->current_velocity;
 			thisElevatorStatus->altimeter = p->current_altimeter;
+			thisElevatorStatus->totalMoveDistance = p->totalMoveDistance;
 
 			if(!sim->main_trip_list.empty() && this->go_To_Floor != sim->main_trip_list[0][0])
 			{
-				cout << device_name << " : IS START FROM : " << this->go_To_Floor << " TO " << sim->main_trip_list[0][0] << endl;
+				cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << " : IS START FROM : " << this->go_To_Floor << " TO " << sim->main_trip_list[0][0] << endl;
+
 				this->go_To_Floor = sim->main_trip_list[0][0];
 			}
 
@@ -88,8 +95,8 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 					p->lock = false;
 
 					//3 Second LOCK
-					cout << this->device_name;
-					sim->dev_print_stopped_floor();
+					cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << " Stopped At : " << sim->main_trip_list[0][0] << endl;
+
 					free_time = std::chrono::steady_clock::now() + std::chrono::seconds(4);
 
 					if(sim->main_trip_list[0][1] == 1)
@@ -139,7 +146,7 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 						}
 						else
 						{
-							thisElevatorFlag->IDLEFlag = false;
+							thisElevatorFlag->IDLEFlag = true;
 							this->current_goTo_Floor_vector_info->clear();
 							this->current_goTo_Floor_single_info.clear();
 							p->clear_data();
@@ -177,11 +184,6 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 	elevatorStatus* thisElevatorStatus = getElevatorStatus();
 	flags* thisElevatorFlag = getElevatorFlag();
 
-	if(thisNotificationContent->added_button_outside_floor == 1)
-	{
-		cout << "ASD";
-	}
-
 	//CHECK THIS IS FIRST OPERATION
 	if(thisElevatorFlag->firstOperation)
 	{
@@ -200,8 +202,9 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 			thisElevatorStatus->button_outside->push_back({notiContent->added_button_outside_floor, notiContent->added_button_outside_direction});
 		}
 
-		cout << "goTo Floor is Changed None -> " << sim->main_trip_list[0][0] << endl;
+		cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << "goTo Floor is Changed None -> " << sim->main_trip_list[0][0] << endl;
 		rearrangeVector(ueSock, p);
+		thisElevatorFlag->IDLEFlag = false;
 	}
 
 	//IF NOTIFICATION ACCURRED WHILE ELEVATOR OPERATING
@@ -227,6 +230,7 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 			if(currentDestFloor != 0 && currentDestFloor != sim->main_trip_list[0][0] && p->lock)
 			{
 				rearrangeVector(ueSock, p);
+				thisElevatorFlag->IDLEFlag = false;
 			}
 		}
 		if(notiContent->goTo != 0)
@@ -279,6 +283,7 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 				if(currentDestFloor != 0 && currentDestFloor != sim->main_trip_list[0][0] && p->lock)
 				{
 					rearrangeVector(ueSock, p);
+					thisElevatorFlag->IDLEFlag = false;
 				}
 			}
 		}

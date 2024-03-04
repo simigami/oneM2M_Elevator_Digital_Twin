@@ -35,6 +35,10 @@ public:
 
 	bool create_oneM2M_CINs(parse_json::parsed_struct parsed_struct);
 
+	bool create_oneM2M_CIN_Except_Button_Outside(parse_json::parsed_struct parsed_struct);
+
+	bool create_oneM2M_CIN_Only_Button_Outside(vector<vector<int>> button_outside);
+
 	bool check_oneM2M_CNT(parse_json::parsed_struct parsed_struct);
 
 	vector<vector<string>> retrieve_oneM2M_cins(vector<int> floor_info);

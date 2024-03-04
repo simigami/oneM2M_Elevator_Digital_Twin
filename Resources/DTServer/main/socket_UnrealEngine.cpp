@@ -82,8 +82,10 @@ void socket_UnrealEngine::send_data_to_UE5(const UE_Info& info)
         // Send the string to the server
 		std::string json = this->sock.struct_to_json(info);
 
-        boost::asio::async_write(socket, boost::asio::buffer(json), handle_write);
+		boost::asio::write(socket, boost::asio::buffer(json + "\n")); // "\n"을 추가하여 메시지 종료를 명시
+        //boost::asio::async_write(socket, boost::asio::buffer(json), handle_write);
 
+		// RESPONSE 잘 받지 못하는 경우에 생김
 		boost::asio::streambuf response;
         boost::asio::read_until(socket, response, '\n');
 
@@ -96,20 +98,21 @@ void socket_UnrealEngine::send_data_to_UE5(const UE_Info& info)
         if (response_content == "Data Received") 
 		{
             // Data received successfully, exit function
+			cout << "DATA SEND AND RECEIVED COMPLETE FROM UE5" << endl;
             return;
         }
 		else 
 		{
             // Handle response error (e.g., print error message)
-            std::cerr << "Error: Invalid response from UE5 server." << std::endl;
+            std::cerr << "Error: Invalid response from UE5 server." << endl;
         }
 
 		//io_context.run();
     }
-	catch (std::exception& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+	catch (std::exception& e) 
+	{
+		std::cerr << endl << "FROM SERVER TO UE5 -> ERROR : " << endl << e.what() << endl;
     }
-
 #endif
 }
 
