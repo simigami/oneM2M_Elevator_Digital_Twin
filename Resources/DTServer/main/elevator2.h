@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include "send_UnrealEngine.h"
 #include "simulation.h"
@@ -6,8 +7,8 @@
 
 struct Elevator_Status
 {
-	string building_name = "";
-    string device_name = "";
+	wstring building_name = L"";
+    wstring device_name = L"";
 
     bool direction;
 
@@ -50,7 +51,7 @@ public:
 	physics* p;
     socket_UnrealEngine* UEsock;
 
-    vector<vector<double>>* current_goTo_Floor_vector_info;
+    vector<vector<double>>* current_goTo_floor_vector_info;
     vector<double> current_goTo_Floor_single_info;
     vector<vector<double>>::iterator it;
 
@@ -64,7 +65,7 @@ public:
     bool firstOperation;
     bool IDLEFlag;
 
-    Elevator2(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES);
+    Elevator2(Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES);
 
     void start_thread();
     void stop_thread();
@@ -74,4 +75,4 @@ public:
 
 private:
     int RETRIEVE_interval_millisecond;
-};
+};*/

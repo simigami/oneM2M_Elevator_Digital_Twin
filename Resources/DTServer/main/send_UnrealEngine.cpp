@@ -1,9 +1,10 @@
+/*
 #include "send_UnrealEngine.h"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 
-std::string send_UnrealEngine::struct_to_json(const UE_Info& info)
+string send_UnrealEngine::struct_to_json(const UE_Info& info)
 {
 	json jsonObj;
 
@@ -25,3 +26,9 @@ std::string send_UnrealEngine::struct_to_json(const UE_Info& info)
 
     return jsonObj.dump();
 }
+
+void send_UnrealEngine::set_UE_info(const UE_Info& info)
+{
+
+}
+*/

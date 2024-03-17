@@ -5,41 +5,48 @@
 #include "send_oneM2M.h"
 #include "parse_json.h"
 
-using std::chrono::system_clock;
-using std::map;
-
 class socket_oneM2M
 {
 public:
 	send_oneM2M socket;
 
-    string originator_name;
-	string building_name;
-    string device_name;
+    wstring TCName;
+    wstring originator_name;
+	wstring building_name;
+    wstring device_name;
 
-	vector<string> Default_CNTs;
-    vector<string> Default_PHYSICS_CNTs;
-    vector<string> Default_INSIDE_CNTs;
-    vector<string> Default_OUTSIDE_CNTs;
+	vector<wstring> Default_CNTs;
+    vector<wstring> Default_PHYSICS_CNTs;
+    vector<wstring> Default_INSIDE_CNTs;
+    vector<wstring> Default_OUTSIDE_CNTs;
 
-	socket_oneM2M(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES);
+	socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseStruct, vector<wstring> ACP_NAMES);
+	socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseStruct);
 	~socket_oneM2M();
 
-	bool create_oneM2M_under_device_name(parse_json::parsed_struct parsed_struct);
+	void init(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_under_CNTs(parse_json::parsed_struct parsed_struct);
+	bool create_oneM2M_under_device_name(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_CNTs(parse_json::parsed_struct parsed_struct);
+	bool createBuilding(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_SUBs(parse_json::parsed_struct parsed_struct);
+	bool createElevator(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_CINs(parse_json::parsed_struct parsed_struct);
+	bool create_oneM2M_under_CNTs(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_CIN_Except_Button_Outside(parse_json::parsed_struct parsed_struct);
+	bool create_oneM2M_CNTs(Wparsed_struct parseStruct);
+
+	bool create_oneM2M_SUBs(Wparsed_struct parseStruct);
+
+	bool create_oneM2M_CINs(Wparsed_struct parseStruct);
+
+	bool createNewData(Wparsed_struct parseStruct);
+
+	bool create_oneM2M_CIN_Except_Button_Outside(Wparsed_struct parseSstruct);
 
 	bool create_oneM2M_CIN_Only_Button_Outside(vector<vector<int>> button_outside);
 
-	bool check_oneM2M_CNT(parse_json::parsed_struct parsed_struct);
+	bool check_oneM2M_CNT(Wparsed_struct parseStruct);
 
-	vector<vector<string>> retrieve_oneM2M_cins(vector<int> floor_info);
+	vector<vector<wstring>> retrieve_oneM2M_cins(vector<int> floor_info);
 };

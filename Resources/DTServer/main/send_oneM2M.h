@@ -1,63 +1,61 @@
 #pragma once
-#include <string>
-#include <cpprest/http_client.h>
+#include "config.h"
 #include "parse_json.h"
-
-#define acop_all 63
-
-#define oneM2M_tinyIoT
-
-#ifdef oneM2M_tinyIoT
-#define DEFAULT_RI "DT_RI"
-#define RVI "2a"
-#endif
-
-#ifndef oneM2M_tinyIoT
-#define oneM2M_ACME
-#define DEFAULT_RI "DT_RI"
-#define RVI "4"
-#endif
+#include <cpprest/http_client.h>
 
 using namespace web::http;
 
 class send_oneM2M {
 public:
     send_oneM2M();
-    send_oneM2M(parse_json::parsed_struct parsed_struct);
+    send_oneM2M(Wparsed_struct parsed_struct);
 
-    void grp_create(const parse_json::parsed_struct& data);
+    void set_new_building_uri(wstring building_name);
+    void set_new_elevator_uri(wstring building_name);
+
+    void grp_create(const Wparsed_struct& data);
 
     void acp_create(int num, ...);
-    void acp_create_one_ACP(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
-	void acp_update(const parse_json::parsed_struct& data, vector<string> ACP_NAMES, int num, ...);
-    int acp_validate(string ACP_NAME, int num, ...);
 
-    void ae_create(string AE_NAME);
-    void ae_retrieve();
-    bool ae_validate(const parse_json::parsed_struct& data, int num, ...);
+    void acp_create_one_ACP(vector<string>& ACP_NAMES, int num, ...);
+    void acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...);
+
+	void acp_update(const Wparsed_struct& data, vector<wstring> ACP_NAMES, int num, ...);
+    int acp_validate(wstring ACP_NAME, int num, ...);
+
+    void ae_create(wstring AE_NAME);
+
+    bool ae_validate(const Wparsed_struct& data, int num, ...);
 
     //void cnt_create(const parse_json::parsed_struct& data, int num, ...);
-    void cnt_create(string originator_string, int num, ...);
-    void cnt_retrieve(string originator, int num, ...);
-    bool cnt_validate(string originator, int num, ...);
+    void cnt_create(int num, ...);
 
-	void sub_create(string originator_string, int num, ...);
+    bool cnt_validate(int num, ...);
 
-    void cin_create(string originator, string CIN_NAME, string payload, int num, ...);
-    void cin_update(const parse_json::parsed_struct& data, int num, ...);
-    http_response cin_retrieve_la(string originator, int num, ...);
+	void sub_create(wstring originator_string, int num, ...);
 
-    void discovery_retrieve(string originator, int num, ...);
-    void result_content_retrieve(string originator, int num, ...);
+    void cin_create(wstring CIN_NAME, wstring payload, int num, ...);
+    void cin_update(const Wparsed_struct& data, int num, ...);
+    http_response cin_retrieve_la(wstring originator, int num, ...);
 
-    std::string URL_TO_CSE;
-    std::string URL_TO_AE;
-    std::string URL_TO_CNT;
+    void discovery_retrieve(int num, ...);
+    void result_content_retrieve(int num, ...);
 
 private:
     int numbering = 1;
     const std::string server_url;
 
-	std::string nu_URL;
-	std::string ae_poa_URL;
+    std::wstring uri_to_ip;
+    std::wstring uri_to_cse;
+    std::wstring uri_to_dt_notification;
+
+    std::wstring building_originator;
+
+    std::wstring uri_to_building;
+    std::wstring uri_to_elevator;
+
+    std::wstring uri_only_cse_and_building;
+
+	std::wstring nu_URL;
+	std::wstring ae_poa_URL;
 };

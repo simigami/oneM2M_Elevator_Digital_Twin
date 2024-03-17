@@ -6,16 +6,6 @@
 #include "parse_json.h"
 #include "socket_oneM2M.h"
 
-#define host_protocol "http://"
-#define host_ip "192.168.0.178"
-#define dt_server_ip "192.168.0.134"
-#define host_port "10051"
-#define notification_port "10053"
-
-#define DEFAULT_ACP_NAME "DT_SERVER"
-#define DEFAULT_ORIGINATOR "CAdmin"
-#define DEFAULT_CSE_NAME "tinyIoT"
-
 using namespace std;
 using namespace web;
 using namespace web::http;
@@ -26,7 +16,7 @@ struct class_of_one_Building
 	int outsideButtonMod = 0;
 
 	vector<Elevator*> classOfAllElevators;
-	string ACP_NAME = "";
+	wstring ACP_NAME = L"";
 };
 
 class Building
@@ -44,37 +34,37 @@ public:
 	vector<vector<int>> getDiffBetweenCurrentAndEmbedded(vector<vector<int>> newList, vector<vector<int>> oldList);
 };
 
-class DTServer
+class dt_real_time
 {
 public:
-	DTServer();
+	dt_real_time();
 
 	void Run();
 
 	void startAsyncAccept(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
-	void Running_Embedded(const std::string& httpResponse);
-	void Running_Notification(const std::string& httpResponse);
+	void Running_Embedded(const wstring& httpResponse);
+	void Running_Embedded2(const wstring& httpResponse);
+	void Running_Notification(const string& httpResponse);
 
-	bool existsElevator(Building* one_building, string device_name);
+	bool existsElevator(Building* one_building, const wstring& device_name);
 
-	Building* get_building_vector(string ACOR_NAME);
-	Elevator* getElevator(Building* class_of_one_building, string device_name);
-	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const string AE_ID);
+	Building* get_building_vector(const wstring& ACOR_NAME);
+	Elevator* getElevator(Building* class_of_one_building, const wstring& device_name);
+	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const wstring& AE_ID);
 
 	//MAIN 함수에서 알고리즘에 전달할 notificationContent 구조체
     notificationContent* tempContentMoveToAlgorithm;
 
 	vector<Building*> allBuildingInfo; //THIS WILL BE USED
 	vector<thread> one_building_threads;
-	vector<string> ACP_NAMES;
+	vector<wstring> ACP_NAMES;
 
-	parse_json::parsed_struct parsed_struct;
-	send_oneM2M ACP_Validation_Socket;
+	Wparsed_struct parsed_struct;
 	boost::asio::io_service io;
 
-	std::string* httpRequest;
+	std::wstring* httpRequest;
 
 private:
 

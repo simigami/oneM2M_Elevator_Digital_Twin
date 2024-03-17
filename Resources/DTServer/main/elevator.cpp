@@ -1,18 +1,13 @@
 #include "elevator.h"
 
-Elevator::Elevator(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES, int algorithmNumber)
+Elevator::Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES, int algorithmNumber)
 {
-	this->sock = new socket_oneM2M(parsed_struct, ACP_NAMES);
-	this->p = new physics(parsed_struct.underground_floor, parsed_struct.ground_floor, {
-        -55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1
-    });
-	this->UEsock = new socket_UnrealEngine(parsed_struct.building_name, parsed_struct.device_name, parsed_struct.underground_floor, parsed_struct.ground_floor, this->p->info.altimeter_of_each_floor, this->p->info.acceleration, this->p->info.max_velocity);
+	this->sock = new socket_oneM2M(sc, parsed_struct, ACP_NAMES);
+	this->p = new physics(parsed_struct);
+	this->UEsock = new socket_UnrealEngine();
 
 	this->thisElevatorAlgorithmSingle = new elevatorAlgorithmSingle(parsed_struct.building_name, parsed_struct.device_name);
 	this->thisElevatorAlgorithmMultiple = new elevatorAlgorithmMultiple(parsed_struct.building_name, parsed_struct.device_name);
-
-	this->building_name = parsed_struct.building_name;
-	this->device_name = parsed_struct.device_name;
 
 	this->algorithmNumber = algorithmNumber;
 }
@@ -21,10 +16,12 @@ void Elevator::runElevator()
 {
 	if(algorithmNumber == 1)
 	{
+		this->thisElevatorAlgorithmSingle->set_physical_information(p);
 		this->thisElevatorAlgorithmSingle->startThread(sock , UEsock, p);
 	}
 	else
 	{
+		this->thisElevatorAlgorithmMultiple->set_physical_information(p);
 		this->thisElevatorAlgorithmMultiple->startThread(sock , UEsock, p);
 	}
 
@@ -62,4 +59,15 @@ void Elevator::setUpdateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
 			this->thisElevatorAlgorithmSingle->updateElevatorTick(ueSock, phy);
 		break;
 	}
+}
+
+wstring Elevator::getBuildingName() const
+{
+	return this->thisElevatorAlgorithmSingle->thisElevatorStatus->get_building_name();	
+}
+
+wstring Elevator::getDeviceName() const
+{
+	return this->thisElevatorAlgorithmSingle->thisElevatorStatus->get_device_name();
+
 }

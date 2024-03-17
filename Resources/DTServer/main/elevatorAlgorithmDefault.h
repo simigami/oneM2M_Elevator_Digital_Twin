@@ -1,31 +1,58 @@
 #pragma once
+#include "config.h"
 #include "socket_UnrealEngine.h"
 #include "socket_oneM2M.h"
 #include "simulation.h"
 
-struct elevatorStatus
+class elevatorStatus
 {
+public:
+    double wake_up_time = 0.0;
+    double velocity = 0.0;
+    double altimeter = 0.0;
+
+    int go_to_floor = 0;
     bool direction;
+    double total_move_distance = 0.0;
 
-    double velocity = 0;
-    double altimeter = -55;
+    double tta;
+    double ttm;
+    double ttd;
 
-    const double max_velocity = 2.5;
-    const double acceleration = 1.25;
-    const double time_to_reach_max = 2.0;
-
-    double totalMoveDistance = 0.0;
-
-    int goTo = 0;
+    vector<vector<double>>* current_goTo_floor_vector_info;
+    vector<double> current_goTo_Floor_single_info;
 
     vector<int>* button_inside = new vector<int>;
     vector<vector<int>>* button_outside = new vector<vector<int>>;
+
+    void set_names(wstring buildingName, wstring deviceName);
+    void set_physical_information(physics* p);
+
+    wstring get_building_name();
+    wstring get_device_name();
+    int get_underground_floor();
+    int get_ground_floor();
+    vector<double> get_each_floor_altimeter();
+    double get_max_velocity();
+    double get_acceleration();
+
+private:
+    wstring building_name = L"";
+    wstring device_name = L"";
+
+    int underground_floor = 0;
+    int ground_floor = 0;
+
+    vector<double> each_floor_altimeter;
+
+    double max_velocity = 0.0;
+    double acceleration = 0.0;
 };
 
 struct notificationContent
 {
-	double velocity = 0.0;
-	double altimeter = 0.0;
+	double current_velocity = 0.0;
+	double current_altimeter = 0.0;
 
 	vector<int> button_inside_list;
 
@@ -62,31 +89,43 @@ public:
     //알고리즘에 사용되는 flag들을 모은 구조체
     flags* thisFlags;
 
-    vector<vector<double>>* current_goTo_Floor_vector_info;
-    vector<double> current_goTo_Floor_single_info;
+    std::chrono::system_clock::time_point worldClock;
+    std::chrono::system_clock::time_point someClock;
+
     vector<vector<double>>::iterator it;
 
     string notification_body;
 
-    string building_name;
-    string device_name;
-
     long double Elevator_current_time, Elevator_current_velocity, Elevator_current_altimeter;
     int go_To_Floor;
 
-    elevatorAlgorithmDefault(string buildingName, string deviceName);
+    elevatorAlgorithmDefault(wstring buildingName, wstring deviceName);
     virtual ~elevatorAlgorithmDefault();
 
     virtual void startThread(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy);
     virtual void stopThread();
 	virtual void run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* p);
-	virtual void rearrangeVector(socket_UnrealEngine* ueSock, physics* p);
+    virtual void stop(physics* p);
+
+    virtual void set_physical_information(physics* p);
+	virtual void rearrangeVector(elevatorStatus* stats, socket_UnrealEngine* ueSock, physics* p);
+
+    virtual void set_elevator_Status_JSON_STRING();
+ 
+	virtual void printTimeDeltaWhenRearrange();
+	virtual void printTimeDeltaWhenStop();
     virtual void updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
+
+    virtual string wstringToString(const std::wstring& wstr) const;
+    virtual wstring stringToWstring(const std::string& str) const;
 
     elevatorStatus* getElevatorStatus();
     flags* getElevatorFlag();
 
-private:
+protected:
+    //elevatorStatus의 값들을 UE5로 전송할 JSON STRING
+    string elevatorStatus_JSON_STRING;
+
     //각 Loop를 돌 간격
     int RETRIEVE_interval_millisecond;
 };

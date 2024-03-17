@@ -1,3 +1,4 @@
+/*
 #pragma once
 #include <vector>
 #include <string>
@@ -33,9 +34,11 @@ struct UE_Info
 class send_UnrealEngine
 {
 public:
-	UE_Info UE_info;
-
 	string struct_to_json(const UE_Info& info);
+	void set_UE_info(const UE_Info& info);
+
+private:
+	UE_Info UE_info;
 };
 
 template<typename Archive>
@@ -50,4 +53,4 @@ inline void UE_Info::serialize(Archive& ar, const unsigned int version)
 	ar & tta;
 	ar & ttm;
 	ar & ttd;
-}
+}*/

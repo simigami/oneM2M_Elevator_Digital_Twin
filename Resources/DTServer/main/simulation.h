@@ -1,31 +1,14 @@
 #pragma once
+#include "parse_json.h"
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <queue>
 
-using namespace std;
-
-struct latest_RETRIEVE_STRUCT
-{
-    bool empty = true;
-
-    double velocity;
-    double altimeter;
-
-	int und;
-	int gnd;
-	vector<double> each_floor_altimeter;
-
-    vector<string> button_inside;
-    vector<vector<int>> button_outside;
-};
-
 class simulation
 {
 
 public:
-	void check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction);
 	void swap_trip_list();
 	const void clear_data();
 
@@ -40,8 +23,7 @@ public:
 	vector<vector<int>> pop_floor_of_trip_list(vector<vector<int>> trip_list);
 	bool erase_floor_of_trip_list(vector<vector<int>> trip_list, int floor);
 
-	bool update_main_trip_list_via_inside_data(vector<string> button_inside, bool direction);
-	bool update_main_trip_list_via_inside_data2(vector<int> button_inside, bool direction);
+	void update_main_trip_list_via_inside_data(vector<int> button_inside, bool direction);
 ;
 	void check_and_set_trip_list(int req_floor, bool direction, bool req_direction, double current_altimeter, double req_altimeter);
 	void check_and_set_trip_list_Nearest_N(
@@ -88,7 +70,6 @@ struct default_building_info
 
 	float acceleration = 1.25;
 	float max_velocity = 2.5;
-	float ttr = 2.0;
 
 	vector<double> altimeter_of_each_floor;
 };
@@ -96,7 +77,7 @@ struct default_building_info
 class physics
 {
 public:
-	physics(int underground_floor, int ground_floor, vector<double> altimeter_of_each_floor);
+	physics(Wparsed_struct parsed_struct);
 
 	simulation* s;
 	default_building_info info;
@@ -106,7 +87,7 @@ public:
 	bool current_direction;
 	long double current_velocity; 
 	long double current_altimeter;
-	long double totalMoveDistance;
+	long double total_move_distance;
 
 	double t_to_max_velocity; 
 	double t_constant_speed;

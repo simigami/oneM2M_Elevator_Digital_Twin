@@ -13,10 +13,10 @@ void my_class::t_run()
 }
 void my_class::run()
 {
-    cout << "MEM ADDR : " << this << endl;
+    std::cout << "MEM ADDR : " << this << std::endl;
 	while(true)
 	{
-		cout << "ELEM : " << this->num << endl;
+		std::cout << "ELEM : " << this->num << std::endl;
         std::this_thread::sleep_for(std::chrono::seconds(2));
 	}
 }

@@ -1,9 +1,6 @@
 #include "elevatorAlgorithmSingle.h"
 
-#define SECOND 1000.0
-#define TICK 100.0
-
-elevatorAlgorithmSingle::elevatorAlgorithmSingle(string buildingName, string deviceName) : elevatorAlgorithmDefault(buildingName, deviceName)
+elevatorAlgorithmSingle::elevatorAlgorithmSingle(wstring buildingName, wstring deviceName) : elevatorAlgorithmDefault(buildingName, deviceName)
 {
 
 }
@@ -30,73 +27,67 @@ void elevatorAlgorithmSingle::stopThread()
 
 void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy)
 {
-	socket_oneM2M* s = sock;
+	elevatorAlgorithmDefault::run(sock, ueSock, phy);
+
 	socket_UnrealEngine* us = ueSock;
 	physics* p = phy;
-	simulation* sim = p->s;
 
 	elevatorStatus* thisElevatorStatus = getElevatorStatus();
 	flags* thisElevatorFlag = getElevatorFlag();
 
-	vector<vector<int>> main_trip_list = sim->main_trip_list;
+	vector<vector<int>> main_trip_list = p->s->main_trip_list;
 	vector<vector<int>> outside_button_list;
 
-	const string building_name = this->building_name;
-	const string device_name = this->device_name;
+	const wstring building_name = this->thisElevatorStatus->get_building_name();
+	const wstring device_name = this->thisElevatorStatus->get_device_name();
 
 	std::chrono::steady_clock::time_point free_time;
 	std::chrono::steady_clock::time_point start_time;
 	std::chrono::steady_clock::time_point end_time;
 
-	us->sock.UE_info = us->wrap_for_UE_socket(building_name, device_name, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
-	us->send_data_to_UE5(us->sock.UE_info);
+	this->set_elevator_Status_JSON_STRING();
+	us->send_data_to_UE5(this->elevatorStatus_JSON_STRING);
 	
 	while(thisElevatorFlag->isRunning)
 	{
 		start_time = std::chrono::steady_clock::now();
-		//CHECK MAIN TRIP LIST AND current_goTo_Floor_vector_info exists
-		if(sim->main_trip_list.empty() && sim->reserved_trip_list_up.empty() && sim->reserved_trip_list_down.empty())
+		//CHECK MAIN TRIP LIST AND this->thisElevatorStatus->current_goTo_floor_vector_info exists
+		if ((p->s->bCheckAllListEmpty() == true) and (thisElevatorFlag->firstOperation == false) and (thisElevatorFlag->IDLEFlag == true))
 		{
-			if(!(thisElevatorFlag->firstOperation || !thisElevatorFlag->IDLEFlag))
-			{
-				cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << " TURNS TO IDLE, " << " TOTAL MOVE DISTANCE : " << p->totalMoveDistance << endl;
-				thisElevatorFlag->isRunning = true;
-				thisElevatorFlag->firstOperation = true;
-				thisElevatorFlag->IDLEFlag = true;
-			}
-		}
+			std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " TURNS TO IDLE, " << " TOTAL MOVE DISTANCE : " << p->total_move_distance << std::endl;
+			elevatorAlgorithmDefault::	printTimeDeltaWhenStop();
+			this->stop(p);
 
-		if(thisElevatorFlag->isRunning == true && this->current_goTo_Floor_vector_info->empty())
-		{
-			//cout << "ELEVATOR " << thisElevatorStatus->device_name << " IN IDLE STATE..." << endl;
+			thisElevatorFlag->isRunning = true;
+			thisElevatorFlag->firstOperation = true;
+			thisElevatorFlag->IDLEFlag = true;
 		}
-		else if(thisElevatorFlag->isRunning == true && !this->current_goTo_Floor_vector_info->empty())
+		if(thisElevatorFlag->isRunning == true && !this->thisElevatorStatus->current_goTo_floor_vector_info->empty())
 		{
 			thisElevatorFlag->firstOperation = false;
 			//CHECK IF main trip list is modified
-			if(!sim->main_trip_list.empty() && this->go_To_Floor != sim->main_trip_list[0][0])
+			if(!p->s->main_trip_list.empty() && this->go_To_Floor != p->s->main_trip_list[0][0])
 			{
-				this->go_To_Floor = sim->main_trip_list[0][0];
+				this->go_To_Floor = p->s->main_trip_list[0][0];
 			}
 
 			//CHECK IF goTo Floor is SET
-			if(!current_goTo_Floor_single_info.empty())
+			if(!this->thisElevatorStatus->current_goTo_Floor_single_info.empty())
 			{
-				p->totalMoveDistance += current_goTo_Floor_single_info[1] * ((int)(TICK)/(SECOND));
-				p->current_velocity = current_goTo_Floor_single_info[1];
-				p->current_altimeter = current_goTo_Floor_single_info[2];
+				p->total_move_distance += this->thisElevatorStatus->current_goTo_Floor_single_info[1] * ((int)(TICK)/(SECOND));
+				p->current_velocity = this->thisElevatorStatus->current_goTo_Floor_single_info[1];
+				p->current_altimeter = this->thisElevatorStatus->current_goTo_Floor_single_info[2];
 
 				thisElevatorStatus->velocity = p->current_velocity;
 				thisElevatorStatus->altimeter = p->current_altimeter;
-				thisElevatorStatus->totalMoveDistance = p->totalMoveDistance;
-
-				//cout << "IN " <<  this->building_name << " -> " << this->device_name << " : CURRENT TRIP INFO : " << current_goTo_Floor_single_info[0] << " : VELOCITY : " << current_goTo_Floor_single_info[1] << " ALTIMETER : " << current_goTo_Floor_single_info[2] << endl;
+				thisElevatorStatus->total_move_distance = p->total_move_distance;
+				thisElevatorStatus->wake_up_time += 0.1;
 
 				//CHECK IF THIS VECTOR IS NEAR END
-				if(!(current_goTo_Floor_single_info == current_goTo_Floor_vector_info->back()))
+				if(!(this->thisElevatorStatus->current_goTo_Floor_single_info == this->thisElevatorStatus->current_goTo_floor_vector_info->back()))
 				{
 					++it;
-					current_goTo_Floor_single_info = *it;
+					this->thisElevatorStatus->current_goTo_Floor_single_info = *it;
 				}
 
 				//IF REACHED FLOOR
@@ -105,19 +96,22 @@ void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSo
 					if(p->lock)
 					{
 						p->lock = false;
+						thisElevatorFlag->IDLEFlag = false;
 
 						//4 Second LOCK
-						cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << " Stopped At : " << sim->main_trip_list[0][0] << endl;
+						std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " Stopped At : " << this->thisElevatorStatus->go_to_floor << std::endl;
+						elevatorAlgorithmDefault::printTimeDeltaWhenStop();
+
 						free_time = std::chrono::steady_clock::now() + std::chrono::seconds(4);
 
-						if(sim->main_trip_list[0][1] == 1)
+						if(p->s->main_trip_list[0][1] == 1)
 						{
-							int erasing_inside_floor = sim->main_trip_list[0][0];
-							if(sim->main_trip_list.size() >= 2 && sim->main_trip_list[0][0] == sim->main_trip_list[1][0])
+							int erasing_inside_floor = p->s->main_trip_list[0][0];
+							if(p->s->main_trip_list.size() >= 2 && p->s->main_trip_list[0][0] == p->s->main_trip_list[1][0])
 							{
-								sim->main_trip_list = sim->pop_floor_of_trip_list(sim->main_trip_list);
+								p->s->main_trip_list = p->s->pop_floor_of_trip_list(p->s->main_trip_list);
 							}
-							sim->main_trip_list = sim->pop_floor_of_trip_list(sim->main_trip_list);
+							p->s->main_trip_list = p->s->pop_floor_of_trip_list(p->s->main_trip_list);
 
 							thisElevatorStatus->button_inside->erase(remove(thisElevatorStatus->button_inside->begin(), thisElevatorStatus->button_inside->end(), erasing_inside_floor), thisElevatorStatus->button_inside->end());
 						}
@@ -125,13 +119,13 @@ void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSo
 						//IF REACHED FLOOR IS FROM OUTSIDE BUTTON
 						else
 						{
-							int erasing_outside_floor = sim->main_trip_list[0][0];
+							int erasing_outside_floor = p->s->main_trip_list[0][0];
 							//DELETE THIS FLOOR ON oneM2M
-							string temp = sim->main_trip_list[0][0] > 0 ? std::to_string(sim->main_trip_list[0][0]) : "B"+std::to_string(sim->main_trip_list[0][0] * -1);
-							string payload = "None";
-							s->socket.cin_create(s->originator_name, "status", payload, 3, device_name, s->Default_CNTs[2], temp);
+							wstring temp = p->s->main_trip_list[0][0] > 0 ? to_wstring(p->s->main_trip_list[0][0]) : L"B"+to_wstring(p->s->main_trip_list[0][0] * -1);
+							wstring payload = L"None";
+							sock->socket.cin_create(L"status", payload, 3, device_name, sock->Default_CNTs[2], temp);
 
-							sim->main_trip_list = sim->pop_floor_of_trip_list(sim->main_trip_list);
+							p->s->main_trip_list = p->s->pop_floor_of_trip_list(p->s->main_trip_list);
 							thisElevatorStatus->button_outside->erase(std::remove_if(thisElevatorStatus->button_outside->begin(), 
 	                                                    thisElevatorStatus->button_outside->end(), 
 	                                                    [erasing_outside_floor](const vector<int>& innerVec) {
@@ -144,22 +138,21 @@ void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSo
 					else if(std::chrono::steady_clock::now() >= free_time)
 					{
 						p->lock = true;
-						if(sim->main_trip_list.empty())
+						if(p->s->main_trip_list.empty())
 						{
-							sim->prev_button_inside_data.clear();
-							sim->swap_trip_list();
+							p->s->prev_button_inside_data.clear();
+							p->s->swap_trip_list();
 
-							if(!sim->main_trip_list.empty())
+							if(!p->s->main_trip_list.empty())
 							{
-								sim->dev_print_trip_list();
+								p->s->dev_print_trip_list();
 
-								rearrangeVector(ueSock, p);
-								thisElevatorFlag->IDLEFlag = true;
+								rearrangeVector(this->getElevatorStatus(), ueSock, p);
 							}
 							else
 							{
-								this->current_goTo_Floor_vector_info->clear();
-								this->current_goTo_Floor_single_info.clear();
+								this->thisElevatorStatus->current_goTo_floor_vector_info->clear();
+								this->thisElevatorStatus->current_goTo_Floor_single_info.clear();
 								p->clear_data();
 								thisElevatorFlag->IDLEFlag = true;
 							}
@@ -167,9 +160,8 @@ void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSo
 
 						else
 						{
-							sim->dev_print_trip_list();
-							rearrangeVector(ueSock, p);
-							thisElevatorFlag->IDLEFlag = false;
+							p->s->dev_print_trip_list();
+							rearrangeVector(this->getElevatorStatus(), ueSock, p);
 						}
 					}
 				}
@@ -183,6 +175,11 @@ void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSo
 	}
 }
 
+void elevatorAlgorithmSingle::stop(physics* p)
+{
+	elevatorAlgorithmDefault::stop(p);
+}
+
 void elevatorAlgorithmSingle::updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
 {
 	//CHECK notification_strings
@@ -193,6 +190,10 @@ void elevatorAlgorithmSingle::updateElevatorTick(socket_UnrealEngine* ueSock, ph
 
 	elevatorStatus* thisElevatorStatus = getElevatorStatus();
 	flags* thisElevatorFlag = getElevatorFlag();
+
+	if (thisElevatorStatus->get_building_name() == L"EV1") {
+		std::wcout << "IN " << this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " goTo Floor is Changed None to : " << temp->added_button_outside_floor << std::endl;
+	}
 
 	//CHECK THIS IS FIRST OPERATION
 	if(thisElevatorFlag->firstOperation)
@@ -205,7 +206,8 @@ void elevatorAlgorithmSingle::updateElevatorTick(socket_UnrealEngine* ueSock, ph
 				p->init = false;
 				p->set_initial_elevator_direction(temp->button_inside_list[0]);
 			}
-			sim->update_main_trip_list_via_inside_data2(temp->button_inside_list, p->current_direction);
+			p->s->update_main_trip_list_via_inside_data(temp->button_inside_list, p->current_direction);
+			p->current_direction = p->set_direction(p->s->main_trip_list[0][0]);
 			*(thisElevatorStatus->button_inside) = temp->button_inside_list;
 		}
 		else if(temp->added_button_outside_floor != 0)
@@ -215,29 +217,31 @@ void elevatorAlgorithmSingle::updateElevatorTick(socket_UnrealEngine* ueSock, ph
 				p->init = false;
 				p->set_initial_elevator_direction(temp->added_button_outside_floor);
 			}
-			sim->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->added_button_outside_floor, temp->added_button_outside_direction, temp->added_button_outside_altimeter);
+			p->s->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->added_button_outside_floor, temp->added_button_outside_direction, temp->added_button_outside_altimeter);
+			p->current_direction = p->set_direction(p->s->main_trip_list[0][0]);
+
 			thisElevatorStatus->button_outside->push_back({temp->added_button_outside_floor, temp->added_button_outside_direction});
 		}
-		cout << endl << "IN " <<  this->building_name << " -> " << this->device_name << " goTo Floor is Changed None to : " << sim->main_trip_list[0][0] << endl;
+		std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " goTo Floor is Changed None to : " << p->s->main_trip_list[0][0] << std::endl;
 
 		//CHANGE V_T Graph
-		rearrangeVector(ueSock, p);
-		thisElevatorFlag->IDLEFlag = false;
+		rearrangeVector(this->getElevatorStatus(), ueSock, p);
 	}
 	else
 	{
-		if(temp->velocity != 0.0)
+		if(temp->current_velocity != 0.0)
 		{
 			
 		}
-		if(temp->altimeter != 0.0)
+		if(temp->current_altimeter != 0.0)
 		{
 			
 		}
 		if(!temp->button_inside_list.empty())
 		{
-			sim->prev_button_inside_data2 = *(thisElevatorStatus->button_inside);
-			sim->update_main_trip_list_via_inside_data2(temp->button_inside_list, thisElevatorStatus->direction);
+			p->s->prev_button_inside_data2 = *(thisElevatorStatus->button_inside);
+			p->s->update_main_trip_list_via_inside_data(temp->button_inside_list, thisElevatorStatus->direction);
+			p->current_direction = p->set_direction(p->s->main_trip_list[0][0]);
 
 			*(thisElevatorStatus->button_inside) = temp->button_inside_list;
 		}
@@ -260,16 +264,24 @@ void elevatorAlgorithmSingle::updateElevatorTick(socket_UnrealEngine* ueSock, ph
 			}
 			if(flag)
 			{
-				int currentDestFloor = sim->main_trip_list[0][0];
-				sim->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->added_button_outside_floor, temp->added_button_outside_direction, temp->added_button_outside_altimeter);
+				int currentDestFloor = p->s->main_trip_list[0][0];
+				p->s->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->added_button_outside_floor, temp->added_button_outside_direction, temp->added_button_outside_altimeter);
+				p->current_direction = p->set_direction(p->s->main_trip_list[0][0]);
+
 				thisElevatorStatus->button_outside->push_back({temp->added_button_outside_floor, temp->added_button_outside_direction});
 
-				if(currentDestFloor != sim->main_trip_list[0][0])
+				if(currentDestFloor != p->s->main_trip_list[0][0])
 				{
-					rearrangeVector(ueSock, p);
+					rearrangeVector(this->getElevatorStatus(), ueSock, p);
 					thisElevatorFlag->IDLEFlag = false;
 				}
+
 			}
 		}
 	}
+}
+
+void elevatorAlgorithmSingle::rearrangeVector(elevatorStatus* stats, socket_UnrealEngine* ueSock, physics* phy)
+{
+	elevatorAlgorithmDefault::rearrangeVector(stats, ueSock, phy);
 }

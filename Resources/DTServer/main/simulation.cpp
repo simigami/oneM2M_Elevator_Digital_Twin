@@ -5,55 +5,25 @@
 
 using namespace std;
 
-void simulation::check_cin_and_modify_main_trip_list_between_previous_RETRIEVE(latest_RETRIEVE_STRUCT previous, latest_RETRIEVE_STRUCT current, bool direction)
-{
-	vector<string> button_inside_add;
-	vector<string> button_inside_del;
-
-	//CHECK BUTTON INSIDE DIFFERENCE
-	if(previous.button_inside == current.button_inside)
-	{
-		//cout << "BUTTON INSIDE DATA IS SAME TO PREVIOUS RETRIEVE..." << endl;
-	}
-	else if(previous.button_inside != current.button_inside)
-	{
-		this->update_main_trip_list_via_inside_data(current.button_inside, direction);
-	}
-
-	//CHECK BUTTON OUTSIDE DIFFERENCE
-	if(previous.button_outside == current.button_outside)
-	{
-		//cout << "BUTTON OUTSIDE DATA IS SAME TO PREVIOUS RETRIEVE..." << endl;
-	}
-	else if(previous.button_outside != current.button_outside)
-	{
-		this->update_main_trip_list_via_outside_data(current.button_outside, direction, previous.altimeter, current.each_floor_altimeter, current.und, current.gnd);
-	}
-
-	//IF INSIDE AND OUTSIDE DATA IS SAME
-
-
-}
-
 void simulation::swap_trip_list()
 {
 	if(this->main_trip_list.empty())
 	{
 		if(this->reserved_trip_list_up.size() > this->reserved_trip_list_down.size())
 		{
-			//cout << "UP LIST IS BIGGER THAN DOWN LIST, SWAP MAIN LIST TO RESERVED UP..." << endl;
+			//std::cout << "UP LIST IS BIGGER THAN DOWN LIST, SWAP MAIN LIST TO RESERVED UP..." << std::endl;
 			this->main_trip_list = vector<vector<int>>(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end());
 			this->reserved_trip_list_up.clear();
 		}
 		else if(this->reserved_trip_list_down.size() > this->reserved_trip_list_up.size())
 		{
-			//cout << "DOWN LIST IS BIGGER THAN UP LIST, SWAP MAIN LIST TO RESERVED DOWN..." << endl;
+			//std::cout << "DOWN LIST IS BIGGER THAN UP LIST, SWAP MAIN LIST TO RESERVED DOWN..." << std::endl;
 			this->main_trip_list = vector<vector<int>>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
 			this->reserved_trip_list_down.clear();
 		}
 		else if(this->reserved_trip_list_down.size() == this->reserved_trip_list_up.size() && !this->reserved_trip_list_down.empty())
 		{
-			//cout << "BOTH RESERVED HAS SAME SIZE, SWAP MAIN LIST TO RESERVED DOWN..." << endl;
+			//std::cout << "BOTH RESERVED HAS SAME SIZE, SWAP MAIN LIST TO RESERVED DOWN..." << std::endl;
 			this->main_trip_list = vector<vector<int>>(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end());
 			
 			this->reserved_trip_list_down.clear();
@@ -77,7 +47,14 @@ const void simulation::clear_data()
 
 bool simulation::bCheckAllListEmpty()
 {
-	return !(this->main_trip_list.empty() && this->reserved_trip_list_up.empty() && this->reserved_trip_list_down.empty());
+	if (this->main_trip_list.empty() && this->reserved_trip_list_up.empty() && this->reserved_trip_list_down.empty())
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 bool simulation::bigger(vector<int>& v1, vector<int>& v2)
@@ -190,106 +167,7 @@ bool simulation::erase_floor_of_trip_list(vector<vector<int>> trip_list, int flo
 	}
 }
 
-bool simulation::update_main_trip_list_via_inside_data(vector<string> button_inside, bool direction)
-{
-	try
-	{
-		int floor;
-		bool flag;
-
-		vector<string> prev = this->prev_button_inside_data;
-		vector<string> Currently_Erased(button_inside.size() + prev.size());
-		vector<string> Newly_Added(button_inside.size() + prev.size());
-
-		vector<string>::iterator iter_prev;
-		vector<string>::iterator iter_next;
-
-		sort(button_inside.begin(), button_inside.end());
-		sort(prev.begin(), prev.end());
-
-		iter_prev = set_difference(prev.begin(), prev.end(), button_inside.begin(), button_inside.end(), Currently_Erased.begin());
-		iter_next = set_difference(button_inside.begin(), button_inside.end(), prev.begin(), prev.end(), Newly_Added.begin());
-
-		Currently_Erased.resize(iter_prev-Currently_Erased.begin());
-		Newly_Added.resize(iter_next-Newly_Added.begin());
-
-		if(Newly_Added.empty())
-		{
-			//cout << "Newly Added Floor is Empty" << endl;
-		}
-		else
-		{
-			//cout << endl << "Newly Added Floor" << endl;
-		}
-
-		for(const auto& elem : Newly_Added)
-		{
-			floor = this->string_floor_to_int(elem);
-			flag = check_reachability();
-			if(flag)
-			{
-				add_floor_to_main_trip_list(floor, direction, 1);
-				//cout << "INSIDE FLOOR : " << floor << " IS REACHABLE, ADDING ON MAIN LIST..." << endl;
-			}
-			else
-			{
-				//cout << "FLOOR : " << floor << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
-				add_floor_to_reserve_trip_list(floor, direction, 1);
-			}
-		}
-
-		if(Currently_Erased.empty())
-		{
-			//cout << "Currently_Erased Floor is Empty" << endl;
-		}
-		else
-		{
-			//cout << endl << "Currently_Erased Floor" << endl;
-			for(const auto& elem : Currently_Erased)
-			{
-				floor = this->string_floor_to_int(elem);
-				auto it = find_if(this->main_trip_list.begin(), this->main_trip_list.end(),[floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
-				if(it != this->main_trip_list.end())
-				{
-					this->main_trip_list.erase(it);
-				}
-				else
-				{
-					it =  find_if(this->reserved_trip_list_up.begin(), this->reserved_trip_list_up.end(), [floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
-					if(it != this->reserved_trip_list_up.end())
-					{
-						this->reserved_trip_list_up.erase(it);
-					}
-					else
-					{
-						it =  find_if(this->reserved_trip_list_down.begin(), this->reserved_trip_list_down.end(), [floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
-						if(it != this->reserved_trip_list_down.end())
-						{
-							this->reserved_trip_list_down.erase(it);
-						}
-						else
-						{
-							cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
-							exit(0);
-						}
-					}
-				}
-				//this->main_trip_list.erase(remove(this->main_trip_list.begin(), this->main_trip_list.end(), floor), this->main_trip_list.end());
-				cout << "INSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << endl;
-			}
-		}
-		this->prev_button_inside_data = button_inside;
-
-		return true;
-	}
-	catch (const std::exception& e)
-	{
-		std::cout << "Exception Caught on simulation.cpp : " << e.what();
-		return false;
-	}
-}
-
-bool simulation::update_main_trip_list_via_inside_data2(vector<int> button_inside, bool direction)
+void simulation::update_main_trip_list_via_inside_data(vector<int> button_inside, bool direction)
 {
 	vector<int> prev_button_inside = this->prev_button_inside_data2;
 
@@ -317,11 +195,9 @@ bool simulation::update_main_trip_list_via_inside_data2(vector<int> button_insid
 		if(flag)
 		{
 			add_floor_to_main_trip_list(floor, direction, 1);
-			//cout << "INSIDE FLOOR : " << floor << " IS REACHABLE, ADDING ON MAIN LIST..." << endl;
 		}
 		else
 		{
-			//cout << "FLOOR : " << floor << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
 			add_floor_to_reserve_trip_list(floor, direction, 1);
 		}
     }
@@ -348,7 +224,7 @@ bool simulation::update_main_trip_list_via_inside_data2(vector<int> button_insid
 				}
 				else
 				{
-					cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
+					std::cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << std::endl;
 					exit(0);
 				}
 			}
@@ -365,12 +241,12 @@ void simulation::check_and_set_trip_list(int req_floor, bool direction, bool req
 			if(current_altimeter < req_altimeter)
 			{
 				add_floor_to_main_trip_list(req_floor, direction, 0);
-				//cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << endl;
+				//std::cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << std::endl;
 			}
 			else
 			{
 				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
-				//cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << endl;
+				//std::cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << std::endl;
 			}
 		}
 		else
@@ -383,7 +259,7 @@ void simulation::check_and_set_trip_list(int req_floor, bool direction, bool req
 			{
 				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);	
 			}
-			//cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << endl;
+			//std::cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << std::endl;
 		}
 	}
 	else
@@ -393,12 +269,12 @@ void simulation::check_and_set_trip_list(int req_floor, bool direction, bool req
 			if(current_altimeter > req_altimeter)
 			{
 				add_floor_to_main_trip_list(req_floor, direction, 0);
-				//cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << endl;
+				//std::cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << std::endl;
 			}
 			else
 			{
 				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
-				//cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << endl;
+				//std::cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << std::endl;
 			}
 		}
 		else
@@ -411,7 +287,7 @@ void simulation::check_and_set_trip_list(int req_floor, bool direction, bool req
 			{
 				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);	
 			}
-			//cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << endl;
+			//std::cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << std::endl;
 		}
 	}
 }
@@ -423,81 +299,89 @@ void simulation::check_and_set_trip_list_Nearest_N(
 	double currentDestFloorAltimeter,
 	double currentAltRatio, double intervalMAX)
 {
-	if(1.0 <= currentAltRatio && currentAltRatio <= 2.0)
+	try
 	{
-		currentAltRatio -= 1;
-	}
+		if (1.0 <= currentAltRatio && currentAltRatio <= 2.0)
+		{
+			currentAltRatio -= 1;
+		}
 
-	if(direction)
-	{
-		if(req_direction == direction)
+		if (direction)
 		{
-			if(current_altimeter < req_altimeter)
+			if (req_direction == direction)
 			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
-			}
-			else if(static_cast<double>(req_floor) >= currentAltRatio - intervalMAX)
-			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
+				if (current_altimeter < req_altimeter)
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				else if (static_cast<double>(req_floor) >= currentAltRatio - intervalMAX)
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				else
+				{
+					add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+				}
 			}
 			else
 			{
-				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+				if (this->main_trip_list.empty())
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				// 방향이 다르지만, 호출한 방향으로의 최악으로 많이 간 경우가, 현재 이동하는 Trip Dest보다 작을 때는 이득임
+				else if (abs(each_floor_altimeter.front() - current_altimeter) < abs(currentDestFloorAltimeter - current_altimeter))
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				else
+				{
+					add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+				}
+				//std::cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << std::endl;
 			}
 		}
 		else
 		{
-			if(this->main_trip_list.empty())
+			if (req_direction == direction)
 			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
-			}
-			// 방향이 다르지만, 호출한 방향으로의 최악으로 많이 간 경우가, 현재 이동하는 Trip Dest보다 작을 때는 이득임
-			else if(abs(each_floor_altimeter.front() - current_altimeter) < abs(currentDestFloorAltimeter - current_altimeter))
-			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
+				if (current_altimeter > req_altimeter)
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+					//std::cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << std::endl;
+				}
+				else if (static_cast<double>(req_floor) <= currentAltRatio + intervalMAX)
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				else
+				{
+					add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+					//std::cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << std::endl;
+				}
 			}
 			else
 			{
-				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);	
+				if (this->main_trip_list.empty())
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				else if (abs(each_floor_altimeter.back() - current_altimeter) < abs(currentDestFloorAltimeter - current_altimeter))
+				{
+					add_floor_to_main_trip_list(req_floor, direction, 0);
+				}
+				else
+				{
+					add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
+				}
+				//std::cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << std::endl;
 			}
-			//cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << endl;
 		}
+
 	}
-	else
+	catch (const std::exception&)
 	{
-		if(req_direction == direction)
-		{
-			if(current_altimeter > req_altimeter)
-			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
-				//cout << "OUTSIDE FLOOR : " << req_floor << " IS REACHABLE WITH SAME DIRECTION, ADDING ON MAIN LIST..." << endl;
-			}
-			else if(static_cast<double>(req_floor) <= currentAltRatio + intervalMAX)
-			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
-			}
-			else
-			{
-				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);
-				//cout << "OUTSIDE FLOOR : " << req_floor << " SAME DIRECTION, BUT LOWER ALTIMETER. ADDING ON RESERVED LIST..." << endl;
-			}
-		}
-		else
-		{
-			if(this->main_trip_list.empty())
-			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
-			}
-			else if(abs(each_floor_altimeter.back() - current_altimeter) < abs(currentDestFloorAltimeter - current_altimeter))
-			{
-				add_floor_to_main_trip_list(req_floor, direction, 0);
-			}
-			else
-			{
-				add_floor_to_reserve_trip_list(req_floor, req_direction, 0);	
-			}
-			//cout << "OUTSIDE FLOOR : " << req_floor << " DIFFERENT DIRECTION. ADDING ON RESERVED LIST..." << endl;
-		}
+		std::cout << "Exception Caught on simulation.cpp : " << "check_and_set_trip_list_Nearest_N" << std::endl;
 	}
 }
 
@@ -526,7 +410,7 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 		Currently_Erased.resize(iter_prev-Currently_Erased.begin());
 		Newly_Added.resize(iter_next-Newly_Added.begin());
 
-		//cout << endl << "Newly Added Floor : ";
+		//std::cout << "Newly Added Floor : ";
 		for(const auto& elem : Newly_Added)
 		{
 			req_floor = elem[0];
@@ -568,12 +452,12 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 					}
 					else
 					{
-						cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << endl;
+						std::cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << std::endl;
 						exit(0);
 					}
 				}
 			}
-			cout << "OUTSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << endl;
+			std::cout << "OUTSIDE FLOOR : " << floor << " IS DELETED, ERASE ON MAIN LIST..." << std::endl;
 		}
 		this->prev_button_outside_data = button_outside;
 
@@ -637,18 +521,18 @@ bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 					if(flag)
 					{
 						add_floor_to_main_trip_list(button_inside_int[index], direction, 1);
-						//cout << "FLOOR : " << button_inside_int[index] << " IS MISSING, ADDING ON MAIN LIST..." << endl;
+						//std::cout << "FLOOR : " << button_inside_int[index] << " IS MISSING, ADDING ON MAIN LIST..." << std::endl;
 
 						return true;
 					}
 					else
 					{
-						//cout << "FLOOR : " << button_inside_int[index] << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
+						//std::cout << "FLOOR : " << button_inside_int[index] << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << std::endl;
 						add_floor_to_reserve_trip_list(button_inside_int[index], direction, 1);
 					}
 				}
 			}
-			cout << "FLOOR LIST IS SAME..."<< endl;
+			std::cout << "FLOOR LIST IS SAME..."<< std::endl;
 			return true;
 		}
 		else
@@ -662,19 +546,19 @@ bool simulation::modify_trip_list(vector<string> button_inside, bool direction)
 					if(flag)
 					{
 						add_floor_to_main_trip_list(button_inside_int[index], direction, 1);
-						//cout << "FLOOR : " << button_inside_int[index] << " IS MISSING, ADDING ON MAIN LIST..." << endl;
+						//std::cout << "FLOOR : " << button_inside_int[index] << " IS MISSING, ADDING ON MAIN LIST..." << std::endl;
 
 						return true;
 					}
 					else
 					{
-						//cout << "FLOOR : " << button_inside_int[index] << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << endl;
+						//std::cout << "FLOOR : " << button_inside_int[index] << " IS UNREACHABLE, ADDING ON RESERVED LIST..." << std::endl;
 						add_floor_to_reserve_trip_list(button_inside_int[index], direction, 1);
 					}
 				}
 			}
 		}
-		cout << "FLOOR LIST IS SAME..."<< endl;
+		std::cout << "FLOOR LIST IS SAME..."<< std::endl;
 		return true;
 	}
 	catch (const std::exception& e)
@@ -713,34 +597,38 @@ bool simulation::check_reachability()
 
 const void simulation::dev_print_trip_list()
 {
-	cout << endl << "MAIN TRIP :";
+	std::cout << "MAIN TRIP :";
 	for(auto elem : this->main_trip_list)
 	{
 		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
-		cout << " " << elem[0] << " " << temp << " , ";
-	}
-	cout << endl;
+		std::cout << " " << elem[0] << " " << temp << " , ";
 
-	cout << "RESERVE TRIP UP :";
+		if (elem[0] == 2024) {
+			std::cout << "2024 IS IN MAIN TRIP LIST...";
+		}
+	}
+	std::cout << std::endl;
+
+	std::cout << "RESERVE TRIP UP :";
 	for(auto elem : this->reserved_trip_list_up)
 	{
 		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
-		cout << " " << elem[0] << " " << temp << " , ";
+		std::cout << " " << elem[0] << " " << temp << " , ";
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	cout << "RESERVE TRIP DOWN :";
+	std::cout << "RESERVE TRIP DOWN :";
 	for(auto elem : this->reserved_trip_list_down)
 	{
 		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
-		cout << " " << elem[0] << " " << temp << " , ";
+		std::cout << " " << elem[0] << " " << temp << " , ";
 	}
-	cout << endl;
+	std::cout << std::endl;
 }
 
 const void simulation::dev_print_stopped_floor()
 {
-	cout << " Stopped At : " << this->main_trip_list[0][0] << endl;
+	std::cout << " Stopped At : " << this->main_trip_list[0][0] << std::endl;
 	return void();
 }
 
@@ -765,17 +653,17 @@ string simulation::int_floor_to_string(const int& floor)
 	return floor > 0 ? std::to_string(floor) : "B"+std::to_string(floor*-1);
 }
 
-physics::physics(int underground_floor, int ground_floor, vector<double> altimeter_of_each_floor)
+physics::physics(Wparsed_struct parsed_struct)
 {
 	this->s = new simulation();
 
-	this->info.underground_floor = underground_floor;
-	this->info.ground_floor = ground_floor;
+	this->info.underground_floor = parsed_struct.underground_floor;
+	this->info.ground_floor = parsed_struct.ground_floor;
 
-	this->info.altimeter_of_each_floor = altimeter_of_each_floor;
-	this->s->each_floor_altimeter = altimeter_of_each_floor;
+	this->info.altimeter_of_each_floor = parsed_struct.each_floor_altimeter;
+	this->s->each_floor_altimeter = parsed_struct.each_floor_altimeter;
 
-	this->totalMoveDistance = 0.0;
+	this->total_move_distance = 0.0;
 	this->current_velocity = 0.0;
 	this->current_altimeter = -55;
 
@@ -786,7 +674,7 @@ bool physics::set_initial_elevator_direction(vector<string> button_inside)
 {
 	if(button_inside.empty())
 	{
-		//cout << "ERROR ON CLASS PHYSICS : " << " button_inside IS EMPTY..." << endl;
+		//std::cout << "ERROR ON CLASS PHYSICS : " << " button_inside IS EMPTY..." << std::endl;
 		exit(0);
 	}
 	else
@@ -796,13 +684,13 @@ bool physics::set_initial_elevator_direction(vector<string> button_inside)
 		const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
 		if(this->current_altimeter < called_floor_altimeter)
 		{
-			//cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << endl;
+			//std::cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << std::endl;
 			this->current_direction = true;
 			return true;
 		}
 		else
 		{
-			//cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << endl;
+			//std::cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << std::endl;
 			this->current_direction = false;
 			return false;
 		}
@@ -830,7 +718,7 @@ bool physics::set_initial_elevator_direction(vector<vector<int>> button_outside)
 {
 	if(button_outside.empty())
 	{
-		cout << "ERROR ON CLASS PHYSICS : " << " button_outside IS EMPTY..." << endl;
+		std::cout << "ERROR ON CLASS PHYSICS : " << " button_outside IS EMPTY..." << std::endl;
 		exit(0);
 	}
 	else
@@ -840,13 +728,13 @@ bool physics::set_initial_elevator_direction(vector<vector<int>> button_outside)
 		const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
 		if(this->current_altimeter < called_floor_altimeter)
 		{
-			//cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << endl;
+			//std::cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << std::endl;
 			this->current_direction = true;
 			return true;
 		}
 		else
 		{
-			//cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << endl;
+			//std::cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << std::endl;
 			this->current_direction = false;
 			return false;
 		}

@@ -29,50 +29,82 @@ def dev_sensor_data(timestamp, file_path):
 
             building_name = data[0]
             device_name = data[1]
-            underground_floor = int(data[2])
-            ground_floor = int(data[3])
-            delta = int(data[4])
-            velocity = float(data[5])
-            altimeter = float(data[6])
-            temperature = float(data[7])
 
-            button_inside = []
-            if data[8] != '[]':
-                button_inside = ast.literal_eval(data[8])
+            if device_name == "OUT":
+                delta = int(data[2])
 
-            button_outside = []
-            if data[9] != '[]':
-                sub = data[9][1:-1]
-                values = sub.split(".")
-                for value in values:
-                    if value == "":
-                        continue
-                    else:
-                        subsub = value[1:-1]
-                        button_values = subsub.split(",")
-                        floor = int(button_values[0])
-                        if str(button_values[1]) == "True":
-                            direction = True
+                button_outside = []
+                if data[3] != '[]':
+                    sub = data[3][1:-1]
+                    values = sub.split(".")
+                    for value in values:
+                        if value == "":
+                            continue
                         else:
-                            direction = False
+                            subsub = value[1:-1]
+                            button_values = subsub.split(",")
+                            floor = int(button_values[0])
+                            if str(button_values[1]) == "True":
+                                direction = True
+                            else:
+                                direction = False
 
-                        button_outside.append([floor, direction])
+                            button_outside.append([floor, direction])
+
+                sensor_data = {
+                    "building_name": building_name,
+                    "device_name": device_name,
+                    "timestamp": (timestamp + datetime.timedelta(seconds=delta)).strftime("%Y_%m%d_%H%M%S"),
+                    "button_outside": button_outside
+                }
+
+                ret.append(sensor_data)
+
+            else:
+                underground_floor = int(data[2])
+                ground_floor = int(data[3])
+                delta = int(data[4])
+                velocity = float(data[5])
+                altimeter = float(data[6])
+                temperature = float(data[7])
+
+                button_inside = []
+                if data[8] != "[]":
+                    button_inside = ast.literal_eval(data[8])
+
+                button_outside = []
+                if data[9] != "[]":
+                    sub = data[9][1:-1]
+                    values = sub.split(".")
+                    for value in values:
+                        if value == "":
+                            continue
+                        else:
+                            subsub = value[1:-1]
+                            button_values = subsub.split(",")
+                            floor = int(button_values[0])
+                            if str(button_values[1]) == "True":
+                                direction = True
+                            else:
+                                direction = False
+
+                            button_outside.append([floor, direction])
 
 
-            sensor_data = {
-                "building_name": building_name,
-                "device_name": device_name,
-                "underground_floor": underground_floor,
-                "ground_floor": ground_floor,
-                "timestamp": (timestamp + datetime.timedelta(seconds=delta)).strftime("%Y_%m%d_%H%M%S"),
-                "velocity": velocity,
-                "altimeter": altimeter,
-                "temperature": temperature,
-                "button_inside": button_inside,
-                "button_outside": button_outside
-            }
+                sensor_data = {
+                    "building_name": building_name,
+                    "device_name": device_name,
+                    "underground_floor": underground_floor,
+                    "ground_floor": ground_floor,
+                    "timestamp": (timestamp + datetime.timedelta(seconds=delta)).strftime("%Y_%m%d_%H%M%S"),
+                    "velocity": velocity,
+                    "altimeter": altimeter,
+                    "temperature": temperature,
+                    "button_inside": button_inside,
+                    "button_outside": button_outside
+                }
 
-            ret.append(sensor_data)
+                ret.append(sensor_data)
 
     return ret
 

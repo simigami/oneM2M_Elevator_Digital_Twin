@@ -1,8 +1,8 @@
 #pragma once
+#include "config.h"
 #include "parse_json.h"
 #include "socket_UnrealEngine.h"
 #include "socket_oneM2M.h"
-#include "simulation.h"
 #include "elevatorAlgorithmSingle.h"
 #include "elevatorAlgorithmMultiple.h"
 
@@ -21,17 +21,14 @@ public:
     elevatorAlgorithmSingle* thisElevatorAlgorithmSingle;
     elevatorAlgorithmMultiple* thisElevatorAlgorithmMultiple;
 
-    string building_name = "";
-    string device_name = "";
-
-    Elevator(parse_json::parsed_struct parsed_struct, vector<string> ACP_NAMES, int algorithmNumber);
+    Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES, int algorithmNumber);
 
     void runElevator();
     void setNotificationContent(notificationContent* sendTo);
     void setUpdateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
 
+    wstring getBuildingName() const;
+    wstring getDeviceName() const;
+
     int algorithmNumber;
-
-private:
-
 };

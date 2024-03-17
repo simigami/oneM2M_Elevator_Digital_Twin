@@ -122,6 +122,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\boost_1_84_0\stage\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ShLwApi.Lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -147,25 +148,30 @@
     <ClCompile Include="elevatorAlgorithmDefault.cpp" />
     <ClCompile Include="elevatorAlgorithmMultiple.cpp" />
     <ClCompile Include="elevatorAlgorithmSingle.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="DT_RealTime.cpp" />
+    <ClCompile Include="main2.cpp" />
     <ClCompile Include="parse_json.cpp" />
     <ClCompile Include="send_oneM2M.cpp" />
     <ClCompile Include="send_UnrealEngine.cpp" />
     <ClCompile Include="simulation.cpp" />
+    <ClCompile Include="DT_Simulation.cpp" />
     <ClCompile Include="socket_oneM2M.cpp" />
     <ClCompile Include="socket_UnrealEngine.cpp" />
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="config.h" />
     <ClInclude Include="elevator.h" />
     <ClInclude Include="elevatorAlgorithmDefault.h" />
     <ClInclude Include="elevatorAlgorithmMultiple.h" />
     <ClInclude Include="elevatorAlgorithmSingle.h" />
-    <ClInclude Include="main.h" />
+    <ClInclude Include="DT_RealTime.h" />
+    <ClInclude Include="main2.h" />
     <ClInclude Include="parse_json.h" />
     <ClInclude Include="send_oneM2M.h" />
     <ClInclude Include="send_UnrealEngine.h" />
     <ClInclude Include="simulation.h" />
+    <ClInclude Include="DT_Simulation.h" />
     <ClInclude Include="socket_oneM2M.h" />
     <ClInclude Include="socket_UnrealEngine.h" />
     <ClInclude Include="test.h" />

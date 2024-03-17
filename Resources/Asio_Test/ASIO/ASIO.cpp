@@ -6,6 +6,11 @@
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <ShlObj.h>
+#include <Shlwapi.h>
+#include <string.h>
+#include <commdlg.h>
+#include <shellapi.h>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -393,10 +398,27 @@ vector<vector<double>> getElevatorTrajectory(double current_altimeter, double cu
 
 int main()
 {
-    vector<vector<double>> t = getElevatorTrajectory(-52, 0.125, -55, 1.25, 2.5, false);
+	OPENFILENAME ofn; //파일 선택 대화 상자 구조체
+    wchar_t szFile[260] = { 0 };
 
-    for(auto elem : t)
-    {
-	    cout << " T " << elem[0] << " V " << elem[1] << " A " << elem[2] << endl;
+    // 파일 선택 대화 상자 구조체 설정
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.lpstrFile = szFile;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = sizeof(szFile) / sizeof(wchar_t);
+    ofn.lpstrFilter = L"All Files\0*.*\0";
+    ofn.nFilterIndex = 1;
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+    // 파일 선택 대화 상자 열기
+    if (GetOpenFileName(&ofn) == TRUE) {
+        // 사용자가 파일을 선택한 경우 선택된 파일의 경로 출력
+        std::wcout << L"Selected file: " << szFile << std::endl;
+    } else {
+        // 사용자가 취소한 경우 메시지 출력
+        std::wcout << L"User cancelled the operation." << std::endl;
     }
+
+    return 0;
 }
