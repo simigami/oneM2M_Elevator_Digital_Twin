@@ -7,6 +7,10 @@
 #include "simulation.h"
 #include "elevator.h"
 
+#include <codecvt>
+#include <locale>
+#include <sstream>
+
 using namespace boost::asio;
 using ip::tcp;
 using std::string;
@@ -179,6 +183,9 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 				std::wcout << selectedElevatorIDLE->getBuildingName() << " -> " << selectedElevatorIDLE->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
 				temp.push_back(eachCall);
 
+				const int delta_second = selectedElevatorIDLE->thisElevatorAlgorithmSingle->printTimeDeltaNow();
+				selectedElevatorIDLE->thisElevatorAlgorithmSingle->appendLogToLogList(CALL, 5, selectedElevatorIDLE->getBuildingName(), selectedElevatorIDLE->getDeviceName(), calledFloor, calledDirection, delta_second);
+
 				selectedElevatorIDLE->sock->create_oneM2M_CIN_Only_Button_Outside(temp);
 			}
 
@@ -186,6 +193,13 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 			{
 				std::wcout << selectedElevator->getBuildingName() << " -> " << selectedElevator->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
 				temp.push_back(eachCall);
+
+				if (calledFloor == 2) {
+					std::wcout << "CHECK" << std::endl;
+				}
+
+				const int delta_second = selectedElevator->thisElevatorAlgorithmSingle->printTimeDeltaNow();
+				selectedElevator->thisElevatorAlgorithmSingle->appendLogToLogList(CALL, 5, selectedElevator->getBuildingName(), selectedElevator->getDeviceName(), calledFloor, calledDirection, delta_second);
 
 				selectedElevator->sock->create_oneM2M_CIN_Only_Button_Outside(temp);
 			}
@@ -213,6 +227,9 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 				{
 					std::wcout << selectedElevatorDifferentDirection->getBuildingName() << " -> " << selectedElevatorDifferentDirection->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
 					temp.push_back(eachCall);
+
+					const int delta_second = selectedElevatorDifferentDirection->thisElevatorAlgorithmSingle->printTimeDeltaNow();
+					selectedElevatorDifferentDirection->thisElevatorAlgorithmSingle->appendLogToLogList(CALL, 5, selectedElevatorDifferentDirection->getBuildingName(), selectedElevatorDifferentDirection->getDeviceName(), calledFloor, calledDirection, delta_second);
 
 					selectedElevatorDifferentDirection->sock->create_oneM2M_CIN_Only_Button_Outside(temp);
 				}
@@ -312,6 +329,8 @@ vector<vector<int>> Building::getDiffBetweenCurrentAndEmbedded(vector<vector<int
 
 dt_real_time::dt_real_time() : parsed_struct()
 {
+	this->httpRequest = new std::wstring;
+	this->noti_content = new notificationContent;
 }
 
 bool dt_real_time::existsElevator(Building* one_building, const wstring& device_name)
@@ -332,6 +351,36 @@ bool dt_real_time::existsElevator(Building* one_building, const wstring& device_
         cerr << "ERROR Occurred on dt_real_time::get_elevator : " << e.what() << std::endl;
         exit(0);
 	}
+}
+
+string dt_real_time::get_RN_Path_From_SubscriptionRI(const string& substring)
+{
+#ifdef oneM2M_ACME
+	std::ifstream file(DEFAULT_SUB_RI_FILE_NAME);
+	if (!file.is_open()) {
+		std::cerr << "Error: Unable to open file " << DEFAULT_SUB_RI_FILE_NAME << std::endl;
+		return ""; // Return empty string if file cannot be opened
+	}
+
+	std::string line;
+	std::string result;
+
+	while (std::getline(file, line)) {
+		std::stringstream ss(line);
+		std::string string1;
+
+		// Read string1 (the first string separated by spaces)
+		ss >> string1;
+
+		// Check if string1 contains the substring
+		if (string1.find(substring) != std::string::npos) {
+			// If substring exists in string1, return the rest of the line (string2)
+			std::getline(ss, result);
+			return result;
+		}
+	}
+#endif // oneM2M_ACME
+	return ""; // Return empty string if no matching string1 found
 }
 
 Building* dt_real_time::get_building_vector(const wstring& ACOR_NAME)
@@ -363,6 +412,8 @@ Elevator* dt_real_time::getElevator(Building* class_of_one_building, const wstri
         cerr << "ERROR Occurred on dt_real_time::get_elevator : " << e.what() << std::endl;
         std::exit(0);
 	}
+
+	return NULL;
 }
 
 socket_oneM2M dt_real_time::get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const wstring& AE_ID)
@@ -456,50 +507,60 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
     boost::system::error_code error;
     string httpRequest;
 
-    if(port == oneM2M_NOTIFICATION_LISTEN_PORT)
-    {
-	    //boost::asio::read_until(socket, receiveBuffer, "\0", error);
-        boost::asio::read(socket, receiveBuffer, error);
+	try
+	{
+		if (port == oneM2M_NOTIFICATION_LISTEN_PORT)
+		{
+			//boost::asio::read_until(socket, receiveBuffer, "\0", error);
+#ifdef oneM2M_ACME
+			boost::asio::read_until(socket, receiveBuffer, '}}', error);
+#endif
+#ifdef oneM2M_tinyIoT
+			boost::asio::read_until(socket, receiveBuffer, '\0', error);
+#endif
 
-        istream inputStream(&receiveBuffer);
-        ostringstream httpBodyStream;
+			istream inputStream(&receiveBuffer);
+			ostringstream httpBodyStream;
 
-        // Read the HTTP headers
-        while (getline(inputStream, httpRequest) && httpRequest != "\r") {
-            // Process or ignore HTTP headers as needed
-        }
+			// Read the HTTP headers
+			while (getline(inputStream, httpRequest) && httpRequest != "\r") {
+				// Process or ignore HTTP headers as needed
+			}
 
-        // Read the HTTP body (JSON string)
-        if (inputStream.peek() != EOF) {
-            std::getline(inputStream, httpRequest); // Read the empty line after the headers
-        }
-    }
-    else
-    {
-	    boost::asio::read_until(socket, receiveBuffer, "\n");
+			// Read the HTTP body (JSON string)
+			if (inputStream.peek() != EOF) {
+				std::getline(inputStream, httpRequest); // Read the empty line after the headers
+			}
+		}
+		else
+		{
+			boost::asio::read_until(socket, receiveBuffer, "\n");
 
-        std::istream inputStream(&receiveBuffer);
-        std::getline(inputStream, httpRequest);
-    }
-    if (!error) 
-    {
-        if (port == EMBEDDED_LISTEN_PORT)
-        {
-			wstring temp;
-			temp.assign(httpRequest.begin(), httpRequest.end());
+			std::istream inputStream(&receiveBuffer);
+			std::getline(inputStream, httpRequest);
+		}
 
-            this->Running_Embedded2(temp);
-        }
-    	else if (port == oneM2M_NOTIFICATION_LISTEN_PORT)
-        {
-            this->Running_Notification(httpRequest);
-        }
-    }
-	else
-    {
-        std::cerr << "Error in dt_real_time::handleConnection : " << error.message() << std::endl;
-        exit(0);
-    }
+		if (!error)
+		{
+			if (port == EMBEDDED_LISTEN_PORT)
+			{
+				wstring temp;
+				temp.assign(httpRequest.begin(), httpRequest.end());
+
+				this->Running_Embedded2(temp);
+			}
+			else if (port == oneM2M_NOTIFICATION_LISTEN_PORT)
+			{
+				this->Running_Notification(httpRequest);
+			}
+		}
+	}
+	catch (const std::exception&)
+	{
+		std::cerr << "Error in dt_real_time::handleConnection : " << error.message() << std::endl;
+		exit(0);
+
+	}
 }
 
 void dt_real_time::Running_Embedded(const wstring& httpResponse)
@@ -529,13 +590,13 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
 		int buildingAlgorithmNumber;
 		std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
-		std::wcout << "1 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
-		std::wcout << "2 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
+		std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
+		std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
 		
 		std::cin >> buildingAlgorithmNumber;
-		while (buildingAlgorithmNumber != 1 && buildingAlgorithmNumber != 2) 
+		while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1) 
 		{
-			std::wcout << "PLEASE ENTER 1 OR 2" << std::endl;
+			std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
 			std::cin >> buildingAlgorithmNumber;
 		}
 	    
@@ -565,7 +626,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
         allBuildingInfo.push_back(newBuilding);
 
         thisBuildingElevator->runElevator();
-	    thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+	    thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(newBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
 
         if(newBuilding->getButtonMod() && CNT_NAME == L"OUT")
         {
@@ -592,6 +653,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
         // GET THIS BUILDING CLASS and CHECK THIS CNT(Device Name) Exists
         Building* thisBuildingFlag = this->get_building_vector(ACOR_NAME);
+		thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN = map<wstring, wstring>();
 
         // if TEMP == NULL, It means oneM2M Building Resource Exists, But Server Restarted
         if(thisBuildingFlag == NULL) // oneM2M에 빌딩 ACP가 존재하는데 서버에 클래스가 없는 경우
@@ -601,13 +663,13 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
 			int buildingAlgorithmNumber;
 			std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
-			std::wcout << "1 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
-			std::wcout << "2 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
+			std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
+			std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
 
 			std::cin >> buildingAlgorithmNumber;
-			while (buildingAlgorithmNumber != 1 && buildingAlgorithmNumber != 2)
+			while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
 			{
-				std::wcout << "PLEASE ENTER 1 OR 2" << std::endl;
+				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
 				std::cin >> buildingAlgorithmNumber;
 			}
 
@@ -675,7 +737,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
         {
         	std::wcout << "IN SERVER -> Building Resource Exists, Check Elevator " << CNT_NAME << " Resource Exists IN Server" << std::endl;
 
-			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT");
+			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod());
 			send_oneM2M ACP_Validation_Socket(parsedStruct);
 
         	bool flag = this->existsElevator(thisBuildingFlag, CNT_NAME);
@@ -728,7 +790,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 			        thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 
 			        thisBuildingElevator->runElevator();
-				    thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+				    thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
 
 			        if(thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
 			        {
@@ -832,7 +894,7 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 			std::cin >> buildingAlgorithmNumber;
 			while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
 			{
-				std::wcout << "PLEASE ENTER 1 OR 2" << std::endl;
+				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
 				std::cin >> buildingAlgorithmNumber;
 			}
 
@@ -853,7 +915,7 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 			allBuildingInfo.push_back(newBuilding);
 
 			thisBuildingElevator->runElevator();
-			thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+			thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(newBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
 			thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
 		}
 	}
@@ -888,7 +950,7 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 				std::cin >> buildingAlgorithmNumber;
 				while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
 				{
-					std::wcout << "PLEASE ENTER 1 OR 2" << std::endl;
+					std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
 					std::cin >> buildingAlgorithmNumber;
 				}
 
@@ -945,6 +1007,7 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 		else  
 		{
 			std::wcout << "IN SERVER -> Building Resource Exists, Check Elevator " << CNT_NAME << " Resource Exists IN Server" << std::endl;
+			thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN = map<wstring, wstring>();
 
 			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod());
 			send_oneM2M ACP_Validation_Socket(parsedStruct);
@@ -987,7 +1050,7 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 							thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 
 							thisBuildingElevator->runElevator();
-							thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+							thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
 							thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
 						}
 						// oneM2M에 해당 엘리베이터 클래스가 존재하는데 서버에 없는 경우
@@ -1058,7 +1121,7 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 							thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 
 							thisBuildingElevator->runElevator();
-							thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct);
+							thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
 							thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
 						}
 
@@ -1099,140 +1162,274 @@ void dt_real_time::Running_Notification(const string& httpResponse)
             // Check if "rep" object exists within "nev"
             if (nev.contains("rep")) 
 			{
-                auto rep_json = nlohmann::json::parse(nev["rep"].get<std::string>());
+#ifdef oneM2M_tinyIoT
+				auto rep = nev["rep"];
 
-                if (rep_json.contains("m2m:sub")) 
+				auto rep_json = nlohmann::json::parse(nev["rep"].get<std::string>());
+
+				if (rep_json.contains("m2m:sub"))
 				{
-					return ;
-                }
-            	else
+					return;
+				}
+				else
 				{
-                    //START ANALYZE
+					//START ANALYZE
 					std::string sur_string = json_body["m2m:sgn"]["sur"];
+					std::string rep_value_str = json_body["m2m:sgn"]["nev"]["rep"];
+					nlohmann::json rep_value_json = nlohmann::json::parse(rep_value_str);
+
 					std::stringstream ss(sur_string);
 
-                    std::vector<std::string> sur_values;
-                    std::string item;
+					std::vector<std::string> sur_values;
+					std::string item;
 
-                    while (std::getline(ss, item, '/')) 
+					while (std::getline(ss, item, '/'))
 					{
-                        sur_values.push_back(item);
-                    }
+						sur_values.push_back(item);
+					}
 
 					string building_name = sur_values[1];
 					string device_name = sur_values[2];
 					string majorCNTName = sur_values[3];
 
-					wstring Wbuilding_name;
-					wstring Wdevice_name;
+					wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
+					wstring Wbuilding_name = converter.from_bytes(building_name);
+					wstring Wdevice_name = converter.from_bytes(device_name);
 
-					Wbuilding_name.assign(building_name.begin(), building_name.end());
-					Wdevice_name.assign(device_name.begin(), device_name.end());
-
-                    Building* thisBuilding = this->get_building_vector(Wbuilding_name);
-                    Elevator* thisElevator = this->getElevator(thisBuilding, Wdevice_name);
+					Building* thisBuilding = this->get_building_vector(Wbuilding_name);
+					Elevator* thisElevator = this->getElevator(thisBuilding, Wdevice_name);
 
 					string con;
-					std::string rep_value_str = json_body["m2m:sgn"]["nev"]["rep"];
 
-			        // Parse the value of "rep" as JSON
-					nlohmann::json rep_value_json = nlohmann::json::parse(rep_value_str);
+					noti_content = new notificationContent;
 
-                    tempContentMoveToAlgorithm = new notificationContent;
-
-					if(majorCNTName == "Elevator_physics")
+					if (majorCNTName == "Elevator_physics")
 					{
 						string minorCNTName = sur_values[4];
 
-						if(minorCNTName.find("Velocity") != string::npos)
+						if (minorCNTName.find("Velocity") != string::npos)
 						{
 							con = rep_value_json["m2m:cin"]["con"].get<string>();
-                            tempContentMoveToAlgorithm->current_velocity = stod(con);
+							noti_content->current_velocity = stod(con);
 						}
-						else if(minorCNTName.find("Altimeter") != string::npos)
+						else if (minorCNTName.find("Altimeter") != string::npos)
 						{
 							con = rep_value_json["m2m:cin"]["con"].get<string>();
-							tempContentMoveToAlgorithm->current_altimeter = stod(con);
+							noti_content->current_altimeter = stod(con);
 						}
-                        thisElevator->setNotificationContent(tempContentMoveToAlgorithm);
+						thisElevator->setNotificationContent(noti_content);
 					}
-					else if(majorCNTName == "Elevator_button_inside")
+					else if (majorCNTName == "Elevator_button_inside")
 					{
 						string minorCNTName = sur_values[4];
 
-						if(minorCNTName.find("Button_List") != string::npos)
+						if (minorCNTName.find("Button_List") != string::npos)
 						{
-				            con = rep_value_json["m2m:cin"]["con"].get<string>();
+							con = rep_value_json["m2m:cin"]["con"].get<string>();
 
 							std::vector<int> integers;
 							std::istringstream iss(con);
-						    std::string token;
-						    while (iss >> token) 
+							std::string token;
+							while (iss >> token)
 							{
-                                // Convert each token (integer string) to an integer and store it in the vector
-                                if(token[0] == 'B')
-                                {
-	                                integers.push_back(-1 * stoi(token.substr(1)));
-                                }
+								// Convert each token (integer string) to an integer and store it in the vector
+								if (token[0] == 'B')
+								{
+									integers.push_back(-1 * stoi(token.substr(1)));
+								}
 
-                                else
-                                {
-	                                integers.push_back(stoi(token));
-                                }
+								else
+								{
+									integers.push_back(stoi(token));
+								}
 							}
-                            if(integers[0] == -1)
-                            {
-	                            std::wcout << "" <<std::endl;
-                            }
-							tempContentMoveToAlgorithm->button_inside_list = integers;
-						}
-						else if(minorCNTName.find("goTo") != string::npos)
-						{
-					        con = rep_value_json["m2m:cin"]["con"].get<string>();
-							tempContentMoveToAlgorithm->goTo = stoi(con);
+							if (integers[0] == -1)
+							{
+								std::wcout << "" << std::endl;
+							}
+							noti_content->button_inside = integers;
 						}
 
-                        thisElevator->setNotificationContent(tempContentMoveToAlgorithm);
-                        thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
+						thisElevator->setNotificationContent(noti_content);
+						thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
 					}
-					else if(majorCNTName == "Elevator_button_outside")
+					else if (majorCNTName == "Elevator_button_outside")
 					{
 						string minorCNTName = sur_values[4];
 						con = rep_value_json["m2m:cin"]["con"].get<string>();
 
-				        int called_floor;
-				        bool direction;
+						int called_floor;
+						bool direction;
 
-                        //가정 1. 바깥에 누른 층은 한번 누르면 끝
-						if(con == "None") //바깥의 층에 도달하여 자연스럽게 사라진 경우 None
+						//가정 1. 바깥에 누른 층은 한번 누르면 끝
+						if (con == "None") //바깥의 층에 도달하여 자연스럽게 사라진 경우 None
 						{
-							return ;
+							return;
 						}
-				        else if(con == "Up")
-				        {
-					        direction = true;
-				        }
-				        else
-				        {
-					        direction = false;
-				        }
-						if(!minorCNTName.empty() && minorCNTName[0] == 'B')
-				        {
-					        called_floor = (minorCNTName[minorCNTName.size()-1] - '0') * -1;
-							tempContentMoveToAlgorithm->added_button_outside_altimeter = thisElevator->p->info.altimeter_of_each_floor[called_floor+thisElevator->p->info.underground_floor];
-				        }
-				        else
-				        {
-					        called_floor = stoi(minorCNTName);
-							tempContentMoveToAlgorithm->added_button_outside_altimeter = thisElevator->p->info.altimeter_of_each_floor[called_floor+thisElevator->p->info.underground_floor-1];
-				        }
-						tempContentMoveToAlgorithm->added_button_outside_floor = called_floor;
-						tempContentMoveToAlgorithm->added_button_outside_direction = direction;
+						else if (con == "Up")
+						{
+							direction = true;
+						}
+						else
+						{
+							direction = false;
+						}
+						if (!minorCNTName.empty() && minorCNTName[0] == 'B')
+						{
+							called_floor = (minorCNTName[minorCNTName.size() - 1] - '0') * -1;
+							noti_content->button_outside_altimeter = thisElevator->getAltimeterFromFloor(called_floor);
+						}
+						else
+						{
+							called_floor = stoi(minorCNTName);
+							noti_content->button_outside_altimeter = thisElevator->getAltimeterFromFloor(called_floor);
+						}
+						noti_content->button_outside_floor = called_floor;
+						noti_content->button_outside_direction = direction;
 
-                        thisElevator->setNotificationContent(tempContentMoveToAlgorithm);
-                        thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
+						thisElevator->setNotificationContent(noti_content);
+						thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
 					}
-                }
+				}
+#endif // oneM2M_tinyIoT
+#ifdef ACME
+				auto rep_json = nev["rep"];
+
+				if (rep_json.contains("m2m:sub"))
+				{
+					return;
+				}
+				else
+				{
+					//START ANALYZE
+					std::string sur_string = json_body["m2m:sgn"]["sur"];
+					std::stringstream ss(sur_string);
+
+					std::vector<std::string> sur_values;
+					std::string item;
+
+					while (std::getline(ss, item, '/'))
+					{
+						sur_values.push_back(item);
+					}
+
+					string CSE_ID = sur_values[1];
+					string subscription_RI = sur_values[2];
+
+					string rn_path = get_RN_Path_From_SubscriptionRI(subscription_RI);
+					std::stringstream sss(rn_path);
+
+					std::vector<std::string> path_values;
+					std::string item2;
+
+					while (std::getline(sss, item2, '/'))
+					{
+						path_values.push_back(item2);
+					}
+
+					string building_name = path_values[4];
+					string device_name = path_values[5];
+					string majorCNTName = path_values[6];
+
+					wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
+					wstring Wbuilding_name = converter.from_bytes(building_name);
+					wstring Wdevice_name = converter.from_bytes(device_name);
+
+					Building* thisBuilding = this->get_building_vector(Wbuilding_name);
+					Elevator* thisElevator = this->getElevator(thisBuilding, Wdevice_name);
+
+					string con;
+					noti_content = new notificationContent;
+
+					if (majorCNTName == "Elevator_physics")
+					{
+						string minorCNTName = path_values[7];
+
+						if (minorCNTName.find("Velocity") != string::npos)
+						{
+							con = rep_json["m2m:cin"]["con"].get<string>();
+							noti_content->current_velocity = stod(con);
+						}
+						else if (minorCNTName.find("Altimeter") != string::npos)
+						{
+							con = rep_json["m2m:cin"]["con"].get<string>();
+							noti_content->current_altimeter = stod(con);
+						}
+						thisElevator->setNotificationContent(noti_content);
+					}
+					else if (majorCNTName == "Elevator_button_inside")
+					{
+						string minorCNTName = path_values[7];
+
+						if (minorCNTName.find("Button_List") != string::npos)
+						{
+							con = rep_json["m2m:cin"]["con"].get<string>();
+
+							std::vector<int> integers;
+							std::istringstream iss(con);
+							std::string token;
+							while (iss >> token)
+							{
+								// Convert each token (integer string) to an integer and store it in the vector
+								if (token[0] == 'B')
+								{
+									integers.push_back(-1 * stoi(token.substr(1)));
+								}
+
+								else
+								{
+									integers.push_back(stoi(token));
+								}
+							}
+							if (integers[0] == -1)
+							{
+								std::wcout << "" << std::endl;
+							}
+							noti_content->button_inside = integers;
+						}
+
+						thisElevator->setNotificationContent(noti_content);
+						thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
+					}
+					else if (majorCNTName == "Elevator_button_outside")
+					{
+						string minorCNTName = path_values[7];
+						con = rep_json["m2m:cin"]["con"].get<string>();
+
+						int called_floor;
+						bool direction;
+
+						//가정 1. 바깥에 누른 층은 한번 누르면 끝
+						if (con == "None") //바깥의 층에 도달하여 자연스럽게 사라진 경우 None
+						{
+							return;
+						}
+						else if (con == "Up")
+						{
+							direction = true;
+						}
+						else
+						{
+							direction = false;
+						}
+						if (!minorCNTName.empty() && minorCNTName[0] == 'B')
+						{
+							called_floor = (minorCNTName[minorCNTName.size() - 1] - '0') * -1;
+							noti_content->button_outside_altimeter = thisElevator->getAltimeterFromFloor(called_floor);
+						}
+						else
+						{
+							called_floor = stoi(minorCNTName);
+							noti_content->button_outside_altimeter = thisElevator->getAltimeterFromFloor(called_floor);
+						}
+						noti_content->button_outside_floor = called_floor;
+						noti_content->button_outside_direction = direction;
+
+						thisElevator->setNotificationContent(noti_content);
+						thisElevator->setUpdateElevatorTick(thisElevator->UEsock, thisElevator->p);
+					}
+				}
+#endif
             }
 			else 
 			{

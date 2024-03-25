@@ -126,75 +126,6 @@ void send_oneM2M::acp_create(int num, ...)
     }
 }
 
-void send_oneM2M::acp_create_one_ACP(vector<string>& ACP_NAMES, int num, ...)
-{
-    int index = 0;
-
-    wstring ACP_URL = this->uri_to_cse;
-    wstring rn = DEFAULT_ACP_NAME;
-
-    va_list args;
-    va_start(args, num);
-
-    for(int i=1; i<=num; i++)
-    {
-        auto ret = va_arg(args, const wstring);
-        ACP_URL += L"/";
-        ACP_URL += ret;
-    }
-
-	va_end(args);
-
-    http_client client(utility::conversions::to_string_t(ACP_URL));
-	http_request request(methods::POST) ;
-
-    //std::cout << "new ACP : " << "C" + data.building_name << " is CREATING Under " << ACP_URL << std::endl;
-
-    json::value json_data;
-
-    json_data[U("m2m:acp")][U("rn")] = json::value::string(utility::conversions::to_string_t(rn));
-
-    json_data[U("m2m:acp")][U("pv")] = json::value::object();
-	json_data[U("m2m:acp")][U("pv")][U("acr")] =  json::value::array();
-    json_data[U("m2m:acp")][U("pv")][U("acr")][0] =  json::value::object();
-    json_data[U("m2m:acp")][U("pv")][U("acr")][0][U("acor")] = json::value::array();
-    json_data[U("m2m:acp")][U("pv")][U("acr")][0][U("acor")][0] =  json::value::string(utility::conversions::to_string_t(DEFAULT_ORIGINATOR_NAME));
-    json_data[U("m2m:acp")][U("pv")][U("acr")][0][U("acop")] = json::value::number(ACOP_ALL);
-
-    json_data[U("m2m:acp")][U("pvs")] = json::value::object();
-	json_data[U("m2m:acp")][U("pvs")][U("acr")] =  json::value::array();
-    json_data[U("m2m:acp")][U("pvs")][U("acr")][0] =  json::value::object();
-    json_data[U("m2m:acp")][U("pvs")][U("acr")][0][U("acor")] = json::value::array();
-    for(const string& ACOR_NAME : ACP_NAMES)
-    {
-	    json_data[U("m2m:acp")][U("pvs")][U("acr")][0][U("acor")][index] = json::value::string(utility::conversions::to_string_t("C"+ACOR_NAME));
-        index++;
-    }
-    json_data[U("m2m:acp")][U("pvs")][U("acr")][0][U("acop")] = json::value::number(ACOP_ALL);
-
-    // Create an HTTP request
-    request.headers().set_content_type(U("application/json; ty=1"));
-    request.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR_NAME));
-    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(rn));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
-
-    request.set_body(json_data);
-
-    auto response = client.request(request).get();
-
-    if(400 <= response.status_code()  && response.status_code() < 500)
-    {
-	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
-        exit(0);
-    }
-    else
-    {
-		utility::string_t response_body_string = response.extract_string().get();
-	    //std::wcout << L"ACP HTTP Response:\n" << response_body_string << std::endl;
-    }
-}
-
 void send_oneM2M::acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...)
 {
     int index = 0;
@@ -246,7 +177,7 @@ void send_oneM2M::acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...)
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
     request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR_NAME));
     request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(rn));
-    request.headers().add(U("X-M2M-DEFAULT_RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
 
     request.set_body(json_data);
 
@@ -600,7 +531,7 @@ bool send_oneM2M::cnt_validate(int num, ...)
 	}
 }
 
-void send_oneM2M::sub_create(wstring originator_string, int num, ...)
+void send_oneM2M::sub_create(map<wstring, wstring>* mapper, wstring originator_string, int num, ...)
 {
     try
     {
@@ -648,6 +579,7 @@ void send_oneM2M::sub_create(wstring originator_string, int num, ...)
 		    request.headers().add(U("User-Agent"),U("cpprestsdk"));
 		    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(building_originator));
 			request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
+			request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(building_originator));
 
 		    request.set_body(json_data);
 
@@ -661,6 +593,15 @@ void send_oneM2M::sub_create(wstring originator_string, int num, ...)
 			    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
 		        exit(0);
 		    }
+#ifdef oneM2M_ACME
+            else if (response.status_code() == status_codes::Created)
+            {
+				json::value response_json = response.extract_json().get();
+				std::wstring ri = response_json[U("m2m:sub")][U("ri")].as_string();
+
+                mapper->emplace(ri, CNT_URL);
+			}
+#endif
 	    }
     }
     catch (const std::exception& e)

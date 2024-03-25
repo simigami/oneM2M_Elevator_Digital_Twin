@@ -30,13 +30,13 @@ struct notification_strings
 	double velocity = 0.0;
 	double altimeter = 0.0;
 
-	vector<int> button_inside_list;
+	vector<int> button_inside;
 
     int goTo = 0;
 
-	bool added_button_outside_direction;
-    int added_button_outside_floor = 0;
-    double added_button_outside_altimeter = 0.0;
+	bool button_outside_direction;
+    int button_outside_floor = 0;
+    double button_outside_altimeter = 0.0;
 
     int erased_button_outside_floor = 0;
 };

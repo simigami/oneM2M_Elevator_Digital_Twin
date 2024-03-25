@@ -61,6 +61,22 @@ void Elevator::setUpdateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
 	}
 }
 
+double Elevator::getAltimeterFromFloor(int floor)
+{
+	vector<double> altimeter_of_each_floor = this->thisElevatorAlgorithmSingle->thisElevatorStatus->get_each_floor_altimeter();	
+	int ground_floor = this->thisElevatorAlgorithmSingle->thisElevatorStatus->get_ground_floor();
+	int underground_floor = this->thisElevatorAlgorithmSingle->thisElevatorStatus->get_underground_floor();
+
+	if (floor >= 0)
+	{
+		return altimeter_of_each_floor[underground_floor + floor - 1];
+	}
+	else
+	{
+		return altimeter_of_each_floor[underground_floor + floor];
+	}
+}
+
 wstring Elevator::getBuildingName() const
 {
 	return this->thisElevatorAlgorithmSingle->thisElevatorStatus->get_building_name();	

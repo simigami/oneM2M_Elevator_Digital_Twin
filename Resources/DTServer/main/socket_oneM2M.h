@@ -26,8 +26,6 @@ public:
 
 	void init(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_under_device_name(Wparsed_struct parseStruct);
-
 	bool createBuilding(Wparsed_struct parseStruct);
 
 	bool createElevator(Wparsed_struct parseStruct);
@@ -36,7 +34,10 @@ public:
 
 	bool create_oneM2M_CNTs(Wparsed_struct parseStruct);
 
-	bool create_oneM2M_SUBs(Wparsed_struct parseStruct);
+	bool create_oneM2M_SUBs(Wparsed_struct parseStruct, map<wstring, wstring>* mapper);
+
+	bool write_subscription_mapper_to_file(map<wstring, wstring> mapper);
+	bool modify_mapper_to_file(wstring search_string, wstring change_string);
 
 	bool create_oneM2M_CINs(Wparsed_struct parseStruct);
 

@@ -14,7 +14,6 @@ struct Wparsed_struct
 
 	int underground_floor = 0;
 	int ground_floor = 0;
-	int button_outside_floor;
 
 	int timestampOffset = 0;
 
@@ -40,12 +39,14 @@ public:
 	Wparsed_struct p;
 
 	Wparsed_struct parsingWithBulidingAlgorithms(wstring json_data, int algorithm_number);
+
 	Wparsed_struct parsingOnlyBuildingName(wstring json_data);
 	Wparsed_struct parsingDedicatedButtonBuilding(wstring json_data);
 	Wparsed_struct parsingCCButtonBuliding(wstring json_data);
+
 	Wparsed_struct parsingText(wstring text);
 
-	wstring stringToWstring(const string& input);
+	wstring stringToWstring(const std::string& str)const;
 
 	vector<wstring> splitText(const wstring& s, wchar_t delimiter);
 

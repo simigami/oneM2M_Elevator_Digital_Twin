@@ -27,6 +27,8 @@ public:
     void setNotificationContent(notificationContent* sendTo);
     void setUpdateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
 
+    double getAltimeterFromFloor(int floor);
+
     wstring getBuildingName() const;
     wstring getDeviceName() const;
 

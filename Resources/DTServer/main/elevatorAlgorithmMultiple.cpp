@@ -1,8 +1,5 @@
 #include "elevatorAlgorithmMultiple.h"
 
-#define SECOND 1000.0
-#define TICK 100.0
-
 elevatorAlgorithmMultiple::elevatorAlgorithmMultiple(wstring buildingName, wstring deviceName) : elevatorAlgorithmDefault(buildingName, deviceName)
 {
 
@@ -77,11 +74,11 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 			thisElevatorStatus->altimeter = thisElevatorStatus->altimeter;
 			thisElevatorStatus->total_move_distance = p->total_move_distance;
 
-			if(!sim->main_trip_list.empty() && this->go_To_Floor != sim->main_trip_list[0][0])
+			if(!sim->main_trip_list.empty() && this->thisElevatorStatus->go_to_floor != sim->main_trip_list[0][0])
 			{
-				std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " : IS START FROM : " << this->go_To_Floor << " TO " << sim->main_trip_list[0][0] << std::endl;
+				std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " : IS START FROM : " << this->thisElevatorStatus->go_to_floor << " TO " << sim->main_trip_list[0][0] << std::endl;
 
-				this->go_To_Floor = sim->main_trip_list[0][0];
+				this->thisElevatorStatus->go_to_floor = sim->main_trip_list[0][0];
 			}
 
 			if(!(this->thisElevatorStatus->current_goTo_Floor_single_info == this->thisElevatorStatus->current_goTo_floor_vector_info->back()))
@@ -190,19 +187,19 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 	//CHECK THIS IS FIRST OPERATION
 	if(thisElevatorFlag->firstOperation)
 	{
-		if(!notiContent->button_inside_list.empty())
+		if(!notiContent->button_inside.empty())
 		{
 			thisElevatorFlag->firstOperation = false;
-			p->set_initial_elevator_direction(notiContent->button_inside_list[0]);
-			sim->update_main_trip_list_via_inside_data(notiContent->button_inside_list, thisElevatorStatus->direction);
-			*(thisElevatorStatus->button_inside) = notiContent->button_inside_list;
+			p->set_initial_elevator_direction(notiContent->button_inside[0]);
+			sim->update_main_trip_list_via_inside_data(notiContent->button_inside, thisElevatorStatus->direction);
+			*(thisElevatorStatus->button_inside) = notiContent->button_inside;
 		}
-		else if(notiContent->added_button_outside_floor != 0)
+		else if(notiContent->button_outside_floor != 0)
 		{
 			thisElevatorFlag->firstOperation = false;
-			p->set_initial_elevator_direction(notiContent->added_button_outside_floor);
-			sim->update_main_trip_list_via_outside_data2(thisElevatorStatus->direction, thisElevatorStatus->altimeter, notiContent->added_button_outside_floor, notiContent->added_button_outside_direction, notiContent->added_button_outside_altimeter);
-			thisElevatorStatus->button_outside->push_back({notiContent->added_button_outside_floor, notiContent->added_button_outside_direction});
+			p->set_initial_elevator_direction(notiContent->button_outside_floor);
+			sim->update_main_trip_list_via_outside_data2(thisElevatorStatus->direction, thisElevatorStatus->altimeter, notiContent->button_outside_floor, notiContent->button_outside_direction, notiContent->button_outside_altimeter);
+			thisElevatorStatus->button_outside->push_back({notiContent->button_outside_floor, notiContent->button_outside_direction});
 		}
 
 		std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << "goTo Floor is Changed None -> " << sim->main_trip_list[0][0] << std::endl;
@@ -220,32 +217,28 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 		{
 			
 		}
-		if(!notiContent->button_inside_list.empty())
+		if(!notiContent->button_inside.empty())
 		{
 			const int currentDestFloor = sim->main_trip_list.empty()? 0 : sim->main_trip_list[0][0];
 
 			sim->prev_button_inside_data2 = *(thisElevatorStatus->button_inside);
-			sim->update_main_trip_list_via_inside_data(notiContent->button_inside_list, thisElevatorStatus->direction);
+			sim->update_main_trip_list_via_inside_data(notiContent->button_inside, thisElevatorStatus->direction);
 
-			*(thisElevatorStatus->button_inside) = notiContent->button_inside_list;
+			*(thisElevatorStatus->button_inside) = notiContent->button_inside;
 
 			if(currentDestFloor != 0 && currentDestFloor != sim->main_trip_list[0][0] && p->lock)
 			{
 				rearrangeVector(this->getElevatorStatus(), ueSock, p);
 			}
 		}
-		if(notiContent->goTo != 0)
-		{
-			
-		}
-		if(notiContent->added_button_outside_floor != 0)
+		if(notiContent->button_outside_floor != 0)
 		{
 			//OUTSIDE FLOOR IS ADDED ONLY
 			bool flag = true;
 			//CHECK THIS CALLED FLOOR IS ALREADY EXISTS IN STATUS
 			for(const auto& elem : *(thisElevatorStatus->button_outside))
 			{
-				if(notiContent->added_button_outside_floor == elem[0])
+				if(notiContent->button_outside_floor == elem[0])
 				{
 					flag = false;
 					break;
@@ -266,19 +259,19 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 					//this->bFirstMoveFlag = false;
 					sim->update_main_trip_list_via_outside_data_Nearest_N(
 						thisElevatorStatus->direction, thisElevatorStatus->altimeter, 
-						notiContent->added_button_outside_floor, 
-						notiContent->added_button_outside_direction, 
-						notiContent->added_button_outside_altimeter,
+						notiContent->button_outside_floor, 
+						notiContent->button_outside_direction, 
+						notiContent->button_outside_altimeter,
 						currentDestFloorAltimeter,
 						currentAltimeterToFloorRatio,
 						this->ReverseIntervalMovingDeltaMaximum);
 
-					thisElevatorStatus->button_outside->push_back({notiContent->added_button_outside_floor, notiContent->added_button_outside_direction});
+					thisElevatorStatus->button_outside->push_back({notiContent->button_outside_floor, notiContent->button_outside_direction});
 				}
 				else
 				{
-					sim->update_main_trip_list_via_outside_data2(thisElevatorStatus->direction, thisElevatorStatus->altimeter, notiContent->added_button_outside_floor, notiContent->added_button_outside_direction, notiContent->added_button_outside_altimeter);
-					thisElevatorStatus->button_outside->push_back({notiContent->added_button_outside_floor, notiContent->added_button_outside_direction});
+					sim->update_main_trip_list_via_outside_data2(thisElevatorStatus->direction, thisElevatorStatus->altimeter, notiContent->button_outside_floor, notiContent->button_outside_direction, notiContent->button_outside_altimeter);
+					thisElevatorStatus->button_outside->push_back({notiContent->button_outside_floor, notiContent->button_outside_direction});
 				}
 
 				if(currentDestFloor != 0 && currentDestFloor != sim->main_trip_list[0][0] && p->lock)
@@ -288,6 +281,21 @@ void elevatorAlgorithmMultiple::updateElevatorTick(socket_UnrealEngine* ueSock, 
 			}
 		}
 	}
+}
+
+void elevatorAlgorithmMultiple::appendLogToLogList(int code, ...)
+{
+	elevatorAlgorithmDefault::appendLogToLogList(code);
+}
+
+void elevatorAlgorithmMultiple::writeLog()
+{
+	elevatorAlgorithmDefault::writeLog();
+}
+
+int elevatorAlgorithmMultiple::printTimeDeltaNow()
+{
+	return elevatorAlgorithmDefault::printTimeDeltaNow();
 }
 
 void elevatorAlgorithmMultiple::moveToDeterminedFloor(socket_UnrealEngine* ueSock, physics* phy)

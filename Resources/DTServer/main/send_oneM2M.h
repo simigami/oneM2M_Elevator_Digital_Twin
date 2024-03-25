@@ -17,7 +17,6 @@ public:
 
     void acp_create(int num, ...);
 
-    void acp_create_one_ACP(vector<string>& ACP_NAMES, int num, ...);
     void acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...);
 
 	void acp_update(const Wparsed_struct& data, vector<wstring> ACP_NAMES, int num, ...);
@@ -32,7 +31,7 @@ public:
 
     bool cnt_validate(int num, ...);
 
-	void sub_create(wstring originator_string, int num, ...);
+	void sub_create(map<wstring, wstring>* mapper, wstring originator_string, int num, ...);
 
     void cin_create(wstring CIN_NAME, wstring payload, int num, ...);
     void cin_update(const Wparsed_struct& data, int num, ...);

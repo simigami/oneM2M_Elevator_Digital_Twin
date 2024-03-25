@@ -6,7 +6,8 @@
 #define oneM2M_NOTIFICATION_LISTEN_PORT 10053
 
 #define HTTP
-#define oneM2M_tinyIoT
+//#define oneM2M_tinyIoT
+#define ACME
 #define UE5
 
 #define oneM2M_CSE_Server L"192.168.0.178"
@@ -17,7 +18,7 @@
 	#define PROTOCOL_NAME L"http://"
 	#define CSE_ADDR L"192.168.0.178"
 	#define CSE_LISTEN_PORT 10051
-	#define BUFFER_SIZE 1024
+	#define BUFFER_SIZE 65536
 #endif // HTTP
 
 // THIS IS  DEFAULT oneM2M ATTRIBUTES WHEN CREATE oneM2M RESOURCES
@@ -35,8 +36,10 @@
 #endif
 
 // DEFAULT oneM2M PRIMITIVE WHEN IT USES ACME as oneM2M CSE SERVER
-#ifndef oneM2M_tinyIoT
+#ifdef ACME
 	#define oneM2M_ACME
+	#define DEFAULT_SUB_RI_FILE_PATH "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\DTServer\main"
+	#define DEFAULT_SUB_RI_FILE_NAME "mapper.txt"
 	#define DEFAULT_ACP_NAME L"DT_SERVER"
 	#define DEFAULT_ORIGINATOR_NAME L"CAdmin"
 	#define DEFAULT_CSE_NAME L"ACME"
@@ -56,7 +59,9 @@
 
 // THIS IS FOR DT SERVER SIMULATION MODE
 #define MAXFILEPATHLENGTH 1024
-#define _WIN32_WINNT_WIN10 0x0A00
+
+// THIS IS FOR DT SERVER LOG FILE FOR RTS MODE TO SIMULATION MODE
+#define LOGFILEPATH "log.txt"
 
 enum elevator_resource_status
 {
@@ -77,4 +82,13 @@ enum elevator_resource_status
 
 	//if there is AE, and CNT in oneM2M CSE SERVER and AE, CNT in DT Server
 	ELEVATOR_FOUND
+};
+
+enum status_code {
+	IDLE = 0,
+	CALL = 1,
+	PRESS = 2,
+	UNPRESS = 3,
+	STOP = 4,
+	MOV = 5
 };

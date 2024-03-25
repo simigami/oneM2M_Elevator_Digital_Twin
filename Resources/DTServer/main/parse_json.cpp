@@ -199,11 +199,11 @@ Wparsed_struct parse_json::parsingText(wstring text)
 	return retStruct;
 }
 
-wstring parse_json::stringToWstring(const string& input)
+wstring parse_json::stringToWstring(const string& str) const
 {
 	wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
 
-	return converter.from_bytes(input);
+	return converter.from_bytes(str);
 }
 
 vector<wstring> parse_json::splitText(const wstring& s, wchar_t delimiter)

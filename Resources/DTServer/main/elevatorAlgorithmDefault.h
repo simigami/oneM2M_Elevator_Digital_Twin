@@ -12,12 +12,12 @@ public:
     double altimeter = 0.0;
 
     int go_to_floor = 0;
-    bool direction;
+    bool direction = NULL;
     double total_move_distance = 0.0;
 
-    double tta;
-    double ttm;
-    double ttd;
+    double tta = 0.0;
+    double ttm = 0.0;
+    double ttd = 0.0;
 
     vector<vector<double>>* current_goTo_floor_vector_info;
     vector<double> current_goTo_Floor_single_info;
@@ -54,15 +54,11 @@ struct notificationContent
 	double current_velocity = 0.0;
 	double current_altimeter = 0.0;
 
-	vector<int> button_inside_list;
+    vector<int> button_inside = vector<int>{};
 
-    int goTo = 0;
-
-	bool added_button_outside_direction;
-    int added_button_outside_floor = 0;
-    double added_button_outside_altimeter = 0.0;
-
-    int erased_button_outside_floor = 0;
+	bool button_outside_direction;
+    int button_outside_floor = 0;
+    double button_outside_altimeter = 0.0;
 };
 
 struct flags
@@ -93,11 +89,7 @@ public:
     std::chrono::system_clock::time_point someClock;
 
     vector<vector<double>>::iterator it;
-
-    string notification_body;
-
-    long double Elevator_current_time, Elevator_current_velocity, Elevator_current_altimeter;
-    int go_To_Floor;
+    vector<wstring> log_list;
 
     elevatorAlgorithmDefault(wstring buildingName, wstring deviceName);
     virtual ~elevatorAlgorithmDefault();
@@ -107,12 +99,22 @@ public:
 	virtual void run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* p);
     virtual void stop(physics* p);
 
+    virtual void writeLog();
+    virtual void appendLogToLogList(int code, ...);
+    virtual void IDLELog(va_list args);
+    virtual void CALLLog(va_list args);
+    virtual void PRESSLog(va_list args);
+    virtual void UNPRESSLog(va_list args);
+    virtual void STOPLog(va_list args);
+    virtual void MOVLog(va_list args);
+
     virtual void set_physical_information(physics* p);
 	virtual void rearrangeVector(elevatorStatus* stats, socket_UnrealEngine* ueSock, physics* p);
 
     virtual void set_elevator_Status_JSON_STRING();
  
 	virtual void printTimeDeltaWhenRearrange();
+    virtual int printTimeDeltaNow();
 	virtual void printTimeDeltaWhenStop();
     virtual void updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
 

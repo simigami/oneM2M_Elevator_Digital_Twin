@@ -29,7 +29,7 @@ Elevator2::Elevator2(Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES)
 	this->RETRIEVE_interval_millisecond = 10;
 
 	this->Elevator_opcode = 0;
-	this->go_To_Floor = 0;
+	this->thisElevatorStatus->go_to_floor = 0;
 
 	this->elevatorStatus->building_name = parsed_struct.building_name;
 	this->elevatorStatus->device_name = parsed_struct.device_name;
@@ -105,9 +105,9 @@ void Elevator2::run()
 		{
 			firstFlag = false;
 			//CHECK IF main trip list is modified
-			if(!sim->main_trip_list.empty() && this->go_To_Floor != sim->main_trip_list[0][0])
+			if(!sim->main_trip_list.empty() && this->thisElevatorStatus->go_to_floor != sim->main_trip_list[0][0])
 			{
-				this->go_To_Floor = sim->main_trip_list[0][0];
+				this->thisElevatorStatus->go_to_floor = sim->main_trip_list[0][0];
 			}
 
 			//CHECK IF goTo Floor is SET
@@ -189,7 +189,7 @@ void Elevator2::run()
 								us->set_goTo_Floor(sim->main_trip_list[0][0], p->t_to_max_velocity, p->t_constant_speed, p->t_max_to_zero_deceleration);
 								us->send_data_to_UE5(us->sock.UE_info);
 
-								this->go_To_Floor = sim->main_trip_list[0][0];
+								this->thisElevatorStatus->go_to_floor = sim->main_trip_list[0][0];
 
 								it = this->thisElevatorStatus->current_goTo_floor_vector_info->begin();
 								this->thisElevatorStatus->current_goTo_Floor_single_info = *it;
@@ -212,7 +212,7 @@ void Elevator2::run()
 							us->set_goTo_Floor(sim->main_trip_list[0][0], p->t_to_max_velocity, p->t_constant_speed, p->t_max_to_zero_deceleration);
 							us->send_data_to_UE5(us->sock.UE_info);
 
-							this->go_To_Floor = sim->main_trip_list[0][0];
+							this->thisElevatorStatus->go_to_floor = sim->main_trip_list[0][0];
 
 							it = this->thisElevatorStatus->current_goTo_floor_vector_info->begin();
 							this->thisElevatorStatus->current_goTo_Floor_single_info = *it;
@@ -250,25 +250,25 @@ void Elevator2::updateElevatorTick()
 	if(firstOperation)
 	{
 		firstOperation = false;
-		if(!temp->button_inside_list.empty())
+		if(!temp->button_inside.empty())
 		{
 			if(p->init == true)
 			{
 				p->init = false;
-				p->set_initial_elevator_direction(temp->button_inside_list[0]);
+				p->set_initial_elevator_direction(temp->button_inside[0]);
 			}
-			sim->update_main_trip_list_via_inside_data(temp->button_inside_list, p->current_direction);
-			*(this->elevatorStatus->button_inside) = temp->button_inside_list;
+			sim->update_main_trip_list_via_inside_data(temp->button_inside, p->current_direction);
+			*(this->elevatorStatus->button_inside) = temp->button_inside;
 		}
-		else if(temp->added_button_outside_floor != 0)
+		else if(temp->button_outside_floor != 0)
 		{
 			if(p->init == true)
 			{
 				p->init = false;
-				p->set_initial_elevator_direction(temp->added_button_outside_floor);
+				p->set_initial_elevator_direction(temp->button_outside_floor);
 			}
-			sim->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->added_button_outside_floor, temp->added_button_outside_direction, temp->added_button_outside_altimeter);
-			this->elevatorStatus->button_outside->push_back({temp->added_button_outside_floor, temp->added_button_outside_direction});
+			sim->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->button_outside_floor, temp->button_outside_direction, temp->button_outside_altimeter);
+			this->elevatorStatus->button_outside->push_back({temp->button_outside_floor, temp->button_outside_direction});
 		}
 		std::cout << "goTo Floor is Changed None to : "  << sim->main_trip_list[0][0] << std::endl;
 		//sim->dev_print_trip_list();
@@ -276,7 +276,7 @@ void Elevator2::updateElevatorTick()
 		//CHANGE V_T Graph
 		this->thisElevatorStatus->current_goTo_floor_vector_info = p->draw_vt_on_single_floor(sim->main_trip_list[0][0]);
 
-		this->go_To_Floor = sim->main_trip_list[0][0];
+		this->thisElevatorStatus->go_to_floor = sim->main_trip_list[0][0];
 
 		//SEND MODIFY goTo Floor Data To Unreal Engine
 		us->sock.UE_info = us->wrap_for_UE_socket(buildingName, deivceName, p->info.underground_floor, p->info.ground_floor, {-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1}, p->info.acceleration, p->info.max_velocity);
@@ -296,25 +296,25 @@ void Elevator2::updateElevatorTick()
 		{
 			
 		}
-		if(!temp->button_inside_list.empty())
+		if(!temp->button_inside.empty())
 		{
 			sim->prev_button_inside_data2 = *(this->elevatorStatus->button_inside);
-			sim->update_main_trip_list_via_inside_data(temp->button_inside_list, this->elevatorStatus->direction);
+			sim->update_main_trip_list_via_inside_data(temp->button_inside, this->elevatorStatus->direction);
 
-			*(this->elevatorStatus->button_inside) = temp->button_inside_list;
+			*(this->elevatorStatus->button_inside) = temp->button_inside;
 		}
 		if(temp->goTo != 0)
 		{
 			
 		}
-		if(temp->added_button_outside_floor != 0)
+		if(temp->button_outside_floor != 0)
 		{
 			//OUTSIDE FLOOR IS ADDED ONLY
 			bool flag = true;
 			//CHECK THIS CALLED FLOOR IS ALREADY EXISTS IN STATUS
 			for(const auto& elem : *(this->elevatorStatus->button_outside))
 			{
-				if(temp->added_button_outside_floor == elem[0])
+				if(temp->button_outside_floor == elem[0])
 				{
 					flag = false;
 					break;
@@ -322,8 +322,8 @@ void Elevator2::updateElevatorTick()
 			}
 			if(flag)
 			{
-				sim->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->added_button_outside_floor, temp->added_button_outside_direction, temp->added_button_outside_altimeter);
-				this->elevatorStatus->button_outside->push_back({temp->added_button_outside_floor, temp->added_button_outside_direction});
+				sim->update_main_trip_list_via_outside_data2(p->current_direction, p->current_altimeter, temp->button_outside_floor, temp->button_outside_direction, temp->button_outside_altimeter);
+				this->elevatorStatus->button_outside->push_back({temp->button_outside_floor, temp->button_outside_direction});
 			}
 		}
 	}

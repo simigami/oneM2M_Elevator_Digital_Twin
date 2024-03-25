@@ -16,6 +16,7 @@ struct class_of_one_Building
 	int outsideButtonMod = 0;
 
 	vector<Elevator*> classOfAllElevators;
+	map<wstring, wstring> subscriptionRI_to_RN;
 	wstring ACP_NAME = L"";
 };
 
@@ -50,12 +51,14 @@ public:
 
 	bool existsElevator(Building* one_building, const wstring& device_name);
 
+	string get_RN_Path_From_SubscriptionRI(const string& substring);
+
 	Building* get_building_vector(const wstring& ACOR_NAME);
 	Elevator* getElevator(Building* class_of_one_building, const wstring& device_name);
 	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const wstring& AE_ID);
 
 	//MAIN 함수에서 알고리즘에 전달할 notificationContent 구조체
-    notificationContent* tempContentMoveToAlgorithm;
+    notificationContent* noti_content;
 
 	vector<Building*> allBuildingInfo; //THIS WILL BE USED
 	vector<thread> one_building_threads;
