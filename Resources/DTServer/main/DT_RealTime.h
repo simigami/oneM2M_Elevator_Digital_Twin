@@ -46,7 +46,6 @@ public:
 	void startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
 	void Running_Embedded(const wstring& httpResponse);
-	void Running_Embedded2(const wstring& httpResponse);
 	void Running_Notification(const string& httpResponse);
 
 	bool existsElevator(Building* one_building, const wstring& device_name);

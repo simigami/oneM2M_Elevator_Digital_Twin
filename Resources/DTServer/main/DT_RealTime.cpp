@@ -547,7 +547,7 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 				wstring temp;
 				temp.assign(httpRequest.begin(), httpRequest.end());
 
-				this->Running_Embedded2(temp);
+				this->Running_Embedded(temp);
 			}
 			else if (port == oneM2M_NOTIFICATION_LISTEN_PORT)
 			{
@@ -565,293 +565,6 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 
 void dt_real_time::Running_Embedded(const wstring& httpResponse)
 {
-    Elevator* thisBuildingElevator;
-
-    parse_json c;
-	Wparsed_struct parsedStruct;
-
-	parsedStruct = c.parsingOnlyBuildingName(httpResponse);
-	send_oneM2M ACP_Validation_Socket(parsedStruct);
-
-    wstring ACOR_NAME = parsedStruct.building_name;
-    wstring AE_NAME = parsedStruct.building_name;
-    wstring CNT_NAME = parsedStruct.device_name;
-
-	std::wcout << endl << "FROM EMBEDDED -> SERVER : " << " Receive Data From : " << parsedStruct.device_name << std::endl;
-
-    int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
-
-    if(ACP_FLAG == 0 || ACP_FLAG == 1) // oneM2M에 빌딩 ACP가 존재하지 않는 경우
-    {
-    	std::wcout << "IN SERVER : " << " ACP : C" << parsedStruct.building_name << " Not Exists" << std::endl;
-
-    	Building* newBuilding;
-        this->ACP_NAMES.push_back(ACOR_NAME);
-
-		int buildingAlgorithmNumber;
-		std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
-		std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
-		std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
-		
-		std::cin >> buildingAlgorithmNumber;
-		while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1) 
-		{
-			std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
-			std::cin >> buildingAlgorithmNumber;
-		}
-	    
-		newBuilding = new Building(buildingAlgorithmNumber);
-
-        // Create THIS AE(Building) Class
-        int algNumber;
-
-        if(CNT_NAME == L"EV1" || CNT_NAME == L"EV2")
-        {
-	        algNumber = 1;
-        }
-        else
-        {
-	        algNumber = 2;
-        }
-
-		parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
-		send_oneM2M ACP_Validation_Socket(parsedStruct);
-
-        // Create THIS CNT(Building's Elevator) Class
-        thisBuildingElevator = new Elevator(ACP_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-        newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-        newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-        allBuildingInfo.push_back(newBuilding);
-
-        thisBuildingElevator->runElevator();
-	    thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(newBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
-
-        if(newBuilding->getButtonMod() && CNT_NAME == L"OUT")
-        {
-	        //thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-
-        	// SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
-        	newBuilding->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
-        }
-
-        else
-        {
-	        thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-        }
-
-        //DISCOVERY TEST
-	    //this_Building_Elevator->sock.socket.discovery_retrieve(this_Building_Elevator->sock.originator_name, 0);
-
-        //RCN TEST
-        //this_Building_Elevator->sock.socket.result_content_retrieve(this_Building_Elevator->sock.originator_name, 0);
-    }
-    else // oneM2M에 빌딩 ACP가 존재하는 경우
-    {
-        std::wcout << "IN SERVER -> Building ACP Exists, Check Building " << AE_NAME << " Exists In Server" << std::endl;
-
-        // GET THIS BUILDING CLASS and CHECK THIS CNT(Device Name) Exists
-        Building* thisBuildingFlag = this->get_building_vector(ACOR_NAME);
-		thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN = map<wstring, wstring>();
-
-        // if TEMP == NULL, It means oneM2M Building Resource Exists, But Server Restarted
-        if(thisBuildingFlag == NULL) // oneM2M에 빌딩 ACP가 존재하는데 서버에 클래스가 없는 경우
-        {
-            std::wcout << "IN SERVER -> Building Resource Not Exist in Server Create New " << AE_NAME << " Resource with " << CNT_NAME << std::endl;
-	        this->ACP_NAMES.push_back(ACOR_NAME);
-
-			int buildingAlgorithmNumber;
-			std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
-			std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
-			std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
-
-			std::cin >> buildingAlgorithmNumber;
-			while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
-			{
-				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
-				std::cin >> buildingAlgorithmNumber;
-			}
-
-	        // Create THIS AE(Building) Class
-	        Building* newBuilding;
-			newBuilding = new Building(buildingAlgorithmNumber);
-
-            int algNumber = 1;
-
-			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
-			send_oneM2M ACP_Validation_Socket(parsedStruct);
-
-			//서버에서 빌딩 클래스 재생성 하고, 이제 해당 엘리베이터가 oneM2M에 존재하는지 확인
-			bool flag = ACP_Validation_Socket.cnt_validate(1, CNT_NAME);
-
-			if (flag) //oneM2M 서버에 해당 엘리베이터 클래스가 존재하는 경우
-			{
-				thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-				newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-				newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-				allBuildingInfo.push_back(newBuilding);
-
-				thisBuildingElevator->runElevator();
-
-				if (newBuilding->getButtonMod() && CNT_NAME == L"OUT")
-				{
-					//thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-
-					newBuilding->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
-					// SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
-				}
-				else
-				{
-					thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-				}
-			}
-			else //oneM2M 서버에 해당 엘리베이터 클래스가 존재하지 않는 경우
-			{
-				thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-				newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-				newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-				allBuildingInfo.push_back(newBuilding);
-
-				thisBuildingElevator->runElevator();
-
-				if (newBuilding->getButtonMod())
-				{
-					thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-
-					newBuilding->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
-					// SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
-				}
-				else
-				{
-					thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-				}
-			}
-        }
-
-        else  // oneM2M에 빌딩 ACP가 존재하고 서버에도 클래스가 존재하는 경우
-        {
-        	std::wcout << "IN SERVER -> Building Resource Exists, Check Elevator " << CNT_NAME << " Resource Exists IN Server" << std::endl;
-
-			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod());
-			send_oneM2M ACP_Validation_Socket(parsedStruct);
-
-        	bool flag = this->existsElevator(thisBuildingFlag, CNT_NAME);
-
-	        if(flag) // oneM2M과 서버에 해당 엘리베이터 클래스가 모두 존재하는 경우
-	        {
-	            // THIS CNT Exists
-	            Elevator* thisBuildingElevator = this->getElevator(thisBuildingFlag, CNT_NAME);
-
-	            // Update CIN Value
-	            std::wcout << "IN SERVER -> Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
-
-                if(thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
-		        {
-			        thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-					thisBuildingFlag->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
-		            // SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
-		        }
-		        else
-		        {
-			        thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-		        }
-	        }
-	        else // oneM2M에 해당 엘리베이터 클래스가 존재하지 않는 경우
-	        {
-                //CHECK THIS CNT EXISTS in oneM2M
-        		bool flag = ACP_Validation_Socket.cnt_validate(1, CNT_NAME); //수정 필요, 엘리베이터 CNT 존재하는 지 확인
-
-                if(!flag) // oneM2M에 해당 엘리베이터 클래스가 존재하지 않는 경우
-                {
-	                // THIS CNT NOT Exists in DT Server and oneM2M
-		            std::wcout << "IN SERVER -> Elevator Not Found, Creating New Elevator : " << CNT_NAME << std::endl;
-
-	                int algNumber;
-		            //std::wcout <<  "SET THIS ELEVATOR ALGORITHM : 1, 2 = ";
-					//cin >> algNumber;
-
-					if(CNT_NAME == L"EV1" || CNT_NAME == L"EV2" || CNT_NAME == L"EV3")
-			        {
-				        algNumber = 1;
-			        }
-			        else
-			        {
-				        algNumber = 2;
-			        }
-
-		            // Create THIS CNT(Building's Elevator) Class
-			        thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-			        thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-
-			        thisBuildingElevator->runElevator();
-				    thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
-
-			        if(thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
-			        {
-				        thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-						thisBuildingFlag->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
-			            // SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
-			        }
-
-			        else
-			        {
-				        thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-			        }
-
-                }
-
-                // THIS CNT NOT Exists in DT Server but in oneM2M
-                else // // oneM2M에 해당 엘리베이터 클래스가 존재하는데 서버에 없는 경우
-                {
-	                std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT " << CNT_NAME << " Resource" << std::endl;
-			        this->ACP_NAMES.push_back(ACOR_NAME);
-
-		            int algNumber;
-		            //std::wcout <<  "SET THIS ELEVATOR ALGORITHM : 1, 2 = ";
-					//cin >> algNumber;
-
-					if(CNT_NAME == L"EV1" || CNT_NAME == L"EV2" || CNT_NAME == L"EV3")
-			        {
-				        algNumber = 1;
-			        }
-			        else
-			        {
-				        algNumber = 2;
-			        }
-
-			        // Create THIS CNT(Building's Elevator) Class
-                    thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-			        thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-			        thisBuildingFlag->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-			        thisBuildingElevator->runElevator();
-
-			        if(thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
-			        {
-				        thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-						thisBuildingFlag->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
-			            // SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
-			        }
-
-			        else
-			        {
-				        thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-			        }
-                }
-	        }
-        }
-    }
-}
-
-void dt_real_time::Running_Embedded2(const wstring& httpResponse)
-{
 	parse_json c;
 	Elevator* thisBuildingElevator;
 	Wparsed_struct parsedStruct;
@@ -867,10 +580,8 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 
 	int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
 
-	Building* thisBuildingFlag = this->get_building_vector(ACOR_NAME);
-
 	// oneM2M에 빌딩 ACP가 존재하지 않는 경우
-	if (ACP_FLAG == 0 || ACP_FLAG == 1) 
+	if (ACP_FLAG == ACP_NOT_FOUND) 
 	{
 		// 임베디드 장치로 온 신호가 OUT 신호인 경우 -> REJECT
 		if (CNT_NAME == L"OUT")
@@ -908,6 +619,59 @@ void dt_real_time::Running_Embedded2(const wstring& httpResponse)
 
 			// Create THIS CNT(Building's Elevator) Class
 			Elevator* thisBuildingElevator = new Elevator(ACP_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
+
+			newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+			newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+
+			allBuildingInfo.push_back(newBuilding);
+
+			thisBuildingElevator->runElevator();
+			thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(newBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
+			thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+		}
+	}
+
+	else if(ACP_FLAG == THIS_ACP_NOT_FOUND)
+	{
+		// 임베디드 장치로 온 신호가 OUT 신호인 경우 -> REJECT
+		if (CNT_NAME == L"OUT")
+		{
+			wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
+
+			return;
+		}
+
+		// 임베디드 장치로 온 신호가 엘리베이터 내부 신호인 경우 -> ACCEPT
+		else
+		{
+			Building* newBuilding;
+
+			// GET ALL ACP NAMES FROM RETRIEVE DT_SERVER ACP
+			this->ACP_NAMES = ACP_Validation_Socket.acp_retrieve(0);
+			this->ACP_NAMES.push_back(ACOR_NAME);
+
+			int buildingAlgorithmNumber;
+			std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
+			std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
+			std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
+
+			std::cin >> buildingAlgorithmNumber;
+			while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
+			{
+				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
+				std::cin >> buildingAlgorithmNumber;
+			}
+
+			newBuilding = new Building(buildingAlgorithmNumber);
+
+			// Create THIS AE(Building) Class
+			int algNumber = 1;
+
+			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
+			send_oneM2M ACP_Validation_Socket(parsedStruct);
+
+			// Create THIS CNT(Building's Elevator) Class
+			Elevator* thisBuildingElevator = new Elevator(THIS_ACP_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
 
 			newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 			newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
@@ -1165,18 +929,14 @@ void dt_real_time::Running_Notification(const string& httpResponse)
 #ifdef oneM2M_tinyIoT
 				auto rep = nev["rep"];
 
-				auto rep_json = nlohmann::json::parse(nev["rep"].get<std::string>());
-
-				if (rep_json.contains("m2m:sub"))
+				if (rep.contains("m2m:sub"))
 				{
 					return;
 				}
-				else
+				else if(rep.contains("m2m:cin"))
 				{
 					//START ANALYZE
 					std::string sur_string = json_body["m2m:sgn"]["sur"];
-					std::string rep_value_str = json_body["m2m:sgn"]["nev"]["rep"];
-					nlohmann::json rep_value_json = nlohmann::json::parse(rep_value_str);
 
 					std::stringstream ss(sur_string);
 
@@ -1209,12 +969,12 @@ void dt_real_time::Running_Notification(const string& httpResponse)
 
 						if (minorCNTName.find("Velocity") != string::npos)
 						{
-							con = rep_value_json["m2m:cin"]["con"].get<string>();
+							con = rep["m2m:cin"]["con"].get<string>();
 							noti_content->current_velocity = stod(con);
 						}
 						else if (minorCNTName.find("Altimeter") != string::npos)
 						{
-							con = rep_value_json["m2m:cin"]["con"].get<string>();
+							con = rep["m2m:cin"]["con"].get<string>();
 							noti_content->current_altimeter = stod(con);
 						}
 						thisElevator->setNotificationContent(noti_content);
@@ -1225,7 +985,7 @@ void dt_real_time::Running_Notification(const string& httpResponse)
 
 						if (minorCNTName.find("Button_List") != string::npos)
 						{
-							con = rep_value_json["m2m:cin"]["con"].get<string>();
+							con = rep["m2m:cin"]["con"].get<string>();
 
 							std::vector<int> integers;
 							std::istringstream iss(con);
@@ -1256,7 +1016,7 @@ void dt_real_time::Running_Notification(const string& httpResponse)
 					else if (majorCNTName == "Elevator_button_outside")
 					{
 						string minorCNTName = sur_values[4];
-						con = rep_value_json["m2m:cin"]["con"].get<string>();
+						con = rep["m2m:cin"]["con"].get<string>();
 
 						int called_floor;
 						bool direction;

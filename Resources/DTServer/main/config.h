@@ -6,8 +6,8 @@
 #define oneM2M_NOTIFICATION_LISTEN_PORT 10053
 
 #define HTTP
-//#define oneM2M_tinyIoT
-#define ACME
+#define oneM2M_tinyIoT
+//#define ACME
 #define UE5
 
 #define oneM2M_CSE_Server L"192.168.0.178"
@@ -55,6 +55,7 @@
 
 // THIS IS FOR DT SERVER RTS MODE WHEN SIMULATION ELEVATORS
 #define SECOND 1000.0
+#define MILLISECONDHUNDRED 100.0
 #define TICK 100.0
 
 // THIS IS FOR DT SERVER SIMULATION MODE
@@ -67,6 +68,11 @@ enum elevator_resource_status
 {
 	//if there is no ACP in oneM2M CSE SERVER
 	ACP_NOT_FOUND, 
+
+	//if there is ACP in oneM2M CSE SERVER but not this BUILDING ACP
+	THIS_ACP_NOT_FOUND,
+
+	ACP_FOUND,
 
 	//if there is ACP in oneM2M CSE SERVER but not AE(building)
 	BUILDING_NOT_FOUND,

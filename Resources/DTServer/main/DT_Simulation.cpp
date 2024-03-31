@@ -1,5 +1,6 @@
 #include "DT_Simulation.h"
 #include "config.h"
+#include <future>
 #include <algorithm>
 #include <random>
 #include <cctype>
@@ -61,11 +62,15 @@ void dt_simulation::run()
 
     elevatorMap = findLogStart(LOGFILEPATH, elevatorMap);
     this->buildings = createBuildings(elevatorMap);
-    ReadAndAddAllTransactions();
-    giveAllBuildingTransactions();
-    sendAllBuildingTransactions();
 
-    //WriteAllTransactionsToFile();
+    ReadAndAddAllTransactions();
+
+    giveAllBuildingTransactions();
+
+    runningthread();
+    //sendAllBuildingTransactions();
+
+    WriteAllTransactionsToFile();
 
     return;
 }
@@ -93,9 +98,7 @@ std::unordered_map<std::string, std::string> dt_simulation::findLogStart(const s
             if (elevatorMap.find(buildingName) == elevatorMap.end()) {
 				elevatorMap[buildingName] = underground_floor + " " + ground_floor + " " + each_floor_altimeter + " ";
 			}
-            else {
-                elevatorMap[buildingName] += elevatorName + " ";
-            }
+            elevatorMap[buildingName] += elevatorName + " ";
         }
     }
 
@@ -135,7 +138,23 @@ std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_ma
 
         while (iss >> elevatorName) {
             simElevator elevator;
+            bool flag = false;
+
             elevator.elevatorName = std::wstring(elevatorName.begin(), elevatorName.end()); // Convert string to wstring
+
+            // Check if this elevator name is already in the building
+            for (auto& elem : *building.elevators)
+            {
+                if (elem.elevatorName == elevator.elevatorName)
+                {
+                    flag = true;
+					break;
+				}
+			}
+            if (flag)
+            {
+				continue;
+			}
 
             // Add elevator to building
             building.elevators->push_back(elevator);
@@ -609,6 +628,23 @@ string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building,
     return json_string;
 }
 
+void dt_simulation::runningthread() {
+    // EACH THREAD WILL RUN sendAllBuildingTransactions FUNCTION FOR EACH BUILDING
+    std::vector<std::future<void>> futures;
+
+    // EACH THREAD WILL BE DETACHED
+    for (const auto& building : *buildings) 
+    {
+        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, building));
+    }
+
+    // Wait for all threads to finish
+    for (auto& future : futures) 
+    {
+        future.wait();
+    }
+}
+
 void dt_simulation::send_data(std::string request_content)
 {
 #ifdef UE5_SERVER_ADDR
@@ -660,46 +696,42 @@ void dt_simulation::send_data(std::string request_content)
 #endif
 }
 
-void dt_simulation::sendAllBuildingTransactions() {
-    for (auto& building : *buildings) {
-        const auto this_building_transactions = building.timestamp_for_each_floor;
+void dt_simulation::sendAllBuildingTransactions(simBuilding each_building) {
+    double count = 0.0;
 
-        int count = 0;
+    for (const UE5Transaction& each_transaction : *each_building.timestamp_for_each_floor) {
+        while (count < each_transaction.timestamp) {
+            // SET TIMER HERE using chrno
+            chrono::steady_clock::time_point start = chrono::steady_clock::now();
 
-       for (const auto& each_transaction : *this_building_transactions) {
-           while (count < each_transaction.timestamp) {
-               // SET TIMER HERE using chrno
-               chrono::steady_clock::time_point start = chrono::steady_clock::now();
+            // SET TIMER HERE
+            chrono::steady_clock::time_point end = chrono::steady_clock::now();
 
-               // SET TIMER HERE
-               chrono::steady_clock::time_point end = chrono::steady_clock::now();
+            // GET TIMER DELTA
+            const auto execution_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); // Calculate the execution time
+            auto remaining = MILLISECONDHUNDRED - execution_time.count();
 
-               // GET TIMER DELTA
-               const auto execution_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); // Calculate the execution time
-               auto remaining = SECOND - execution_time.count();
+            // Sleep delta seconds
+            if (remaining > 0.0)
+            {
+                Sleep(remaining);
+            }
+            count += 0.1;
+            //std::wcout << L"COUNT SECOND : " << count << std::endl;
+        }
 
-               // Sleep delta seconds
-               if (remaining > 0.0)
-               {
-                   Sleep(remaining);
-               }
-               count += 1;
-               std::wcout << L"COUNT SECOND : " << count << std::endl;
-           }
-
-           std::wcout << L"TRANSACTION OCCURRED AT : " << count << " BY BUILDING : " << building.buildingName << " EV : " << each_transaction.owner << std::endl;
-           building.json_string = set_elevator_Status_JSON_STRING(building, each_transaction);
-           send_data(building.json_string);
-		}
-    }
+        std::wcout << L"TRANSACTION OCCURRED AT : " << count << " BY BUILDING : " << each_building.buildingName << " EV : " << each_transaction.owner << " DEST FLOOR : " << each_transaction.goTo_floor;
+        std::wcout << L"TTA : " << each_transaction.tta << " TTM : " << each_transaction.ttm << " TTD : " << each_transaction.ttd << std::endl;
+           
+        each_building.json_string = set_elevator_Status_JSON_STRING(each_building, each_transaction);
+        send_data(each_building.json_string);
+	}
 }
 
 void dt_simulation::giveAllBuildingTransactions() {
     for (const auto& building : *buildings) {
 		giveElevatorTransaction(building);
 	}
-
-
 }
 
 void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
@@ -809,6 +841,7 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
 		}
 		else
 		{
+            each_transaction.timestamp = chosen_elevator->current_transaction.back().end_timestamp;
 			current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
             each_transaction.end_timestamp = each_transaction.timestamp;
 		}
@@ -895,6 +928,7 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
             }
 
             UE5Transaction new_ue5_transaction = { goTo_floor, timestamp , tta, ttm, ttd, each_transaction.transaction_owner };
+
             this_building.timestamp_for_each_floor->push_back(new_ue5_transaction);
 		}
     }

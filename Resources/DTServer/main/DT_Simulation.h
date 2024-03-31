@@ -103,9 +103,10 @@ public:
     void SimulationLogIDLE(simBuilding this_building, std::wstring line);
     void sortTransactions(simBuilding this_building);
 
+    void runningthread();
     void send_data(std::string json_string);
     string set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp);
-    void sendAllBuildingTransactions();
+    void sendAllBuildingTransactions(simBuilding each_building);
     void giveAllBuildingTransactions();
     void giveElevatorTransaction(simBuilding this_building);
     void reallocateAllElevatorOfThisBuilding(simBuilding this_building, int timestamp);

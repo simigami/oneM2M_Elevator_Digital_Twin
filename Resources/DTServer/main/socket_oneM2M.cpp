@@ -18,6 +18,7 @@ socket_oneM2M::socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseSt
         switch (sc)
         {
         case ACP_NOT_FOUND:
+            // FIRST CHECK THERE IS ACPS IN oneM2M CSE SERVER
             socket.acp_create_one_ACP(ACP_NAMES, 0);
             socket.ae_create(building_name);
             socket.cnt_create(1, device_name);
@@ -28,8 +29,20 @@ socket_oneM2M::socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseSt
             create_oneM2M_CNTs(parseStruct);
             break;
 
+        case THIS_ACP_NOT_FOUND:
+			socket.acp_update(ACP_NAMES, 0);
+			socket.ae_create(building_name);
+			socket.cnt_create(1, device_name);
+
+			Default_CNTs.emplace_back(L"Elevator_physics");
+			Default_CNTs.emplace_back(L"Elevator_button_inside");
+			Default_CNTs.emplace_back(L"Elevator_button_outside");
+
+			create_oneM2M_CNTs(parseStruct);
+			break;
+
         case BUILDING_NOT_FOUND:
-            socket.acp_update(parseStruct, ACP_NAMES, 0);
+            socket.acp_update(ACP_NAMES, 0);
             socket.ae_create(building_name);
             break;
 

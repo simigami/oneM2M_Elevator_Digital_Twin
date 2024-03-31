@@ -195,7 +195,7 @@ void send_oneM2M::acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...)
     }
 }
 
-void send_oneM2M::acp_update(const Wparsed_struct& data, vector<wstring> ACP_NAMES, int num, ...)
+void send_oneM2M::acp_update(vector<wstring> ACP_NAMES, int num, ...)
 {
     int index = 0;
 
@@ -321,17 +321,17 @@ int send_oneM2M::acp_validate(wstring ACP_NAME, int num, ...)
 #ifdef oneM2M_tinyIoT
     if(response.status_code() == 404)
     {
-	    return 0;
+        return ACP_NOT_FOUND;
     }
     else if(response_body_string.find(U("m2m:acp")) != utility::string_t::npos)
     {
         if(response_body_string.find(utility::conversions::to_string_t(ACP_NAME)) != utility::string_t::npos)
         {
-        	return 2;
+        	return ACP_FOUND;
         }
         else
         {
-	        return 1;
+	        return THIS_ACP_NOT_FOUND;
         }
     }
     else
@@ -339,6 +339,72 @@ int send_oneM2M::acp_validate(wstring ACP_NAME, int num, ...)
 	    return false;
     }
 #endif
+}
+
+vector<wstring> send_oneM2M::acp_retrieve(int num, ...)
+{
+    wstring URL = uri_to_cse;
+
+    va_list args;
+    va_start(args, num);
+
+    if (num >= 1)
+    {
+        for (int i = 1; i <= num; i++)
+        {
+            auto ret = va_arg(args, const wstring);
+            URL.append(L"/");
+            URL.append(ret);
+
+        }
+        va_end(args);
+    }
+
+    URL.append(L"/");
+    URL.append(DEFAULT_ACP_NAME);
+
+    http_client client(utility::conversions::to_string_t(URL));
+    http_request request(methods::GET);
+
+    // Create an HTTP request
+    request.headers().add(U("User-Agent"), U("cpprestsdk"));
+    request.headers().add(U("Accept"), utility::conversions::to_string_t("application/json"));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR_NAME));
+    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(DEFAULT_RI));
+    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
+
+    web::http::http_response response = client.request(request).get();
+    utility::string_t response_body_string = response.extract_string().get();
+
+    vector<wstring> ACP_NAMES;
+    //GET ACP NAME FROM RESPONSE BODY
+    try 
+    {
+        json::value json_data = json::value::parse(response_body_string);
+        if (json_data.has_object_field(U("m2m:acp")))
+        {
+			json::value acp = json_data.at(U("m2m:acp"));
+			json::value pvs_object = acp.at(U("pvs"));
+			const auto acr_array = pvs_object.at(U("acr")).as_array();
+
+            for (const auto& acr : acr_array) {
+                auto acorArray = acr.at(U("acor")).as_array();
+
+                for (const auto& acor : acorArray) {
+                    auto name = acor.as_string();
+
+                    // name to wstring
+                    wstring acor_name = utility::conversions::to_utf16string(name);
+                    ACP_NAMES.push_back(acor_name);
+                }
+            }
+        }
+	}
+	catch (json::json_exception& e)
+	{
+		std::wcout << L"ACP NAME RETRIEVE ERROR : " << e.what() << std::endl;
+    }
+    return ACP_NAMES;
 }
 
 void send_oneM2M::ae_create(wstring AE_NAME)

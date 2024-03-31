@@ -19,8 +19,10 @@ public:
 
     void acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...);
 
-	void acp_update(const Wparsed_struct& data, vector<wstring> ACP_NAMES, int num, ...);
+	void acp_update(vector<wstring> ACP_NAMES, int num, ...);
     int acp_validate(wstring ACP_NAME, int num, ...);
+
+    vector<wstring> acp_retrieve(int num, ...);
 
     void ae_create(wstring AE_NAME);
 
