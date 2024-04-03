@@ -21,11 +21,13 @@ public:
     elevatorAlgorithmSingle* thisElevatorAlgorithmSingle;
     elevatorAlgorithmMultiple* thisElevatorAlgorithmMultiple;
 
-    Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES, int algorithmNumber);
+    Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES, int algorithmNumber, std::chrono::system_clock::time_point this_building_creation_time);
 
     void runElevator();
     void setNotificationContent(notificationContent* sendTo);
     void setUpdateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
+
+    elevatorStatus* getElevatorStatus();
 
     double getAltimeterFromFloor(int floor);
 

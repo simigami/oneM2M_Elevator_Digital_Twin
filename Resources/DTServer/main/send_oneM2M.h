@@ -39,6 +39,8 @@ public:
     void cin_update(const Wparsed_struct& data, int num, ...);
     http_response cin_retrieve_la(wstring originator, int num, ...);
 
+    vector<double> retrieve_oneM2M_Energy_CIN(Wparsed_struct parseStruct);
+
     void discovery_retrieve(int num, ...);
     void result_content_retrieve(int num, ...);
 

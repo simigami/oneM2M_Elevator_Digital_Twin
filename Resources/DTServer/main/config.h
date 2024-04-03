@@ -98,3 +98,10 @@ enum status_code {
 	STOP = 4,
 	MOV = 5
 };
+
+enum elevator_type {
+	NoCounterBalance,
+	CounterBalance,
+	Hydraulic,
+	CounterBalanceWithHydraulic,
+};

@@ -2,16 +2,17 @@
 #include "elevatorAlgorithmDefault.h"
 #include <mutex>
 
-elevatorAlgorithmDefault::elevatorAlgorithmDefault(wstring buildingName, wstring deviceName)
+elevatorAlgorithmDefault::elevatorAlgorithmDefault(wstring buildingName, wstring deviceName, std::chrono::system_clock::time_point this_building_creation_time)
 {
+	thisFlags = new flags;
+
 	thisNotificationContent = new notificationContent;
 
 	thisElevatorStatus = new elevatorStatus;
 	thisElevatorStatus->set_names(buildingName, deviceName);
 
-	thisFlags = new flags;
-
-	worldClock = std::chrono::system_clock::now();
+	thisElevatorStatus->start_time = std::chrono::system_clock::now();
+	worldClock = this_building_creation_time;
 	RETRIEVE_interval_millisecond = 10;
 }
 
@@ -320,9 +321,15 @@ void elevatorAlgorithmDefault::writeLog()
 		if (lastLogEndPos == std::string::npos) {
 			const auto underground_floor = temp->get_underground_floor();
 			const auto ground_floor = temp->get_ground_floor();
+
+			const auto max_velocity = temp->get_max_velocity();
+			const auto acceleration = temp->get_acceleration();
+			const auto jerk = temp->get_jerk();
+			const auto door_open_time = temp->door_open_time;
+
 			const auto each_floor_altimeter = temp->get_each_floor_altimeter();
 
-			logFile << L"LOG START " << buildingName << L" " << deviceName << L" " << underground_floor << L" " << ground_floor << L" [";
+			logFile << L"LOG START " << buildingName << L" " << deviceName << L" " << max_velocity << L" " << acceleration << L" " << jerk << L" " << door_open_time << L" " << underground_floor << L" " << ground_floor << L" [";
 			for (int i = 0; i < each_floor_altimeter.size(); i++) {
 				logFile << each_floor_altimeter[i];
 
@@ -330,7 +337,23 @@ void elevatorAlgorithmDefault::writeLog()
 					logFile << L",";
 				}
 			}
-			logFile << L"]" << std::endl;
+			logFile << L"]";
+
+			// Write this Elevator uses energy calculation
+			const auto this_elevator_energy_flag = temp->get_this_elevator_energy_consumption();
+			logFile << " " << this_elevator_energy_flag;
+
+			if (this_elevator_energy_flag)
+			{
+				// Put Additional Information
+				const auto IDLE_Power = temp->getIDLEPower();
+				const auto Standby_Power = temp->getStandbyPower();
+				const auto ISO_Reference_Cycle_Energy = temp->getISOReferenceCycleEnergy();
+
+				logFile << " " << IDLE_Power << " " << Standby_Power << " " << ISO_Reference_Cycle_Energy;
+			}
+
+			logFile << std::endl;
 
 			for (const auto& log : logs) {
 				logFile << log << std::endl;
@@ -388,6 +411,21 @@ void elevatorAlgorithmDefault::set_elevator_Status_JSON_STRING()
 	jsonObj["underground_floor"] = thisElevatorStatus->get_underground_floor();
 	jsonObj["ground_floor"] = thisElevatorStatus->get_ground_floor();
 
+	//set energy consumption to jsonObj
+	jsonObj["calculate_this_elevator_energy_consumption"] = thisElevatorStatus->get_this_elevator_energy_consumption();
+	
+	if (thisElevatorStatus->get_this_elevator_energy_consumption())
+	{
+		// Put Energy Consumption Information
+		jsonObj["IDLE_Power"] = thisElevatorStatus->getIDLEPower();
+		jsonObj["Standby_Power"] = thisElevatorStatus->getStandbyPower();
+		jsonObj["ISO_Reference_Cycle_Energy"] = thisElevatorStatus->getISOReferenceCycleEnergy();
+
+		jsonObj["Erd"] = thisElevatorStatus->erd;
+		jsonObj["Esd"] = thisElevatorStatus->esd;
+		jsonObj["Ed"] = thisElevatorStatus->ed;
+	}
+
 	auto revised_altimeter = thisElevatorStatus->get_each_floor_altimeter();
 	double lowest_altimeter = abs(revised_altimeter[0]);
 
@@ -414,6 +452,21 @@ void elevatorAlgorithmDefault::set_elevator_Status_JSON_STRING()
 	jsonObj["ttd"] = thisElevatorStatus->ttd;
 
 	this->elevatorStatus_JSON_STRING = jsonObj.dump();
+}
+
+void elevatorAlgorithmDefault::printThisElevatorEnergyConsumptionInfos()
+{
+	// Get this elevator status
+	auto temp = this->getElevatorStatus();
+
+	// print erd
+	std::wcout << L"Estimated Daily Running Energy Consumption : " << temp->erd << std::endl;
+
+	// print esd
+	std::wcout << L"Estimated Standby Energy Consumption : " << temp->esd << std::endl;
+
+	// print ed
+	std::wcout << L"Estimated Daily Energy Consumption : " << temp->ed << std::endl;
 }
 
 void elevatorAlgorithmDefault::printTimeDeltaWhenRearrange()
@@ -505,6 +558,11 @@ flags* elevatorAlgorithmDefault::getElevatorFlag()
 	return this->thisFlags;
 }
 
+string elevatorAlgorithmDefault::getJSONString()
+{
+	return this->elevatorStatus_JSON_STRING;
+}
+
 void elevatorStatus::set_names(wstring buildingName, wstring deviceName)
 {
 	this->building_name = buildingName;
@@ -527,7 +585,14 @@ void elevatorStatus::set_physical_information(physics* p)
 	this->current_goTo_floor_vector_info = new vector<vector<double>>{};
 	this->current_goTo_Floor_single_info = vector<double>{};
 }
-
+void elevatorStatus::set_building_name(wstring buildingName)
+{
+	this->building_name = buildingName;
+}
+void elevatorStatus::set_device_name(wstring deviceName)
+{
+	this->device_name = deviceName;
+}
 wstring elevatorStatus::get_building_name()
 {
 	return building_name;
@@ -535,6 +600,19 @@ wstring elevatorStatus::get_building_name()
 wstring elevatorStatus::get_device_name()
 {
 	return device_name;
+}
+
+void elevatorStatus::set_underground_floor(int floor)
+{
+	underground_floor = floor;
+}
+void elevatorStatus::set_ground_floor(int floor)
+{
+	ground_floor = floor;
+}
+void elevatorStatus::set_each_floor_altimeter(vector<double> alt)
+{
+	each_floor_altimeter = alt;
 }
 int elevatorStatus::get_underground_floor()
 {
@@ -548,12 +626,254 @@ vector<double> elevatorStatus::get_each_floor_altimeter()
 {
 	return each_floor_altimeter;
 }
+
+void elevatorStatus::set_max_velocity(double velocity)
+{
+	this->max_velocity = velocity;
+}
+void elevatorStatus::set_acceleration(double acceleration)
+{
+	this->acceleration = acceleration;
+}
+void elevatorStatus::set_jerk(double jerk)
+{
+	this->jerk = jerk;
+}
 double elevatorStatus::get_max_velocity()
 {
 	return max_velocity;
 }
-
 double elevatorStatus::get_acceleration()
 {
 	return acceleration;
+}
+double elevatorStatus::get_jerk()
+{
+	return this->jerk;
+}
+
+void elevatorStatus::set_this_elevator_energy_consumption(bool flag)
+{
+	calculate_this_elevator_energy_consumption = flag;
+}
+void elevatorStatus::set_this_elevator_energy_consumption(double energy1, double energy2, double energy3)
+{
+	IDLE_Power = energy1;
+	Standby_Power_5Min = energy2;
+	ISO_Reference_Cycle_Energy = energy3;
+}
+bool elevatorStatus::get_this_elevator_energy_consumption()
+{
+	return calculate_this_elevator_energy_consumption;
+}
+void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_delta)
+{
+	if (!calculate_this_elevator_energy_consumption) 
+	{
+		return; 
+	}
+	else 
+	{
+		const double night_time_shorten_ratio = 0.66;
+		const double one_day = 86400.0;
+
+		measure_time = chrono::system_clock::now();
+
+		// Get time diff in seconds
+		auto diff = chrono::duration_cast<chrono::seconds>(measure_time - start_time).count();
+
+		if (sim_mode_delta != 0) 
+		{
+			diff = sim_mode_delta;
+		}
+
+		// Get ratio of diif seconds to 1 day
+		double ratio = one_day / diff;
+
+		// Round to .0
+		ratio = round(ratio * 100) / 100;
+
+		// Get Estimated Daily Trip Count
+		int estimated_daily_trip_count = ratio * number_of_trips * (0.5 *(1 + night_time_shorten_ratio));
+
+		if (estimated_daily_trip_count < 50) 
+		{
+			Category = 1;
+			IDLE_time_ratio = 0.13;
+			StandBy_time_ratio = 0.87;
+		}
+		else if (estimated_daily_trip_count < 125)
+		{
+			Category = 2;
+			IDLE_time_ratio = 0.23;
+			StandBy_time_ratio = 0.77;
+		}
+		else if (estimated_daily_trip_count < 300)
+		{
+			Category = 3;
+			IDLE_time_ratio = 0.36;
+			StandBy_time_ratio = 0.64;
+		}
+		else if (estimated_daily_trip_count < 750)
+		{
+			Category = 4;
+			IDLE_time_ratio = 0.45;
+			StandBy_time_ratio = 0.55;
+		}
+		else
+		{
+			Category = 5;
+			IDLE_time_ratio = 0.42;
+			StandBy_time_ratio = 0.58;
+		}
+
+		// Calculate %S constant
+		if (Category < 5)
+		{
+			if (ground_floor + underground_floor == 2)
+			{
+				S_factor = 1.0;
+			}
+			else if (ground_floor + underground_floor == 3) 
+			{
+				S_factor = 0.67;
+			}
+			else
+			{
+				S_factor = 0.44;
+			}
+		}
+		else
+		{
+			if (ground_floor + underground_floor == 2 || number_of_trips == 1)
+			{
+				S_factor = 1.0;
+			}
+			else if (ground_floor + underground_floor == 3 || number_of_trips == 2)
+			{
+				S_factor = 0.67;
+			}
+			else
+			{
+				S_factor = 0.33;
+			}
+		}
+
+		// Calulate Load Factor
+		double Q_Factor = 0.0;
+		switch (Category)
+		{
+			case 4:
+				Q_Factor = 9.0;
+				break;
+			case 5 :
+				Q_Factor = 13.0;
+				break;
+			default:
+				Q_Factor = 7.5;
+				break;
+		}
+
+		switch (this_elevator_type_info.this_elevator_type)
+		{
+			case NoCounterBalance:
+				load_factor = 1 + (Q_Factor * 0.0071);
+				break;
+
+			case CounterBalance:
+				if (this_elevator_type_info.type_load_rate <= 0.4) {
+					load_factor = 1 - (Q_Factor * 0.0164);
+				}
+				else
+				{
+					load_factor = 1 - (Q_Factor * 0.0192);
+				}
+				break;
+
+			case Hydraulic:
+				load_factor = 1 + (Q_Factor * 0.0071);
+				break;
+
+			case CounterBalanceWithHydraulic:
+				if (this_elevator_type_info.type_load_rate <= 0.35) {
+					load_factor = 1 + (Q_Factor * 0.01);
+				}
+				else
+				{
+					load_factor = 1 - (Q_Factor * 0.0187);
+				}
+				break;
+
+			default:
+				break;
+		}
+
+		const double estimated_daily_running_energy_consumption =
+			(estimated_daily_trip_count * S_factor * load_factor * ISO_Reference_Cycle_Energy) / 2.0;
+
+		const double average_travel_distance_per_trip = total_move_distance * S_factor;
+		const double average_time_per_trip = 
+			average_travel_distance_per_trip / max_velocity +
+			max_velocity / acceleration +
+			acceleration / jerk +
+			door_open_time;
+
+		const double estimated_daily_standing_energy_consumption = 
+			(24 - ((estimated_daily_trip_count * average_time_per_trip)/3600)) * 
+			(IDLE_Power * IDLE_time_ratio + Standby_Power_5Min * StandBy_time_ratio);
+
+		if (estimated_daily_standing_energy_consumption < 0)
+		{
+			cout << "Error : Estimated Daily Standing Energy Consumption is Negative" << endl;
+			cout << "Estimated estimated_daily_trip_count : " << estimated_daily_trip_count << endl;
+			cout << "Estimated average_travel_distance_per_trip : " << average_travel_distance_per_trip << endl;
+			cout << "ADDED : " << ((estimated_daily_trip_count * average_time_per_trip) / 3600) << endl;
+		}
+
+		const double estimated_daily_energy_consumption = 
+			estimated_daily_running_energy_consumption + estimated_daily_standing_energy_consumption;
+
+		erd = estimated_daily_running_energy_consumption;
+		esd = estimated_daily_standing_energy_consumption;
+		ed = estimated_daily_energy_consumption;
+	}
+}
+
+vector<double> elevatorStatus::get_this_elevator_daily_energy_consumption()
+{
+	if (calculate_this_elevator_energy_consumption)
+	{
+		return vector<double>{this->erd, this->esd, this->ed};
+	}
+	return vector<double>();
+}
+
+double elevatorStatus::getIDLEPower()
+{
+	return IDLE_Power;
+}
+
+double elevatorStatus::getStandbyPower()
+{
+	return Standby_Power_5Min;
+}
+
+double elevatorStatus::getISOReferenceCycleEnergy()
+{
+	return ISO_Reference_Cycle_Energy;
+}
+
+void elevatorStatus::setIDLEPower(double power)
+{
+	IDLE_Power = power;
+}
+
+void elevatorStatus::setStandbyPower(double power)
+{
+	Standby_Power_5Min = power;
+}
+
+void elevatorStatus::setISOReferenceCycleEnergy(double power)
+{
+	ISO_Reference_Cycle_Energy = power;
 }

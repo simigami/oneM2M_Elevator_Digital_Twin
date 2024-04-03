@@ -1,6 +1,6 @@
 #include "elevatorAlgorithmSingle.h"
 
-elevatorAlgorithmSingle::elevatorAlgorithmSingle(wstring buildingName, wstring deviceName) : elevatorAlgorithmDefault(buildingName, deviceName)
+elevatorAlgorithmSingle::elevatorAlgorithmSingle(wstring buildingName, wstring deviceName, std::chrono::system_clock::time_point this_building_creation_time) : elevatorAlgorithmDefault(buildingName, deviceName, this_building_creation_time)
 {
 
 }
@@ -8,6 +8,11 @@ elevatorAlgorithmSingle::elevatorAlgorithmSingle(wstring buildingName, wstring d
 elevatorAlgorithmSingle::~elevatorAlgorithmSingle()
 {
 
+}
+
+string elevatorAlgorithmSingle::getJSONString()
+{
+	return elevatorAlgorithmDefault::getJSONString();
 }
 
 void elevatorAlgorithmSingle::startThread(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy)
@@ -114,7 +119,10 @@ void elevatorAlgorithmSingle::run(socket_oneM2M* sock, socket_UnrealEngine* ueSo
 						std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " Stopped At : " << this->thisElevatorStatus->go_to_floor << std::endl;
 						elevatorAlgorithmDefault::printTimeDeltaWhenStop();
 
-						free_time = std::chrono::steady_clock::now() + std::chrono::seconds(4);
+						free_time = std::chrono::steady_clock::now() + std::chrono::milliseconds((long)getElevatorStatus()->door_open_time * 1000);
+						getElevatorStatus()->number_of_trips += 1;
+						getElevatorStatus()->set_this_elevator_daily_energy_consumption(0);
+						printThisElevatorEnergyConsumptionInfos();
 
 						if(p->s->main_trip_list[0][1] == 1)
 						{
@@ -341,6 +349,11 @@ void elevatorAlgorithmSingle::appendLogToLogList(int code, ...)
 void elevatorAlgorithmSingle::writeLog()
 {
 	elevatorAlgorithmDefault::writeLog();
+}
+
+void elevatorAlgorithmSingle::printThisElevatorEnergyConsumptionInfos()
+{
+	elevatorAlgorithmDefault::printThisElevatorEnergyConsumptionInfos();
 }
 
 int elevatorAlgorithmSingle::printTimeDeltaNow()

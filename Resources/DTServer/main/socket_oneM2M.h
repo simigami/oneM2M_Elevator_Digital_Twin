@@ -43,6 +43,8 @@ public:
 
 	bool createNewData(Wparsed_struct parseStruct);
 
+	bool create_oneM2M_CIN_EnergyConsumption(Wparsed_struct parseSstruct);
+
 	bool create_oneM2M_CIN_Except_Button_Outside(Wparsed_struct parseSstruct);
 
 	bool create_oneM2M_CIN_Only_Button_Outside(vector<vector<int>> button_outside);
@@ -50,4 +52,6 @@ public:
 	bool check_oneM2M_CNT(Wparsed_struct parseStruct);
 
 	vector<vector<wstring>> retrieve_oneM2M_cins(vector<int> floor_info);
+
+	vector<double> retrieve_oneM2M_Energy_CIN(Wparsed_struct parseSstruct);
 };

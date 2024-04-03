@@ -21,6 +21,10 @@ struct Wparsed_struct
 	double altimeter = 0.0;
 	double temperature = 0.0;
 
+	double idle_power = 0.0;
+	double standby_power = 0.0;
+	double iso_power = 0.0;
+
 	bool button_outside_direction;
 	bool inFlag = true;
 	bool outFlag = true;

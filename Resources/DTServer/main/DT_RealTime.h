@@ -25,6 +25,9 @@ class Building
 public:
 	Building(int buttonMod);
 
+	//const time for this building created time
+	std::chrono::system_clock::time_point buliding_start_time;
+
 	class_of_one_Building* buildingElevatorInfo;
 	vector<vector<int>>* currentButtonOutsideInfos;
 
@@ -45,7 +48,11 @@ public:
 	void startAsyncAccept(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
+
 	void Running_Embedded(const wstring& httpResponse);
+	void Create_New_Building_And_Elevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status);
+	void setConstructArgumentsOfElevator(Building* this_buliding, Elevator* new_elevator);
+
 	void Running_Notification(const string& httpResponse);
 
 	bool existsElevator(Building* one_building, const wstring& device_name);
@@ -63,7 +70,12 @@ public:
 	vector<thread> one_building_threads;
 	vector<wstring> ACP_NAMES;
 
+	parse_json c;
 	Wparsed_struct parsed_struct;
+	wstring ACOR_NAME;
+	wstring AE_NAME;
+	wstring CNT_NAME;
+
 	boost::asio::io_service io;
 
 	std::wstring* httpRequest;

@@ -1,13 +1,13 @@
 #include "elevator.h"
 
-Elevator::Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES, int algorithmNumber)
+Elevator::Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, vector<wstring> ACP_NAMES, int algorithmNumber, std::chrono::system_clock::time_point this_building_creation_time)
 {
 	this->sock = new socket_oneM2M(sc, parsed_struct, ACP_NAMES);
 	this->p = new physics(parsed_struct);
 	this->UEsock = new socket_UnrealEngine();
 
-	this->thisElevatorAlgorithmSingle = new elevatorAlgorithmSingle(parsed_struct.building_name, parsed_struct.device_name);
-	this->thisElevatorAlgorithmMultiple = new elevatorAlgorithmMultiple(parsed_struct.building_name, parsed_struct.device_name);
+	this->thisElevatorAlgorithmSingle = new elevatorAlgorithmSingle(parsed_struct.building_name, parsed_struct.device_name, this_building_creation_time);
+	this->thisElevatorAlgorithmMultiple = new elevatorAlgorithmMultiple(parsed_struct.building_name, parsed_struct.device_name, this_building_creation_time);
 
 	this->algorithmNumber = algorithmNumber;
 }
@@ -59,6 +59,24 @@ void Elevator::setUpdateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
 			this->thisElevatorAlgorithmSingle->updateElevatorTick(ueSock, phy);
 		break;
 	}
+}
+
+elevatorStatus* Elevator::getElevatorStatus()
+{
+	switch (this->algorithmNumber)
+	{
+		case 1:
+		return this->thisElevatorAlgorithmSingle->getElevatorStatus();
+		break;
+
+		case 2:
+		return this->thisElevatorAlgorithmMultiple->getElevatorStatus();
+		break;
+		
+		default:
+		break;
+	}
+	return nullptr;
 }
 
 double Elevator::getAltimeterFromFloor(int floor)

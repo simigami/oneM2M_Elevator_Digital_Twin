@@ -30,6 +30,7 @@ void print_elapsed_time()
 
 Building::Building(int buttonMod)
 {
+	this->buliding_start_time = system_clock::now();
     this->buildingElevatorInfo = new class_of_one_Building;
     this->buildingElevatorInfo->outsideButtonMod = buttonMod;
 	this->currentButtonOutsideInfos = new vector<vector<int>>;
@@ -565,78 +566,45 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 
 void dt_real_time::Running_Embedded(const wstring& httpResponse)
 {
-	parse_json c;
 	Elevator* thisBuildingElevator;
-	Wparsed_struct parsedStruct;
 
-	parsedStruct = c.parsingOnlyBuildingName(httpResponse);
-	send_oneM2M ACP_Validation_Socket(parsedStruct);
+	parsed_struct = c.parsingOnlyBuildingName(httpResponse);
+	send_oneM2M ACP_Validation_Socket(parsed_struct);
 
-	wstring ACOR_NAME = parsedStruct.building_name;
-	wstring AE_NAME = parsedStruct.building_name;
-	wstring CNT_NAME = parsedStruct.device_name;
+	ACOR_NAME = parsed_struct.building_name;
+	AE_NAME = parsed_struct.building_name;
+	CNT_NAME = parsed_struct.device_name;
 
-	std::wcout << endl << "FROM EMBEDDED -> SERVER : " << " Receive Data From : " << parsedStruct.device_name << std::endl;
+	std::wcout << endl << "FROM EMBEDDED -> SERVER : " << " Receive Data From : " << parsed_struct.device_name << std::endl;
 
 	int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
 
 	// oneM2M에 빌딩 ACP가 존재하지 않는 경우
-	if (ACP_FLAG == ACP_NOT_FOUND) 
+	if (ACP_FLAG == ACP_NOT_FOUND)
 	{
 		// 임베디드 장치로 온 신호가 OUT 신호인 경우 -> REJECT
 		if (CNT_NAME == L"OUT")
 		{
-			wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
+			std::wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
 
 			return;
 		}
-		
+
 		// 임베디드 장치로 온 신호가 엘리베이터 내부 신호인 경우 -> ACCEPT
 		else
 		{
-			Building* newBuilding;
-			this->ACP_NAMES.push_back(ACOR_NAME);
-
-			int buildingAlgorithmNumber;
-			std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
-			std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
-			std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
-
-			std::cin >> buildingAlgorithmNumber;
-			while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
-			{
-				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
-				std::cin >> buildingAlgorithmNumber;
-			}
-
-			newBuilding = new Building(buildingAlgorithmNumber);
-
-			// Create THIS AE(Building) Class
-			int algNumber = 1;
-
-			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
-			send_oneM2M ACP_Validation_Socket(parsedStruct);
-
-			// Create THIS CNT(Building's Elevator) Class
-			Elevator* thisBuildingElevator = new Elevator(ACP_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-			newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-			newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-			allBuildingInfo.push_back(newBuilding);
-
-			thisBuildingElevator->runElevator();
-			thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(newBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
-			thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+			Create_New_Building_And_Elevator(httpResponse, ACOR_NAME, ACP_NOT_FOUND);
+			allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_SUBs(parsed_struct, &(allBuildingInfo.back()->buildingElevatorInfo->subscriptionRI_to_RN));
+			allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_CINs(parsed_struct);
 		}
 	}
 
-	else if(ACP_FLAG == THIS_ACP_NOT_FOUND)
+	else if (ACP_FLAG == THIS_ACP_NOT_FOUND)
 	{
 		// 임베디드 장치로 온 신호가 OUT 신호인 경우 -> REJECT
 		if (CNT_NAME == L"OUT")
 		{
-			wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
+			std::wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
 
 			return;
 		}
@@ -644,43 +612,11 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 		// 임베디드 장치로 온 신호가 엘리베이터 내부 신호인 경우 -> ACCEPT
 		else
 		{
-			Building* newBuilding;
-
 			// GET ALL ACP NAMES FROM RETRIEVE DT_SERVER ACP
 			this->ACP_NAMES = ACP_Validation_Socket.acp_retrieve(0);
-			this->ACP_NAMES.push_back(ACOR_NAME);
-
-			int buildingAlgorithmNumber;
-			std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
-			std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
-			std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
-
-			std::cin >> buildingAlgorithmNumber;
-			while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
-			{
-				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
-				std::cin >> buildingAlgorithmNumber;
-			}
-
-			newBuilding = new Building(buildingAlgorithmNumber);
-
-			// Create THIS AE(Building) Class
-			int algNumber = 1;
-
-			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
-			send_oneM2M ACP_Validation_Socket(parsedStruct);
-
-			// Create THIS CNT(Building's Elevator) Class
-			Elevator* thisBuildingElevator = new Elevator(THIS_ACP_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
-			newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-			newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-			allBuildingInfo.push_back(newBuilding);
-
-			thisBuildingElevator->runElevator();
-			thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(newBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
-			thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+			Create_New_Building_And_Elevator(httpResponse, ACOR_NAME, THIS_ACP_NOT_FOUND);
+			allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_SUBs(parsed_struct, &(allBuildingInfo.back()->buildingElevatorInfo->subscriptionRI_to_RN));
+			allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_CINs(parsed_struct);
 		}
 	}
 
@@ -693,21 +629,22 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 		Building* thisBuildingFlag = this->get_building_vector(ACOR_NAME);
 
 		// oneM2M에 빌딩 ACP가 존재하는데 서버에 데이터가 없는 경우
-		if (thisBuildingFlag == NULL) 
+		if (thisBuildingFlag == NULL)
 		{
 			if (CNT_NAME == L"OUT")
 			{
-				wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
+				std::wcout << "CANNOT MAKE BUILDING WHEN OUT SIGNAL INCOMES" << endl;
 
 				return;
 			}
-			else 
+			else
 			{
 				std::wcout << "IN SERVER -> Building Resource Not Exist in Server Create New " << AE_NAME << " Resource with " << CNT_NAME << std::endl;
+
 				this->ACP_NAMES.push_back(ACOR_NAME);
 
 				int buildingAlgorithmNumber;
-				std::wcout << "IN SERVER : BUILDING NAME : " << parsedStruct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
+				std::wcout << "IN SERVER : BUILDING NAME : " << parsed_struct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
 				std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
 				std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
 
@@ -724,84 +661,118 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
 				int algNumber = 1;
 
-				parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
-				send_oneM2M ACP_Validation_Socket(parsedStruct);
+				parsed_struct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
+				send_oneM2M ACP_Validation_Socket(parsed_struct);
 
 				//서버에서 빌딩 클래스 재생성 하고, 이제 해당 엘리베이터가 oneM2M에 존재하는지 확인
 				bool flag = ACP_Validation_Socket.cnt_validate(1, CNT_NAME);
 
 				if (flag) //oneM2M 서버에 해당 엘리베이터 클래스가 존재하는 경우
 				{
-					Elevator* thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
+					Elevator* thisBuildingElevator;
+					flag = ACP_Validation_Socket.cnt_validate(2, CNT_NAME, parsed_struct.device_name + L"_Energy");
+					// 이 엘리베이터가 에너지 계산을 사용하는 경우
+					if (flag)
+					{
+						std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT With Energy Info " << CNT_NAME << " Resource" << std::endl;
 
-					newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-					newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+						auto energy_info = ACP_Validation_Socket.retrieve_oneM2M_Energy_CIN(parsed_struct);
+
+						int algNumber = 1;
+
+						// Create THIS CNT(Building's Elevator) Class
+						thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
+						thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+
+						thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setIDLEPower(energy_info[0]);
+						thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setStandbyPower(energy_info[1]);
+						thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setISOReferenceCycleEnergy(energy_info[2]);
+					}
+					else
+					{
+						std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT " << CNT_NAME << " Resource" << std::endl;
+
+						int algNumber = 1;
+
+						// Create THIS CNT(Building's Elevator) Class
+						thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
+					}
 
 					allBuildingInfo.push_back(newBuilding);
-
-					thisBuildingElevator->runElevator();
-					thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-				}
-				else //oneM2M 서버에 해당 엘리베이터 클래스가 존재하지 않는 경우
-				{
-					Elevator* thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
-
 					newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 					newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
-
-					allBuildingInfo.push_back(newBuilding);
+				
+					allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_CINs(parsed_struct);
 
 					thisBuildingElevator->runElevator();
 
 					if (newBuilding->getButtonMod() && CNT_NAME == L"OUT")
 					{
-						//thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsedStruct);
-						newBuilding->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
+						thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
+					}
+				}
+				else //oneM2M 서버에 해당 엘리베이터 클래스가 존재하지 않는 경우
+				{
+					Elevator* thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
+
+					newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+					newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+					allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_SUBs(parsed_struct, &(allBuildingInfo.back()->buildingElevatorInfo->subscriptionRI_to_RN));
+					allBuildingInfo.push_back(newBuilding);
+					setConstructArgumentsOfElevator(newBuilding, thisBuildingElevator);
+
+					thisBuildingElevator->runElevator();
+
+					if (newBuilding->getButtonMod() && CNT_NAME == L"OUT")
+					{
+						//thisBuildingElevator->sock->create_oneM2M_CIN_Except_Button_Outside(parsed_struct);
+						newBuilding->getWhichElevatorToGetButtonOutside(parsed_struct.button_outside);
 						// SELECT WHICH ELEVATOR TO GIVE BUTTON OUTSIDE INFO
 					}
 					else
 					{
-						thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+						thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 					}
 				}
 			}
 		}
 
 		// oneM2M에 빌딩 ACP가 존재하고 서버에도 데이터가 존재하는 경우
-		else  
+		else
 		{
 			std::wcout << "IN SERVER -> Building Resource Exists, Check Elevator " << CNT_NAME << " Resource Exists IN Server" << std::endl;
 			thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN = map<wstring, wstring>();
 
-			parsedStruct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod());
-			send_oneM2M ACP_Validation_Socket(parsedStruct);
+			parsed_struct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod());
+			send_oneM2M ACP_Validation_Socket(parsed_struct);
 
 			// 해당 빌딩이 군중화 알고리즘을 사용하는 경우
 			if (thisBuildingFlag->getButtonMod())
 			{
 				if (CNT_NAME == L"OUT")
 				{
-					thisBuildingFlag->getWhichElevatorToGetButtonOutside(parsedStruct.button_outside);
+					thisBuildingFlag->getWhichElevatorToGetButtonOutside(parsed_struct.button_outside);
 				}
-				else 
+				else
 				{
+					Elevator* thisBuildingElevator;
 					bool flag = this->existsElevator(thisBuildingFlag, CNT_NAME);
 					// oneM2M과 서버에 해당 엘리베이터 클래스가 모두 존재하는 경우
-					if (flag) 
+					if (flag)
 					{
-						Elevator* thisBuildingElevator = this->getElevator(thisBuildingFlag, CNT_NAME);
+						thisBuildingElevator = this->getElevator(thisBuildingFlag, CNT_NAME);
 
 						// Update CIN Value
 						std::wcout << "IN SERVER -> Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
-						thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+						thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 					}
 					// oneM2M에 해당 엘리베이터 클래스가 존재하지 않는 경우
-					else 
+					else
 					{
 						//CHECK THIS CNT EXISTS in oneM2M
 						bool flag = ACP_Validation_Socket.cnt_validate(1, CNT_NAME);
 						// oneM2M에 해당 엘리베이터 클래스가 존재하지 않는 경우
-						if (!flag) 
+						if (!flag)
 						{
 							// THIS CNT NOT Exists in DT Server and oneM2M
 							std::wcout << "IN SERVER -> Elevator Not Found, Creating New Elevator : " << CNT_NAME << std::endl;
@@ -809,40 +780,71 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 							int algNumber = 1;
 
 							// Create THIS CNT(Building's Elevator) Class
-							Elevator* thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
+							thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
 
 							thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+							setConstructArgumentsOfElevator(thisBuildingFlag, thisBuildingElevator);
 
-							thisBuildingElevator->runElevator();
-							thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
-							thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+							parsed_struct.idle_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getIDLEPower();
+							parsed_struct.standby_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getStandbyPower();
+							parsed_struct.iso_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getISOReferenceCycleEnergy();
+
+							thisBuildingElevator->sock->create_oneM2M_SUBs(parsed_struct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
+							thisBuildingElevator->sock->create_oneM2M_CIN_EnergyConsumption(parsed_struct);
 						}
 						// oneM2M에 해당 엘리베이터 클래스가 존재하는데 서버에 없는 경우
-						else 
+						else
 						{
-							std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT " << CNT_NAME << " Resource" << std::endl;
+							flag = ACP_Validation_Socket.cnt_validate(2, CNT_NAME, parsed_struct.device_name + L"_Energy");
+							// 이 엘리베이터가 에너지 계산을 사용하는 경우
+							if (flag)
+							{
+								std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT With Energy Info " << CNT_NAME << " Resource" << std::endl;
 
-							int algNumber = 1;
+								auto energy_info = ACP_Validation_Socket.retrieve_oneM2M_Energy_CIN(parsed_struct);
 
-							// Create THIS CNT(Building's Elevator) Class
-							Elevator* thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
+								int algNumber = 1;
+
+								// Create THIS CNT(Building's Elevator) Class
+								thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setIDLEPower(energy_info[0]);
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setStandbyPower(energy_info[1]);
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setISOReferenceCycleEnergy(energy_info[2]);
+							
+								parsed_struct.idle_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getIDLEPower();
+								parsed_struct.standby_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getStandbyPower();
+								parsed_struct.iso_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getISOReferenceCycleEnergy();
+
+								//thisBuildingElevator->sock->create_oneM2M_CIN_EnergyConsumption(parsed_struct);
+							}
+							else
+							{
+								std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT " << CNT_NAME << " Resource" << std::endl;
+
+								int algNumber = 1;
+
+								// Create THIS CNT(Building's Elevator) Class
+								thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+							}
 
 							thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 							thisBuildingFlag->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+						}
 
-							thisBuildingElevator->runElevator();
-
-							if (thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
-							{
-								thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
-							}
+						thisBuildingElevator->runElevator();
+						
+						if (thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
+						{
+							thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 						}
 					}
 				}
 			}
 
 			// 해당 빌딩이 군중화 알고리즘을 사용하지 않는 경우
-			else 
+			else
 			{
 				if (CNT_NAME == L"OUT")
 				{
@@ -854,7 +856,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 					bool flag = this->existsElevator(thisBuildingFlag, CNT_NAME);
 
 					// oneM2M과 서버에 해당 엘리베이터 클래스가 모두 존재하는 경우
-					if (flag) 
+					if (flag)
 					{
 						// THIS CNT Exists
 						Elevator* thisBuildingElevator = this->getElevator(thisBuildingFlag, CNT_NAME);
@@ -862,17 +864,17 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 						// Update CIN Value
 						std::wcout << "IN SERVER -> Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
 
-						thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+						thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 					}
-					
+
 					// DT서버에 해당 엘리베이터 클래스가 존재하지 않는 경우
-					else 
+					else
 					{
 						//CHECK THIS CNT EXISTS in oneM2M
 						bool flag = ACP_Validation_Socket.cnt_validate(1, CNT_NAME);
 
 						// DT서버와 oneM2M에 해당 엘리베이터 클래스가 존재하지 않는 경우
-						if (!flag) 
+						if (!flag)
 						{
 							// THIS CNT NOT Exists in DT Server and oneM2M
 							std::wcout << "IN SERVER -> Elevator Not Found, Creating New Elevator : " << CNT_NAME << std::endl;
@@ -880,37 +882,220 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 							int algNumber = 1;
 
 							// Create THIS CNT(Building's Elevator) Class
-							thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
+							thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
 
 							thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+							setConstructArgumentsOfElevator(thisBuildingFlag, thisBuildingElevator);
 
 							thisBuildingElevator->runElevator();
-							thisBuildingElevator->sock->create_oneM2M_SUBs(parsedStruct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
-							thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+							thisBuildingElevator->sock->create_oneM2M_SUBs(parsed_struct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
+							thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 						}
 
 						// oneM2M에는 엘리베이터 리소스가 존재하나, DT 서버에 존재하지 않는 경우
 						else
 						{
-							std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT " << CNT_NAME << " Resource" << std::endl;
-							this->ACP_NAMES.push_back(ACOR_NAME);
+							flag = ACP_Validation_Socket.cnt_validate(2, CNT_NAME, parsed_struct.device_name + L"_Energy");
+							// 이 엘리베이터가 에너지 계산을 사용하는 경우
+							Elevator* thisBuildingElevator;
+							if (flag)
+							{
+								std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT With Energy Info " << CNT_NAME << " Resource" << std::endl;
 
-							int algNumber = 1;
+								auto energy_info = ACP_Validation_Socket.retrieve_oneM2M_Energy_CIN(parsed_struct);
 
-							// Create THIS CNT(Building's Elevator) Class
-							thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsedStruct, this->ACP_NAMES, algNumber);
+								int algNumber = 1;
+
+								// Create THIS CNT(Building's Elevator) Class
+								thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setIDLEPower(energy_info[0]);
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setStandbyPower(energy_info[1]);
+								thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setISOReferenceCycleEnergy(energy_info[2]);
+							
+								parsed_struct.idle_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getIDLEPower();
+								parsed_struct.standby_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getStandbyPower();
+								parsed_struct.iso_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getISOReferenceCycleEnergy();
+
+
+								thisBuildingElevator->sock->create_oneM2M_CIN_EnergyConsumption(parsed_struct);
+
+							}
+							else
+							{
+								std::wcout << "IN SERVER -> Elevator Resource Not Exist in DT Server... Create New CNT " << CNT_NAME << " Resource" << std::endl;
+
+								int algNumber = 1;
+
+								// Create THIS CNT(Building's Elevator) Class
+								thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+							}
 
 							thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 							thisBuildingFlag->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
 
 							thisBuildingElevator->runElevator();
-							thisBuildingElevator->sock->create_oneM2M_CINs(parsedStruct);
+							thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 						}
 					}
 				}
 			}
 		}
 	}
+}
+
+void dt_real_time::Create_New_Building_And_Elevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status)
+{
+	this->ACP_NAMES.push_back(ACOR_NAME);
+
+	int buildingAlgorithmNumber;
+	std::wcout << "IN SERVER : BUILDING NAME : " << parsed_struct.building_name << " Is Newly Added. Please Enter This Building's Lobby Call Algorithm" << std::endl;
+	std::wcout << "0 : IF EVERY ELEVATOR HAS UNIQUE OUTSIDE BUTTON " << std::endl;
+	std::wcout << "1 : IF BUILDING HAS ELEVATOR CROWD CONTROL SYSTEM" << std::endl;
+
+	std::cin >> buildingAlgorithmNumber;
+	while (buildingAlgorithmNumber != 0 && buildingAlgorithmNumber != 1)
+	{
+		std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
+		std::cin >> buildingAlgorithmNumber;
+	}
+
+	Building* newBuilding = new Building(buildingAlgorithmNumber);
+
+	// Create THIS AE(Building) Class
+	int algNumber = 1;
+
+	parsed_struct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
+	send_oneM2M ACP_Validation_Socket(parsed_struct);
+
+	// Create THIS CNT(Building's Elevator) Class
+	Elevator* thisBuildingElevator = new Elevator(status, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
+
+	newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+	newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+
+	allBuildingInfo.push_back(newBuilding);
+
+	setConstructArgumentsOfElevator(newBuilding, thisBuildingElevator);
+
+	parsed_struct.idle_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getIDLEPower();
+	parsed_struct.standby_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getStandbyPower();
+	parsed_struct.iso_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getISOReferenceCycleEnergy();
+	
+	thisBuildingElevator->sock->create_oneM2M_CIN_EnergyConsumption(parsed_struct);
+
+	thisBuildingElevator->runElevator();
+}
+
+void dt_real_time::setConstructArgumentsOfElevator(Building* this_buliding, Elevator* new_elevator)
+{
+	int command = 0;
+
+	std::wcout << "New Building Has Been Created. You Must Input Basic Elevator Energy Information to Calculate Energy Consumption for : " << new_elevator->getDeviceName() << std::endl;
+	std::wcout << "0 : Dont Need To Calculate EnergyConsumption, It Will only Calculate Movement and Distance" <<  std::endl;
+	std::wcout << "1 : Calculate EnergyConsumption, It Will Additionally Need Pre-Measuremented Data" <<  std::endl;
+	std::wcout << "2 : Calculate EnergyConsumption, But This Elevator Measuremented Data is Same With Other Elevator In This Building" <<  std::endl;
+	
+	std::cin >> command;
+	while (command != 0 && command != 1 && command != 2)
+	{
+		std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
+		std::cin >> command;
+	}
+
+	if (command == 2)
+	{
+		// Try To Get First Elevator of this building if length of classOfAllElevators is 0 then there is no elevator in this building
+		const int length = this_buliding->buildingElevatorInfo->classOfAllElevators.size();
+
+		if (length == 0)
+		{
+			std::wcout << "No Elevator Found On This Buliding Please Enter 0 or 1 For " << new_elevator->getDeviceName() << std::endl;
+			std::wcout << "0 : Dont Need To Calculate EnergyConsumption, It Will only Calculate Movement and Distance" << std::endl;
+			std::wcout << "1 : Calculate EnergyConsumption, It Will Additionally Need Pre-Measuremented Data" << std::endl;
+			
+			
+			while (command != 0 && command != 1 && command != 2)
+			{
+				std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
+				std::cin >> command;
+			}
+		}
+
+		else 
+		{
+			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+			Elevator* first_elevator = this_buliding->buildingElevatorInfo->classOfAllElevators[0];
+
+			// PORT first_elevator's energy consumption to new_elevator
+			auto first_elevator_status = first_elevator->thisElevatorAlgorithmSingle->getElevatorStatus();
+			const double IDLE_power = first_elevator_status->getIDLEPower();
+			const double STANDBY_power = first_elevator_status->getStandbyPower();
+			const double ISO_power = first_elevator_status->getISOReferenceCycleEnergy();
+
+			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(IDLE_power, STANDBY_power, ISO_power);
+		}
+
+	}
+	if (command == 1) 
+	{
+		int command2 = 0;
+		double double_value1 = 0;
+		double double_value2 = 0;
+		double double_value3 = 0;
+
+		new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(command);
+	
+		std::wcout << "We Need To Get Measuremented Data To Calculate Energy Consumption" << std::endl;
+		std::wcout << "0 : Set this Elevator As Default, This Will User Default Consumption Values" << std::endl;
+		std::wcout << "1 : Input Custom Measured Value" << std::endl;
+
+		std::cin >> command2;
+
+		while (command2 != 0 && command2 != 1)
+		{
+			std::wcout << "PLEASE ENTER 0 OR 1" << std::endl;
+			std::cin >> command2;
+		}
+
+		if (command2) 
+		{
+			std::wcout << "Please Enter Average IDLE Status Power Consumption in Watt" << std::endl;
+
+			std::cin >> double_value1;
+			while (double_value1 < 0)
+			{
+				std::wcout << "PLEASE ENTER POSITIVE VALUE" << std::endl;
+				std::cin >> double_value1;
+			}
+
+			std::wcout << "Please Enter Average Standby power after 5-minutes Power Consumption in Watt" << std::endl;
+
+			std::cin >> double_value2;
+			while (double_value2 < 0)
+			{
+				std::wcout << "PLEASE ENTER POSITIVE VALUE" << std::endl;
+				std::cin >> double_value2;
+			}
+
+			std::wcout << "Please Enter ISO reference cycle energy Power Consumption in Watt Hour" << std::endl;
+
+			std::cin >> double_value3;
+			while (double_value3 < 0)
+			{
+				std::wcout << "PLEASE ENTER POSITIVE VALUE" << std::endl;
+				std::cin >> double_value3;
+			}
+
+			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(double_value1, double_value2, double_value3);
+		}
+	}
+	if (command == 0)
+	{
+		new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(command);
+	}
+
 }
 
 void dt_real_time::Running_Notification(const string& httpResponse)

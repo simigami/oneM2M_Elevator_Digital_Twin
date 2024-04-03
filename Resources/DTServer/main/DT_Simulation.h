@@ -3,6 +3,7 @@
 #include <ShlObj.h>
 #include <commdlg.h>
 #include "socket_oneM2M.h"
+#include "elevatorAlgorithmDefault.h"
 #include "parse_json.h"
 
 using namespace std;
@@ -29,13 +30,19 @@ struct transaction {
 class simElevator {
 
 public:
-    simElevator();
+    simElevator(wstring buliding_name, wstring device_name);
+    elevatorAlgorithmDefault* this_elevator_algorithm;
 
     wstring elevatorName;
 
     double current_velocity;
     double current_altimeter;
     double move_distance;
+
+    vector<vector<double>> energy_consumption_vector = { {0.0, 0.0, 0.0}, };
+
+    int latest_floor = 0;
+    int will_reach_floor = 0;
 
     vector<transaction> current_transaction;
     vector<transaction> previous_transactions;
@@ -104,17 +111,17 @@ public:
     void sortTransactions(simBuilding this_building);
 
     void runningthread();
+    void calculateEnergyConsumption(simBuilding* thisBuilding, UE5Transaction each_transaction);
     void send_data(std::string json_string);
     string set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp);
-    void sendAllBuildingTransactions(simBuilding each_building);
+    void sendAllBuildingTransactions(simBuilding* each_building);
     void giveAllBuildingTransactions();
     void giveElevatorTransaction(simBuilding this_building);
     void reallocateAllElevatorOfThisBuilding(simBuilding this_building, int timestamp);
     double getTimeBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);
+    double getDisatanceBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);
     simElevator* findIDLEElevator(vector<simElevator>* this_building_elevators, transaction this_transaction);
     simElevator* findNearestElevator(simBuilding this_building, vector<simElevator>* this_building_elevators, transaction this_transaction);
-
-    void run2(); // PREVIOUSLY USED
 
     void readFileAndCreateoneM2MResource(wstring TCName);
     void putSimulatedStringTooneM2M(Wparsed_struct parsedStruct);

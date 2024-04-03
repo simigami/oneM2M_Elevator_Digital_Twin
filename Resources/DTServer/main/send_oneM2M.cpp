@@ -983,3 +983,39 @@ void send_oneM2M::grp_create(const Wparsed_struct& data)
 	    this->uri_to_building = this->uri_to_cse + L"/" + ri;
     }
 }
+
+vector<double> send_oneM2M::retrieve_oneM2M_Energy_CIN(Wparsed_struct parseStruct)
+{
+    wstring building_name = parseStruct.building_name;
+    wstring originator_name = L"C" + building_name;
+    wstring device_name = parseStruct.device_name;
+
+    web::http::http_response res;
+    web::json::value response_json;
+    std::wstring con;
+
+    vector<double> energy_info;
+    try
+    {
+        //CIN RETRIEVE
+        res = cin_retrieve_la(originator_name, 2, device_name, device_name + L"_Energy");
+
+        response_json = res.extract_json().get();
+        con = response_json[U("m2m:cin")][U("con")].as_string();
+
+        // con info is [idle] [standby] [iso_reference_cycle_energy]
+        // move this string to vector<double> energy_info
+        wstringstream iss(con);
+        wstring value;
+        while (iss >> value)
+        {
+            energy_info.push_back(stod(value));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Exception Caught : " << e.what() << std::endl;
+    }
+
+    return energy_info;
+}

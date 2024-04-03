@@ -1,6 +1,6 @@
 #include "elevatorAlgorithmMultiple.h"
 
-elevatorAlgorithmMultiple::elevatorAlgorithmMultiple(wstring buildingName, wstring deviceName) : elevatorAlgorithmDefault(buildingName, deviceName)
+elevatorAlgorithmMultiple::elevatorAlgorithmMultiple(wstring buildingName, wstring deviceName, std::chrono::system_clock::time_point this_building_creation_time) : elevatorAlgorithmDefault(buildingName, deviceName, this_building_creation_time)
 {
 
 }
@@ -8,6 +8,11 @@ elevatorAlgorithmMultiple::elevatorAlgorithmMultiple(wstring buildingName, wstri
 elevatorAlgorithmMultiple::~elevatorAlgorithmMultiple()
 {
 
+}
+
+string elevatorAlgorithmMultiple::getJSONString()
+{
+	return elevatorAlgorithmDefault::getJSONString();
 }
 
 void elevatorAlgorithmMultiple::startThread(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy)

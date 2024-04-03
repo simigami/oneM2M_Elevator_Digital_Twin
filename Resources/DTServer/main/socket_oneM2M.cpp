@@ -769,6 +769,41 @@ bool socket_oneM2M::createNewData(Wparsed_struct parseStruct)
     }
 }
 
+bool socket_oneM2M::create_oneM2M_CIN_EnergyConsumption(Wparsed_struct parseStruct)
+{
+    try
+    {
+        send_oneM2M s = this->socket;
+
+        building_name = parseStruct.building_name;
+        device_name = parseStruct.device_name;
+
+        const wstring building_name = this->building_name;
+        const wstring originator_name = L"C" + building_name;
+        const wstring device_name = this->device_name;
+
+        const wstring energy_cnt_name = device_name + L"_Energy";
+
+        s.cnt_create(2, device_name, energy_cnt_name);
+
+        // get idle, standby, iso reference energy to wstring
+        const wstring idle_power = to_wstring(parseStruct.idle_power);
+        const wstring standby_power = to_wstring(parseStruct.standby_power);
+        const wstring iso_reference_cycle_energy = to_wstring(parseStruct.iso_power);
+
+        const wstring payload = idle_power + L" " + standby_power + L" " + iso_reference_cycle_energy;
+
+        s.cin_create(L"power_info", payload, 2, device_name, energy_cnt_name);
+
+        return true;
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Exception caught on socket_oneM2M::create_oneM2M_CNTs: " << e.what() << std::endl;
+        exit(0);
+    }
+}
+
 bool socket_oneM2M::create_oneM2M_CIN_Except_Button_Outside(Wparsed_struct parseStruct)
 {
 	try
@@ -1002,4 +1037,42 @@ vector<vector<wstring>> socket_oneM2M::retrieve_oneM2M_cins(vector<int> floor_in
         std::cerr << "Exception Caught : " << e.what() << std::endl;
 	}
     return ret;
+}
+
+vector<double> socket_oneM2M::retrieve_oneM2M_Energy_CIN(Wparsed_struct parseSstruct)
+{
+    send_oneM2M s = this->socket;
+
+    wstring building_name = this->building_name;
+    wstring originator_name = L"C" + building_name;
+    wstring device_name = this->device_name;
+
+    web::http::http_response res;
+    web::json::value response_json;
+    std::wstring con;
+
+    vector<double> energy_info;
+    try
+    {
+        //CIN RETRIEVE
+        res = s.cin_retrieve_la(originator_name, 2, device_name, device_name + L"_Energy");
+
+        response_json = res.extract_json().get();
+        con = response_json[U("m2m:cin")][U("con")].as_string();
+
+        // con info is [idle] [standby] [iso_reference_cycle_energy]
+        // move this string to vector<double> energy_info
+        wstringstream iss(con);
+        wstring value;
+        while (iss >> value)
+        {
+            energy_info.push_back(stod(value));
+		}
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Exception Caught : " << e.what() << std::endl;
+    }
+
+    return energy_info;
 }

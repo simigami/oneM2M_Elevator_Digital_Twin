@@ -4,8 +4,10 @@
 class elevatorAlgorithmMultiple : public elevatorAlgorithmDefault
 {
 public:
-	elevatorAlgorithmMultiple(wstring buildingName, wstring deviceName);
+	elevatorAlgorithmMultiple(wstring buildingName, wstring deviceName, std::chrono::system_clock::time_point this_building_creation_time);
 	~elevatorAlgorithmMultiple();
+
+	virtual string getJSONString() override;
 
 	virtual void startThread(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy) override;
 	virtual void stopThread() override;
