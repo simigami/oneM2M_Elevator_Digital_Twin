@@ -1,12 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "MyGameInstance.h"
-#include "Kismet/GameplayStatics.h"
-#include "SocketThread.h"
-#include <Ws2tcpip.h>
+#include "oneM2MReceiverThread.h"
 
-UMyGameInstance::UMyGameInstance()
+UMyGameInstance::UMyGameInstance() 
 {
+	
 }
 
 UMyGameInstance::~UMyGameInstance()
@@ -17,21 +16,23 @@ void UMyGameInstance::Init()
 {
 	Super::Init();
 
-	UE_LOG(LogTemp, Warning, TEXT("Init Started"));
-	UE_LOG(LogTemp, Warning, TEXT("Init Ended"));
+	// Spawn thisActor in the world
+	thisActor = GetWorld()->SpawnActor<AAssosiateActor>(AAssosiateActor::StaticClass());
+	
+	// Operation oneM2M Receiver Thread
+	oneM2MReceiverThread = new FoneM2MReceiverThread(this->GetWorld());
 }
 
-void UMyGameInstance::OnStart()
+void UMyGameInstance::Shutdown()
 {
-	Super::OnStart();
-	UE_LOG(LogTemp, Warning, TEXT("On Start Ended"));
-}
-
-bool UMyGameInstance::BuildingNameExists(const FString& BuildingName) const
-{
-	return true;
-}
-
-void UMyGameInstance::GenerateNewLevel(const FString& BuildingName)
-{
+	//if (oneM2MReceiverThread)
+	if(oneM2MReceiverThread)
+	{
+		oneM2MReceiverThread->Stop();
+		oneM2MReceiverThread->Exit();
+		delete oneM2MReceiverThread;
+		oneM2MReceiverThread = nullptr;
+	}
+	
+	Super::Shutdown();
 }

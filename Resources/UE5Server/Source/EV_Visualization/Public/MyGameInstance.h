@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "oneM2MReceiverThread.h"
+#include "AssosiateActor.h"
 #include "Engine/GameInstance.h"
-#pragma comment(lib, "ws2_32.lib")
-#include <WinSock2.h>
 #include "MyGameInstance.generated.h"
 
 /**
@@ -21,18 +21,8 @@ class EV_VISUALIZATION_API UMyGameInstance : public UGameInstance
 	
 public:
 	virtual void Init() override;
-	void OnStart() override;
-	//EV_struct deserialJSON(const FString& ReceivedJSON);
-	
-	//EV_struct struct_EV;
-	TArray<FString> BuildingLevels;
+	virtual void Shutdown() override;
 
-	bool BuildingNameExists(const FString& BuildingName) const;
-
-	void GenerateNewLevel(const FString& BuildingName);
-	
-	SOCKET Socket;
-	WSADATA wsaData;
-
-private:
+	AAssosiateActor* thisActor;
+	FoneM2MReceiverThread* oneM2MReceiverThread;
 };

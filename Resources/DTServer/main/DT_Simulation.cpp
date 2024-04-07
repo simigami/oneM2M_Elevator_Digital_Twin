@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <random>
 #include <cctype>
+#include <mutex>
 
 dt_simulation::dt_simulation()
 {
@@ -646,11 +647,12 @@ string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building,
 void dt_simulation::runningthread() {
     // EACH THREAD WILL RUN sendAllBuildingTransactions FUNCTION FOR EACH BUILDING
     std::vector<std::future<void>> futures;
+    std::mutex mutex;
 
     // EACH THREAD WILL BE DETACHED
     for (auto& building : *buildings) 
     {
-        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, &building));
+        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, &building, &mutex));
     }
 
     // Wait for all threads to finish
@@ -711,7 +713,7 @@ void dt_simulation::send_data(std::string request_content)
 #endif
 }
 
-void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building) {
+void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex) {
     double count = 0.0;
 
     for (const UE5Transaction& each_transaction : *each_building->timestamp_for_each_floor) {
@@ -735,8 +737,17 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building) {
             //std::wcout << L"COUNT SECOND : " << count << std::endl;
         }
 
+        //if (count > 10)
+        //{
+        //    return;
+        //}
+
+        this_mutex->lock();
+
         std::wcout << L"TRANSACTION OCCURRED AT : " << count << " BY BUILDING : " << each_building->buildingName << " EV : " << each_transaction.owner << " DEST FLOOR : " << each_transaction.goTo_floor;
         std::wcout << L" TTA : " << each_transaction.tta << " TTM : " << each_transaction.ttm << " TTD : " << each_transaction.ttd << std::endl;
+
+        this_mutex->unlock();
 
         // get this elevator from this building
         calculateEnergyConsumption(each_building, each_transaction);
@@ -756,7 +767,10 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building) {
 
         // wrap to json string
         thisElevator->this_elevator_algorithm->set_elevator_Status_JSON_STRING();
+
+        this_mutex->lock();
         send_data(thisElevator->this_elevator_algorithm->getJSONString());
+        this_mutex->unlock();
 	}
 }
 
@@ -819,137 +833,45 @@ void dt_simulation::giveAllBuildingTransactions() {
 	}
 }
 
+const int dt_simulation::setSimulationAlgorithm(simBuilding this_building)
+{
+    int algorithm = 0;
+    wcout << L"Please Choose A Simulation Algorithm For Building : " << this_building.buildingName << endl;
+    wcout << L"1. Default Simulation Algorithm" << endl;
+    wcout << L"2. Random Simulation Algorithm" << endl;
+
+    wcin >> algorithm;
+
+    while (algorithm < 1 || algorithm > 2)
+    {
+		wcout << L"Please Choose A Simulation Algorithm For Building : " << this_building.buildingName << endl;
+		wcout << L"1. Default Simulation Algorithm" << endl;
+		wcout << L"2. Random Simulation Algorithm" << endl;
+
+		wcin >> algorithm;
+	}
+    
+	return algorithm;
+}
+
 void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
-    std::random_device rd;
-    std::mt19937 gen(rd());
-
     const auto this_building_transactions = this_building.transactions;
+    const int algorithm_number = setSimulationAlgorithm(this_building);
 
-    if (this_building.transactions->size() == 0) {
+    if (this_building.transactions->size() == 0) 
+    {
         return;
     }
 
     for (auto& each_transaction : *this_building.transactions) {
-        srand(time(NULL));
         const int timestamp_of_this_transaction = each_transaction.timestamp;
 
         // REALLOCATION ALL ELEVATOR POSITIONS TO timestamp_of_this_transaction
         reallocateAllElevatorOfThisBuilding(this_building, timestamp_of_this_transaction);
+        SimulationWithAlgorithm(algorithm_number, &this_building, each_transaction);
 
-        //simElevator* chosen_elevator = findIDLEElevator(this_building.elevators, each_transaction);
-
-        vector<int> IDLE_elevator_indexes;
-        simElevator* chosen_elevator = nullptr;
-
-        for(int i =0 ; i < this_building.elevators->size(); i++)
-		{
-            if (this_building.elevators->at(i).current_transaction.empty())
-            {
-                IDLE_elevator_indexes.push_back(i);
-            }
-		}
-
-        if (IDLE_elevator_indexes.size() > 0)
-        {
-            // Return Random IDLE Elevator
-            const int max_index = IDLE_elevator_indexes.size();
-            std::uniform_int_distribution<int> dist(0, max_index - 1);
-            const int random_index = IDLE_elevator_indexes[dist(gen)];
-            chosen_elevator = &this_building.elevators->at(random_index);
-        }
-
-        else 
-        {
-            const int underGroundFloor = this_building.undergroundFloor;
-            double closest_delta_altimeter = 0.0;
-            int index = -1;
-            // // STEP 1. GET LAST DESTINATION FLOOR of EACH ELEVATOR TRANSACTION
-            for (int i = 0; i < this_building.elevators->size(); i++)
-            {
-                simElevator elevator = this_building.elevators->at(i);
-
-                int last_destination_floors = elevator.current_transaction.back().destination_floors->back();
-                double last_destination_altimeter = 0.0;
-                double transaction_start_altimeter = 0.0;
-                // CHANGE FLOOR TO ALTIMETER By Using each_floor_altimeter
-
-                if (last_destination_floors < 0) {
-                    // UNDERGROUND FLOOR
-                    last_destination_altimeter = this_building.each_floor_altimeter.at(last_destination_floors + underGroundFloor);
-                }
-                else if(last_destination_floors >= 1) {
-                    // ABOVEGROUND FLOOR
-                    last_destination_altimeter = this_building.each_floor_altimeter.at(last_destination_floors + underGroundFloor - 1);
-                }
-
-                if(each_transaction.start_floor < 0)
-				{
-					// UNDERGROUND FLOOR
-                    transaction_start_altimeter  = this_building.each_floor_altimeter.at(each_transaction.start_floor + underGroundFloor);
-				}
-				else if(each_transaction.start_floor >= 1)
-				{
-					// ABOVEGROUND FLOOR
-					transaction_start_altimeter = this_building.each_floor_altimeter.at(each_transaction.start_floor + underGroundFloor - 1);
-				}
-
-                // STEP 2. GET DELTA ALTIMETER OF LAST DESTINATION FLOOR and THIS TRANSACTION FLOOR
-                const double delta_altimeter = abs(last_destination_altimeter - transaction_start_altimeter);
-
-                // STEP 3. GET MINIMUM DELTA ALTIMETER Elevator
-                if (index == -1 || delta_altimeter < closest_delta_altimeter)
-                {
-                    closest_delta_altimeter = delta_altimeter;
-                    index = i;
-                }
-            }
-
-            chosen_elevator = &this_building.elevators->at(index);
-        }
-
-        // CHECK IF CHOSEN ELEVATOR IS NULL
-        each_transaction.transaction_owner = chosen_elevator->elevatorName;
-
-        // STEP 4. CALCULATE END TIME WHEN IT REACHES TO END OF DESTINATION FLOOR
-        // STEP 4-1. FIRST, WE HAVE TO CALCULATE TIME BETWEEN END DEST FLOOR TO TRANSACTION START FLOOR
-        // IF THRERE IS NO PREVIOUS TRANSACTION, START FLOOR WILL BE DEFAULT START FLOOR
-        int current_elevator_floor;
-        if (chosen_elevator->current_transaction.empty() && chosen_elevator->previous_transactions.empty())
-		{
-            current_elevator_floor = this_building.default_start_floor;
-            each_transaction.end_timestamp = 0.0;
-		}
-		else if (chosen_elevator->current_transaction.empty())
-		{
-			current_elevator_floor = chosen_elevator->previous_transactions.back().destination_floors->back();
-            each_transaction.end_timestamp = each_transaction.timestamp;
-		}
-		else
-		{
-            each_transaction.timestamp = chosen_elevator->current_transaction.back().end_timestamp;
-			current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
-            each_transaction.end_timestamp = each_transaction.timestamp;
-		}
-        each_transaction.end_timestamp += getTimeBetweenTwoFloors(this_building, current_elevator_floor, each_transaction.start_floor);
-        each_transaction.end_timestamp += this_building.default_elevator_stop_time;
-
-        // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
-        int start_floor = each_transaction.start_floor;
-        for(const auto& each_destination_floor : *each_transaction.destination_floors)
-		{
-			const double time_to_reach_destination = getTimeBetweenTwoFloors(this_building, start_floor, each_destination_floor);
-			each_transaction.end_timestamp += time_to_reach_destination;
-
-            // ADD STOP TIME
-            each_transaction.end_timestamp += this_building.default_elevator_stop_time;
-
-            // SET START FLOOR TO DESTINATION FLOOR
-            start_floor = each_destination_floor;
-		}
-        each_transaction.end_timestamp += this_building.default_elevator_stop_time;
-        each_transaction.end_timestamp = round(each_transaction.end_timestamp * 10) / 10;
-        
-        chosen_elevator->current_transaction.push_back(each_transaction);
+        //SimulationAlgorithmDefault(&this_building, each_transaction);
+        //SimulationAlgorithmRandom(&this_building, each_transaction);
 	}
 
     reallocateAllElevatorOfThisBuilding(this_building, INT_MAX);
@@ -966,39 +888,19 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
 
 		for(const auto& each_transaction : each_elevator.previous_transactions)
 		{
+            UE5Transaction new_ue5_transaction;
             int goTo_floor = each_transaction.start_floor;
             int timestamp = each_transaction.timestamp;
             
             double tta = 0.0;
             double ttm = 0.0;
             double ttd = 0.0;
+            double time_between_two_floors;
 
-			for(const auto& each_destination_floor : *each_transaction.destination_floors)
-			{
-                const auto time_between_two_floors = getTimeBetweenTwoFloors(this_building, elevator_current_floor, goTo_floor);
-                if (time_between_two_floors > 2 * (this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration)) {
-                    tta = this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration;
-                    tta = round(tta * 10) / 10;
-                    ttd = tta;
-                    ttm = time_between_two_floors - tta - ttd;
-                }
-                else {
-					tta = time_between_two_floors/2;
-                    tta = round(tta * 10) / 10;
-					ttd = tta;
-					ttm = 0.0;
-                }
-                UE5Transaction new_ue5_transaction = { goTo_floor, timestamp , tta, ttm, ttd, each_transaction.transaction_owner };
-                this_building.timestamp_for_each_floor->push_back(new_ue5_transaction);
+            // ADD current floor to this transaction start floor
+            time_between_two_floors = getTimeBetweenTwoFloors(this_building, elevator_current_floor, goTo_floor);
+            elevator_current_floor = goTo_floor;
 
-                timestamp += (int)round(time_between_two_floors);
-                timestamp += this_building.default_elevator_stop_time;
-
-                elevator_current_floor = goTo_floor;
-				goTo_floor = each_destination_floor;
-			}
-
-            const auto time_between_two_floors = getTimeBetweenTwoFloors(this_building, elevator_current_floor, goTo_floor);
             if (time_between_two_floors > 2 * (this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration)) {
                 tta = this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration;
                 tta = round(tta * 10) / 10;
@@ -1011,10 +913,36 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
                 ttd = tta;
                 ttm = 0.0;
             }
-
-            UE5Transaction new_ue5_transaction = { goTo_floor, timestamp , tta, ttm, ttd, each_transaction.transaction_owner };
-
+            new_ue5_transaction = { goTo_floor, timestamp , tta, ttm, ttd, each_transaction.transaction_owner };
             this_building.timestamp_for_each_floor->push_back(new_ue5_transaction);
+            timestamp += (int)round(time_between_two_floors);
+            timestamp += this_building.default_elevator_stop_time;
+
+			for(const auto& each_destination_floor : *each_transaction.destination_floors)
+			{
+                goTo_floor = each_destination_floor;
+
+                time_between_two_floors = getTimeBetweenTwoFloors(this_building, elevator_current_floor, goTo_floor);
+                if (time_between_two_floors > 2 * (this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration)) {
+                    tta = this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration;
+                    tta = round(tta * 10) / 10;
+                    ttd = tta;
+                    ttm = time_between_two_floors - tta - ttd;
+                }
+                else {
+					tta = time_between_two_floors/2;
+                    tta = round(tta * 10) / 10;
+					ttd = tta;
+					ttm = 0.0;
+                }
+                new_ue5_transaction = { goTo_floor, timestamp , tta, ttm, ttd, each_transaction.transaction_owner };
+                this_building.timestamp_for_each_floor->push_back(new_ue5_transaction);
+
+                timestamp += (int)round(time_between_two_floors);
+                timestamp += this_building.default_elevator_stop_time;
+
+                elevator_current_floor = goTo_floor;
+			}
 		}
     }
 
@@ -1069,6 +997,222 @@ void dt_simulation::reallocateAllElevatorOfThisBuilding(simBuilding this_buildin
 			elevator.current_transaction.erase(elevator.current_transaction.begin(), current_transaction_iterator);
         }
     }
+}
+
+void dt_simulation::SimulationWithAlgorithm(const int alg_num, simBuilding* this_building, transaction tran)
+{
+    switch (alg_num)
+    {
+	case 1:
+		SimulationAlgorithmDefault(this_building, tran);
+		break;
+	case 2:
+		SimulationAlgorithmRandom(this_building, tran);
+		break;
+	default:
+		SimulationAlgorithmDefault(this_building, tran);
+		break;
+	}
+}
+
+void dt_simulation::SimulationAlgorithmDefault(simBuilding* this_building, transaction tran)
+{
+    srand(time(NULL));
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    vector<int> IDLE_elevator_indexes;
+    simElevator* chosen_elevator = nullptr;
+
+    for (int i = 0; i < this_building->elevators->size(); i++)
+    {
+        if (this_building->elevators->at(i).current_transaction.empty())
+        {
+            IDLE_elevator_indexes.push_back(i);
+        }
+    }
+
+    if (IDLE_elevator_indexes.size() > 0)
+    {
+        // Return Random IDLE Elevator
+        const int max_index = IDLE_elevator_indexes.size();
+        std::uniform_int_distribution<int> dist(0, max_index - 1);
+        const int random_index = IDLE_elevator_indexes[dist(gen)];
+        chosen_elevator = &this_building->elevators->at(random_index);
+    }
+
+    else
+    {
+        const int underGroundFloor = this_building->undergroundFloor;
+        double closest_delta_altimeter = 0.0;
+        int index = -1;
+        // // STEP 1. GET LAST DESTINATION FLOOR of EACH ELEVATOR TRANSACTION
+        for (int i = 0; i < this_building->elevators->size(); i++)
+        {
+            simElevator elevator = this_building->elevators->at(i);
+
+            int last_destination_floors = elevator.current_transaction.back().destination_floors->back();
+            double last_destination_altimeter = 0.0;
+            double transaction_start_altimeter = 0.0;
+            // CHANGE FLOOR TO ALTIMETER By Using each_floor_altimeter
+
+            if (last_destination_floors < 0) {
+                // UNDERGROUND FLOOR
+                last_destination_altimeter = this_building->each_floor_altimeter.at(last_destination_floors + underGroundFloor);
+            }
+            else if (last_destination_floors >= 1) {
+                // ABOVEGROUND FLOOR
+                last_destination_altimeter = this_building->each_floor_altimeter.at(last_destination_floors + underGroundFloor - 1);
+            }
+
+            if (tran.start_floor < 0)
+            {
+                // UNDERGROUND FLOOR
+                transaction_start_altimeter = this_building->each_floor_altimeter.at(tran.start_floor + underGroundFloor);
+            }
+            else if (tran.start_floor >= 1)
+            {
+                // ABOVEGROUND FLOOR
+                transaction_start_altimeter = this_building->each_floor_altimeter.at(tran.start_floor + underGroundFloor - 1);
+            }
+
+            // STEP 2. GET DELTA ALTIMETER OF LAST DESTINATION FLOOR and THIS TRANSACTION FLOOR
+            const double delta_altimeter = abs(last_destination_altimeter - transaction_start_altimeter);
+
+            // STEP 3. GET MINIMUM DELTA ALTIMETER Elevator
+            if (index == -1 || delta_altimeter < closest_delta_altimeter)
+            {
+                closest_delta_altimeter = delta_altimeter;
+                index = i;
+            }
+        }
+
+        chosen_elevator = &this_building->elevators->at(index);
+    }
+
+    // CHECK IF CHOSEN ELEVATOR IS NULL
+    tran.transaction_owner = chosen_elevator->elevatorName;
+
+    // STEP 4. CALCULATE END TIME WHEN IT REACHES TO END OF DESTINATION FLOOR
+    // STEP 4-1. FIRST, WE HAVE TO CALCULATE TIME BETWEEN END DEST FLOOR TO TRANSACTION START FLOOR
+    // IF THRERE IS NO PREVIOUS TRANSACTION, START FLOOR WILL BE DEFAULT START FLOOR
+    int current_elevator_floor;
+    if (chosen_elevator->current_transaction.empty() && chosen_elevator->previous_transactions.empty())
+    {
+        current_elevator_floor = this_building->default_start_floor;
+        tran.end_timestamp = 0.0;
+    }
+    else if (chosen_elevator->current_transaction.empty())
+    {
+        current_elevator_floor = chosen_elevator->previous_transactions.back().destination_floors->back();
+        tran.end_timestamp = tran.timestamp;
+    }
+    else
+    {
+        tran.timestamp = chosen_elevator->current_transaction.back().end_timestamp;
+        current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
+        tran.end_timestamp = tran.timestamp;
+    }
+    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, current_elevator_floor, tran.start_floor);
+    tran.end_timestamp += this_building->default_elevator_stop_time;
+
+    // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
+    int start_floor = tran.start_floor;
+    for (const auto& each_destination_floor : *tran.destination_floors)
+    {
+        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, start_floor, each_destination_floor);
+        tran.end_timestamp += time_to_reach_destination;
+
+        // ADD STOP TIME
+        tran.end_timestamp += this_building->default_elevator_stop_time;
+
+        // SET START FLOOR TO DESTINATION FLOOR
+        start_floor = each_destination_floor;
+    }
+    tran.end_timestamp += this_building->default_elevator_stop_time;
+    tran.end_timestamp = round(tran.end_timestamp * 10) / 10;
+
+    chosen_elevator->current_transaction.push_back(tran);
+}
+void dt_simulation::SimulationAlgorithmRandom(simBuilding* this_building, transaction tran)
+{
+    srand(time(NULL));
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    vector<int> IDLE_elevator_indexes;
+    simElevator* chosen_elevator = nullptr;
+
+    for (int i = 0; i < this_building->elevators->size(); i++)
+    {
+        if (this_building->elevators->at(i).current_transaction.empty())
+        {
+            IDLE_elevator_indexes.push_back(i);
+        }
+    }
+
+    if (IDLE_elevator_indexes.size() > 0)
+    {
+        // Return Random IDLE Elevator
+        const int max_index = IDLE_elevator_indexes.size();
+        std::uniform_int_distribution<int> dist(0, max_index - 1);
+        const int random_index = IDLE_elevator_indexes[dist(gen)];
+        chosen_elevator = &this_building->elevators->at(random_index);
+    }
+    else
+    {
+        const int elevator_count = this_building->elevators->size();
+        std::uniform_int_distribution<int> dist(0, elevator_count - 1);
+        const int random_index = dist(gen);
+
+        chosen_elevator = &this_building->elevators->at(random_index);
+    }
+
+    // CHECK IF CHOSEN ELEVATOR IS NULL
+    tran.transaction_owner = chosen_elevator->elevatorName;
+
+    // STEP 4. CALCULATE END TIME WHEN IT REACHES TO END OF DESTINATION FLOOR
+    // STEP 4-1. FIRST, WE HAVE TO CALCULATE TIME BETWEEN END DEST FLOOR TO TRANSACTION START FLOOR
+    // IF THRERE IS NO PREVIOUS TRANSACTION, START FLOOR WILL BE DEFAULT START FLOOR
+    int current_elevator_floor;
+    if (chosen_elevator->current_transaction.empty() && chosen_elevator->previous_transactions.empty())
+    {
+        current_elevator_floor = this_building->default_start_floor;
+        tran.end_timestamp = 0.0;
+    }
+    else if (chosen_elevator->current_transaction.empty())
+    {
+        current_elevator_floor = chosen_elevator->previous_transactions.back().destination_floors->back();
+        tran.end_timestamp = tran.timestamp;
+    }
+    else
+    {
+        tran.timestamp = chosen_elevator->current_transaction.back().end_timestamp;
+        current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
+        tran.end_timestamp = tran.timestamp;
+    }
+    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, current_elevator_floor, tran.start_floor);
+    tran.end_timestamp += this_building->default_elevator_stop_time;
+
+    // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
+    int start_floor = tran.start_floor;
+    for (const auto& each_destination_floor : *tran.destination_floors)
+    {
+        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, start_floor, each_destination_floor);
+        tran.end_timestamp += time_to_reach_destination;
+
+        // ADD STOP TIME
+        tran.end_timestamp += this_building->default_elevator_stop_time;
+
+        // SET START FLOOR TO DESTINATION FLOOR
+        start_floor = each_destination_floor;
+    }
+    tran.end_timestamp += this_building->default_elevator_stop_time;
+    tran.end_timestamp = round(tran.end_timestamp * 10) / 10;
+
+    chosen_elevator->current_transaction.push_back(tran);
 }
 
 double dt_simulation::getDisatanceBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor)

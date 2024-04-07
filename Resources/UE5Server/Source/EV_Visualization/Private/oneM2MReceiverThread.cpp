@@ -1,56 +1,47 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "SocketThread.h"
-#include <Windows.h>
-
-#include "EachElevatorActor.h"
+#include "oneM2MReceiverThread.h"
+#include "DataDecisionActor.h"
 #include "EngineUtils.h"
+#include <Windows.h>
+#include <Ws2tcpip.h>
 
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
-#define TIMEOUT_MS 3000 // 타임아웃 시간 (3초)
 
-FSocketThread::FSocketThread(AMyActor* Actor) : ThisThreadActor(Actor)
+FoneM2MReceiverThread::FoneM2MReceiverThread(UWorld* World) : thisWorld(World)
 {
 	Thread = FRunnableThread::Create(this, TEXT("TEST"));
 }
 
-FSocketThread::~FSocketThread()
+FoneM2MReceiverThread::~FoneM2MReceiverThread()
 {
-	if(!bIsFinished)
-	{
-		closesocket(acceptSocket);
-		closesocket(clientSocket);
-		bIsFinished = true;
-	}
-
 	if (clientSocket != INVALID_SOCKET)
 	{
 		closesocket(clientSocket);
 		clientSocket = INVALID_SOCKET;
 	}
-	// 스레드 종료
+
+	if (acceptSocket != INVALID_SOCKET)
+	{
+		closesocket(acceptSocket);
+		acceptSocket = INVALID_SOCKET;
+	}
+	
 	if (Thread)
 	{
-		//PlatformProcess::Sleep(3.0f); 
-		Thread->WaitForCompletion();
 		Thread->Kill();
 		delete Thread;
 	}
 }
 
-bool FSocketThread::Init()
+bool FoneM2MReceiverThread::Init()
 {
 	bIsFinished = false;
 	UE_LOG(LogNet, Warning, TEXT("Thread has been initialized"));
 	return true;
 }
 
-bool FSocketThread::BuildingNameExists(const FString& BuildingName)
-{
-	return BuildingLevels.Contains(BuildingName);
-}
-
-uint32 FSocketThread::Run()
+uint32 FoneM2MReceiverThread::Run()
 {
 	struct sockaddr_in serverAddr;
 
@@ -99,19 +90,27 @@ uint32 FSocketThread::Run()
 			FD_SET(clientSocket, &readSet);
 
 			// SELECT를 이용하여 소켓을 10초 동안 LISTEN 상태로 유지
-			result = select(0, &readSet, NULL, NULL, NULL);
+			struct timeval timeout;
+			timeout.tv_sec = 10; // 10 seconds
+			timeout.tv_usec = 0; // No microseconds
+			
+			result = select(0, &readSet, NULL, NULL, &timeout);
 
 			if(result == SOCKET_ERROR)
 			{
 				UE_LOG(LogTemp, Error, TEXT("ERROR IN SELECT CREATION..."));
 				break;
 			}
+			else if(result == 0)
+			{
+				UE_LOG(LogTemp, Log, TEXT("No connection request received"));
+				FPlatformProcess::Sleep(0.1f); // 0.1초 대기
+				break;
+			}
+			
 			// JSON 수집 시 데이터 처리
 			else
 			{
-				FCriticalSection Mutex;
-				//FScopeLock ScopeLock(&Mutex);
-				
 				UE_LOG(LogTemp, Log, TEXT("Connection request received, accepting connection"));
 				
 				sockaddr_in clientSockInfo;
@@ -132,6 +131,8 @@ uint32 FSocketThread::Run()
 				
 				else
 				{
+					FCriticalSection Mutex;
+					FScopeLock ScopeLock(&Mutex);
 					// While loop: 클라이언트의 메세지를 받아서 출력 후 클라이언트에 다시 보냅니다.
 					enum eBufSize { BUF_SIZE = 4096 };
 					char buf[BUF_SIZE];
@@ -151,26 +152,13 @@ uint32 FSocketThread::Run()
 					}
 
 					FString ReceivedJsonString = ANSI_TO_TCHAR(buf);
+					data = deserialJSON(ReceivedJsonString);
+					data.map_path = FPaths::Combine(FPaths::ProjectContentDir(), "EV_VIS/Maps/", data.building_name + ".umap");
 
-					// Wait Until bIsFunctionRunning is false
-					while(ThisThreadActor->bIsFunctionRunning)
-					{
-						// LOG
-						UE_LOG(LogTemp, Log, TEXT("Waiting for Blueprint Function to Finish\n"));
-						FPlatformProcess::Sleep(0.1f);
-					}
-					
-					deserialJSON(ReceivedJsonString, ThisThreadActor->status);
-
-					// CALL MAIN THREAD
-					ThisThreadActor->spawnEachElevatorActor(ThisThreadActor->status.device_name, ThisThreadActor->status);
-					
-					// LOG Received goToFLoor
-					UE_LOG(LogTemp, Log, TEXT("Received goToFLoor: %d"), ThisThreadActor->status.goToFloor);
-					FPlatformProcess::Sleep(0.1f);
+					UE_LOG(LogTemp, Error, TEXT("Receive Data From Building : %s > Elevator : %s\n"), *data.building_name, *data.device_name);
 					
 					const char* responseMessage;
-					if(ThisThreadActor->status.building_name == "")
+					if(data.building_name == "")
 					{
 						responseMessage = "BuildingDataNULL\n"; // Response message to send
 					}
@@ -178,7 +166,26 @@ uint32 FSocketThread::Run()
 					{
 						responseMessage = "Received\n"; // Response message to send
 					}
-						
+
+					//Find ADataDecisionActor Based on buliding_name using thisWorld, and Subclass
+					auto SetDecisionStructLambda = [](UWorld* World, FDecisionStruct& Data)
+					{
+						for (TActorIterator<ADataDecisionActor> ActorItr(World); ActorItr; ++ActorItr)
+						{
+							if (ActorItr->building_name == Data.building_name + "_" + Data.device_name)
+							{
+								// Set Decision Struct
+								ActorItr->setDecisionStruct(Data);
+								break;
+							}
+						}
+					};
+					
+					AsyncTask(ENamedThreads::GameThread, [this, SetDecisionStructLambda]()
+					{
+						SetDecisionStructLambda(this->thisWorld, this->data);
+					});
+
 					int bytesSent = send(acceptSocket, responseMessage, strlen(responseMessage), 0);
 					if (bytesSent == SOCKET_ERROR)
 					{
@@ -190,33 +197,21 @@ uint32 FSocketThread::Run()
 						UE_LOG(LogTemp, Log, TEXT("Response sent to server: %s\n"), ANSI_TO_TCHAR(responseMessage));
 					}
 					closesocket(acceptSocket);
+					FPlatformProcess::Sleep(0.1f); // 0.1초 대기
 				}
-				Mutex.Unlock();
 			}
 		}
-
 		FPlatformProcess::Sleep(0.1f); // 0.1초 대기
 	}
+	
 	closesocket(clientSocket);
 	return 0;
 }
 
-// Called by Thread->Kill() in Destroyer
-void FSocketThread::Stop()
+FDecisionStruct FoneM2MReceiverThread::deserialJSON(const FString& ReceivedJSON)
 {
-	UE_LOG(LogNet, Warning, TEXT("Thread is being Stop"));
-	bIsFinished = true;
-
-	// Erase All Actors That has been spawned from this->myActor
-	for (TActorIterator<AEachElevatorActor> ActorItr(ThisThreadActor->GetWorld()); ActorItr; ++ActorItr)
-	{
-		AEachElevatorActor* ThisActor = *ActorItr;
-		ThisActor->Destroy();
-	}
-}
-
-void FSocketThread::deserialJSON(const FString& ReceivedJSON, FStatus& stats)
-{
+	FDecisionStruct newStruct;
+	
 	// Deserialize the JSON string 1. Make Reader
 	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(ReceivedJSON);
 	
@@ -226,28 +221,29 @@ void FSocketThread::deserialJSON(const FString& ReceivedJSON, FStatus& stats)
 	// Deserialize the JSON string 3. Do Deserialization
 	if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
 	{
-		if(stats.underground_floor == 0)
-		{
-			stats.underground_floor = JsonObject->GetIntegerField(TEXT("underground_floor"));
-			stats.ground_floor = JsonObject->GetIntegerField(TEXT("ground_floor"));
-		}
+		newStruct.building_name = JsonObject->GetStringField(TEXT("building_name"));
+		newStruct.device_name = JsonObject->GetStringField(TEXT("device_name"));
 
-		if(stats.acceleration == 0)
-		{
-			stats.acceleration = JsonObject->GetNumberField(TEXT("acceleration"));
-			stats.max_velocity = JsonObject->GetNumberField(TEXT("max_velocity"));
-		}
-		
-		stats.building_name = JsonObject->GetStringField(TEXT("building_name"));
-		stats.device_name = JsonObject->GetStringField(TEXT("device_name"));
-		
-		stats.goToFloor = JsonObject->GetIntegerField(TEXT("goToFloor"));
+		// Set Map Path using content dir + building name + device name + umap
+		newStruct.map_path = FPaths::Combine(FPaths::ProjectContentDir(), newStruct.building_name, "EV_VIS/Maps/", newStruct.building_name + ".umap");
 
-		stats.tta = JsonObject->GetNumberField(TEXT("tta"));
-		stats.ttm = JsonObject->GetNumberField(TEXT("ttm"));
-		stats.ttd = JsonObject->GetNumberField(TEXT("ttd"));
+		newStruct.goToFloor = JsonObject->GetIntegerField(TEXT("goToFloor"));
+
+		newStruct.erd = JsonObject->GetNumberField(TEXT("Erd"));
+		newStruct.esd = JsonObject->GetNumberField(TEXT("Esd"));
+		newStruct.ed = JsonObject->GetNumberField(TEXT("Ed"));
+
+		newStruct.tta = JsonObject->GetNumberField(TEXT("tta"));
+		newStruct.ttm = JsonObject->GetNumberField(TEXT("ttm"));
+		newStruct.ttd = JsonObject->GetNumberField(TEXT("ttd"));
 		
-		if(stats.each_floor_altimeter.IsEmpty())
+		newStruct.underground_floor = JsonObject->GetIntegerField(TEXT("underground_floor"));
+		newStruct.ground_floor = JsonObject->GetIntegerField(TEXT("ground_floor"));
+		
+		newStruct.acceleration = JsonObject->GetNumberField(TEXT("acceleration"));
+		newStruct.max_velocity = JsonObject->GetNumberField(TEXT("max_velocity"));
+		
+		if(newStruct.each_floor_altimeter.IsEmpty())
 		{
 			TArray<TSharedPtr<FJsonValue>> temp = JsonObject->GetArrayField(TEXT("each_floor_altimeter"));
 			for (const TSharedPtr<FJsonValue>& JsonValue : temp)
@@ -257,7 +253,7 @@ void FSocketThread::deserialJSON(const FString& ReceivedJSON, FStatus& stats)
 				{
 					// Get the number value as a float and add it to the DecimalsArray
 					float DecimalValue = JsonValue->AsNumber();
-					stats.each_floor_altimeter.Add(DecimalValue);
+					newStruct.each_floor_altimeter.Add(DecimalValue);
 				}
 			}
 		}
@@ -266,10 +262,23 @@ void FSocketThread::deserialJSON(const FString& ReceivedJSON, FStatus& stats)
 	{
 		UE_LOG(LogTemp, Error, TEXT("Failed to deserialize JSON data"));
 	}
+
+	return newStruct;
 }
 
+void FoneM2MReceiverThread::Stop()
+{
+	FRunnable::Stop();
 
-void FSocketThread::Exit()
+	if(!bIsFinished)
+	{
+		closesocket(acceptSocket);
+		closesocket(clientSocket);
+		bIsFinished = true;
+	}
+}
+
+void FoneM2MReceiverThread::Exit()
 {
 	FRunnable::Exit();
 }

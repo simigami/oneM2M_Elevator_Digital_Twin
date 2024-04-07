@@ -114,10 +114,17 @@ public:
     void calculateEnergyConsumption(simBuilding* thisBuilding, UE5Transaction each_transaction);
     void send_data(std::string json_string);
     string set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp);
-    void sendAllBuildingTransactions(simBuilding* each_building);
+    void sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex);
     void giveAllBuildingTransactions();
     void giveElevatorTransaction(simBuilding this_building);
+
     void reallocateAllElevatorOfThisBuilding(simBuilding this_building, int timestamp);
+    const int setSimulationAlgorithm(simBuilding this_building);
+    void SimulationWithAlgorithm(const int alg_num, simBuilding* this_building, transaction tran);
+    void SimulationAlgorithmDefault(simBuilding* this_building, transaction tran);
+    void SimulationAlgorithmRandom(simBuilding* this_building, transaction tran);
+
+
     double getTimeBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);
     double getDisatanceBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);
     simElevator* findIDLEElevator(vector<simElevator>* this_building_elevators, transaction this_transaction);

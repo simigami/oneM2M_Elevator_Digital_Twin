@@ -1,121 +1,146 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "MyActor.h"
-#include "EachElevatorActor.h"
-#include "SocketThread.h"
-#include <Windows.h>
-#include "Kismet/KismetSystemLibrary.h"
+#include "DataDecisionActor.h"
+
 #include "Kismet/GameplayStatics.h"
+
 // Sets default values
-AMyActor::AMyActor()
+ADataDecisionActor::ADataDecisionActor()
 {
-	InitStatus();
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+
 }
 
 // Called when the game starts or when spawned
-void AMyActor::BeginPlay()
+void ADataDecisionActor::BeginPlay()
 {
 	Super::BeginPlay();
-}
-
-void AMyActor::BeginDestroy()
-{
-	if(ReceiveThread)
-	{
-		delete ReceiveThread;
-		ReceiveThread = nullptr;
-	}
-	Super::BeginDestroy();
+	
 }
 
 // Called every frame
-void AMyActor::Tick(float DeltaTime)
+void ADataDecisionActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-}
 
-bool AMyActor::BuildingNameExists(const FString& BuildingName)
-{
-	return BuildingLevels.Contains(BuildingName);
-}
-
-void AMyActor::RunSocket()
-{
-	ReceiveThread = new FSocketThread(this);
-}
-
-void AMyActor::printAllStats()
-{
-	/*
-	UE_LOG(LogTemp, Log, TEXT("Building Name: %s"), *status.building_name);
-	UE_LOG(LogTemp, Log, TEXT("Device Name: %s"), *status.device_name);
-	UE_LOG(LogTemp, Log, TEXT("Ground Floor: %d"), status.ground_floor);
-	UE_LOG(LogTemp, Log, TEXT("Underground Floor: %d"), status.underground_floor);
-	UE_LOG(LogTemp, Log, TEXT("Go To Floor: %d"), status.goToFloor);
-	UE_LOG(LogTemp, Log, TEXT("Acceleration: %.2f"), status.acceleration);
-	UE_LOG(LogTemp, Log, TEXT("Max Velocity: %.2f"), status.max_velocity);
-	UE_LOG(LogTemp, Log, TEXT("TTA: %.2f"), status.tta);
-	UE_LOG(LogTemp, Log, TEXT("TTM: %.2f"), status.ttm);
-	UE_LOG(LogTemp, Log, TEXT("TTD: %.2f"), status.ttd);
-	*/
-}
-
-void AMyActor::spawnEachElevatorActor(FString ThisElevatorName, FStatus this_status)
-{
-	// Get All Class of Actor EachElevator Actor
-	for(const auto& elem : EachsubElevatorActorClass)
+	// Check if new decision struct is changed
+	if(isDecisionStructChanged())
 	{
-		AEachElevatorActor* Instance = elem.GetDefaultObject();
+		// if changed, set latest decision struct to decision struct
+		setLatestDecisionStruct(this->decisionStruct);
+		// Execute Blueprint Implementable Function
+		Execute(this->decisionStruct);
+	}
+}
 
-		if(Instance->ElevatorName == ThisElevatorName && Instance->BuildingName == this_status.building_name)
+FDecisionStruct ADataDecisionActor::deserialJSON(const FString& ReceivedJSON)
+{
+	FDecisionStruct newStruct;
+	
+	// Deserialize the JSON string 1. Make Reader
+	TSharedRef<TJsonReader<TCHAR>> JsonReader = TJsonReaderFactory<TCHAR>::Create(ReceivedJSON);
+	
+	// Deserialize the JSON string 2. Make Object That Saves Deserialized JSON
+	TSharedPtr<FJsonObject> JsonObject = MakeShareable(new FJsonObject());
+
+	// Deserialize the JSON string 3. Do Deserialization
+	if (FJsonSerializer::Deserialize(JsonReader, JsonObject))
+	{
+		newStruct.building_name = JsonObject->GetStringField(TEXT("building_name"));
+		newStruct.device_name = JsonObject->GetStringField(TEXT("device_name"));
+
+		// Set Map Path using content dir + building name + device name + umap
+		newStruct.map_path = FPaths::Combine(FPaths::ProjectContentDir(), newStruct.building_name, "EV_VIS/Maps/", newStruct.building_name + ".umap");
+
+		newStruct.goToFloor = JsonObject->GetIntegerField(TEXT("goToFloor"));
+
+		newStruct.tta = JsonObject->GetNumberField(TEXT("tta"));
+		newStruct.ttm = JsonObject->GetNumberField(TEXT("ttm"));
+		newStruct.ttd = JsonObject->GetNumberField(TEXT("ttd"));
+		
+		newStruct.underground_floor = JsonObject->GetIntegerField(TEXT("underground_floor"));
+		newStruct.ground_floor = JsonObject->GetIntegerField(TEXT("ground_floor"));
+		
+		newStruct.acceleration = JsonObject->GetNumberField(TEXT("acceleration"));
+		newStruct.max_velocity = JsonObject->GetNumberField(TEXT("max_velocity"));
+		
+		if(newStruct.each_floor_altimeter.IsEmpty())
 		{
-			// Set this Class
-			Instance->SetThisElevatorStatus(this_status);
-			return;
+			TArray<TSharedPtr<FJsonValue>> temp = JsonObject->GetArrayField(TEXT("each_floor_altimeter"));
+			for (const TSharedPtr<FJsonValue>& JsonValue : temp)
+			{
+				// Ensure the JsonValue is valid and its type is number
+				if (JsonValue.IsValid() && JsonValue->Type == EJson::Number)
+				{
+					// Get the number value as a float and add it to the DecimalsArray
+					float DecimalValue = JsonValue->AsNumber();
+					newStruct.each_floor_altimeter.Add(DecimalValue);
+				}
+			}
 		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Error, TEXT("Failed to deserialize JSON data"));
+	}
 
-	// If not found, make new instance to spawn
-	AEachElevatorActor* NewInstance = GetWorld()->SpawnActor<AEachElevatorActor>(AEachElevatorActor::StaticClass(), FVector(0, 0, 0), FRotator(0, 0, 0));
-	NewInstance->ElevatorName = ThisElevatorName;
-	NewInstance->BuildingName = this_status.building_name;
+	return newStruct;
+}
+
+void ADataDecisionActor::InitDecisionStruct()
+{
+	this->decisionStruct = FDecisionStruct();
+}
+
+void ADataDecisionActor::setLatestDecisionStruct(FDecisionStruct& thisStruct)
+{
+	this->latestDecisionStruct = thisStruct;
+}
+
+void ADataDecisionActor::setDecisionStruct(FDecisionStruct& thisStruct)
+{
+	this->decisionStruct = thisStruct;
+}
+
+FDecisionStruct ADataDecisionActor::getDecisionStruct()
+{
+	return this->decisionStruct;
+}
+
+bool ADataDecisionActor::isDecisionStructChanged()
+{
+	// if decisionStruct is not empty, and value changed from latest decisionStruct
+
+	// if building name empty = false
+	if(decisionStruct.building_name.IsEmpty())
+	{
+		return false;
+	}
 	
-	NewInstance->SetThisElevatorStatus(this_status);
-	return;
-}
-
-const UObject* AMyActor::GetWorldContextObjectFromPath(const FString& MapPath)
-{
-	// Load the level object from the provided path
-	ULevel* Level = Cast<ULevel>(StaticLoadObject(ULevel::StaticClass(), nullptr, *MapPath));
-    
-	// Check if the level was loaded successfully
-	if(Level)
+	// if building name == latest decisionStruct building name  -> Check goTo Floor
+	if(decisionStruct.building_name == latestDecisionStruct.building_name)
 	{
-		// Get the world context object from the level
-		return Level->GetWorld();
+		// if goToFloor == latest decisionStruct goToFloor -> return false
+		if(decisionStruct.goToFloor == latestDecisionStruct.goToFloor)
+		{
+			return false;
+		}
+		else
+		{
+			// if goToFloor != latest decisionStruct goToFloor -> return true
+			return true;
+		}
 	}
-    
-	// If the level was not loaded successfully, return nullptr
-	return nullptr;
-}
-
-void AMyActor::ChangeEachFloorAltimeterToABS()
-{
-	// Get Lowest Altitude
-	double lowest_alt = this->status.each_floor_altimeter[0];
-
-	// Set Each Floor Altimeter to ABS
-	for(int i = 0; i < this->status.each_floor_altimeter.Num(); i++)
+	else
 	{
-		this->status.each_floor_altimeter[i] = FMath::Abs(this->status.each_floor_altimeter[i] - lowest_alt);
+		// if building name != latest decisionStruct building name -> return true
+		return true;
 	}
 }
 
-TArray<double> AMyActor::getEachFloorTimeLines(FStatus this_status, const int current_floor_index, const int goTo_floor_index)
+TArray<double> ADataDecisionActor::getEachFloorTimeLines(FDecisionStruct this_status, const int current_floor_index, const int goTo_floor_index)
 {
 	FCriticalSection Mutex;
 	FScopeLock ScopeLock(&Mutex);
@@ -134,7 +159,7 @@ TArray<double> AMyActor::getEachFloorTimeLines(FStatus this_status, const int cu
 	const double altimeter_diff = FMath::Abs(eachfloorAlt[goTo_floor_index] - eachfloorAlt[current_floor_index]);
 
 	const double tta = this_status.tta;
-	const double ttm = altimeter_diff - this_status.tta * max_velocity > 0 ? altimeter_diff - this_status.tta * max_velocity : 0.0;
+	const double ttm = altimeter_diff - this_status.tta * max_velocity > 0 ? this_status.ttm : 0.0;
 	const  double ttd = this_status.ttd;
 
 	if(current_floor_index == goTo_floor_index)
@@ -231,7 +256,7 @@ TArray<double> AMyActor::getEachFloorTimeLines(FStatus this_status, const int cu
 			// LOG
 			if(current_floor_index == 13 and goTo_floor_index == 3)
 			{
-				UE_LOG(LogTemp, Log, TEXT("Distance: %f"), distance);
+				//UE_LOG(LogTemp, Log, TEXT("Distance: %f"), distance);
 			}
 			// Compare distance to each_alt_diff
 			if(each_alt_diff < distance)
@@ -281,7 +306,7 @@ TArray<double> AMyActor::getEachFloorTimeLines(FStatus this_status, const int cu
 
 	// LOG Elevator name
 	UE_LOG(LogTemp, Log, TEXT("Elevator Name: %s, Start Floor Index %d -> End Floor Index %d / tta : %f ttm : %f, ttd : %f"), *FString(this_status.device_name), current_floor_index, goTo_floor_index, tta, ttm, ttd);
-		
+	
 	// LOG All elem of eachFloorTime
 	const int count = current_floor_index < goTo_floor_index ? 1 : -1;
 	int start = current_floor_index;
@@ -290,37 +315,6 @@ TArray<double> AMyActor::getEachFloorTimeLines(FStatus this_status, const int cu
 		UE_LOG(LogTemp, Log, TEXT("Each Floor Time of Elevator [%d -> %d] = %f"), start, start+count, elem);
 		start += count;
 	}
+	
 	return eachFloorTime;
-}
-
-void AMyActor::SetMapPath()
-{
-	this->status.map_path = FPaths::ProjectContentDir() + "EV_VIS/Maps/" + this->status.building_name + ".umap";
-}
-
-bool AMyActor::CheckAndAppendMapList()
-{
-	if(this->loaded_building_list.Find(this->status.building_name) != nullptr)
-	{
-		return false;
-	}
-	else
-	{
-		this->loaded_building_list.Add(this->status.building_name, true);
-		return true;
-	}
-}
-
-void AMyActor::emptyMapList()
-{
-	this->loaded_building_list.Empty();
-}
-
-void AMyActor::FilpFlopMapList(FString building_name)
-{
-	// FIND VALUE OF BULIDGING NAME
-	bool* value = this->loaded_building_list.Find(building_name);
-
-	// CHANGE VALUE
-	*value = !(*value);
 }

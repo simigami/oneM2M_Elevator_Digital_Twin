@@ -85,9 +85,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void spawnEachElevatorActor(FString ThisElevatorName, FStatus this_status);
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "GetStats")
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "GetStats")
 	void Execute();
-	virtual void Execute_Implementation();
 
 	UFUNCTION(BlueprintCallable)
 	const UObject* GetWorldContextObjectFromPath(const FString& MapPath);
