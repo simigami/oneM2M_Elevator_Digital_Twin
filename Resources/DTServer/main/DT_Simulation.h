@@ -1,5 +1,6 @@
 #pragma once
 #include <boost/asio.hpp>
+#include <set>
 #include <ShlObj.h>
 #include <commdlg.h>
 #include "socket_oneM2M.h"
@@ -22,9 +23,13 @@ struct UE5Transaction {
 struct transaction {
     int start_floor = 0;
     vector<int>* destination_floors = new vector<int>();
+    set<int>* inside_floors;
     wstring transaction_owner = L"";
     double timestamp = 0.0;
     double end_timestamp = 0.0;
+
+    bool* closed = new bool();
+    bool* idle_with_zero_trip = new bool();
 };
 
 class simElevator {
@@ -35,6 +40,8 @@ public:
 
     wstring elevatorName;
 
+	bool init = true;
+
     double current_velocity;
     double current_altimeter;
     double move_distance;
@@ -43,6 +50,10 @@ public:
 
     int latest_floor = 0;
     int will_reach_floor = 0;
+
+    int first_called_floor = 0;
+
+    vector<int> current_called_floors;
 
     vector<transaction> current_transaction;
     vector<transaction> previous_transactions;
@@ -114,7 +125,7 @@ public:
     void calculateEnergyConsumption(simBuilding* thisBuilding, UE5Transaction each_transaction);
     void send_data(std::string json_string);
     string set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp);
-    void sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex);
+    void sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation);
     void giveAllBuildingTransactions();
     void giveElevatorTransaction(simBuilding this_building);
 
@@ -123,6 +134,7 @@ public:
     void SimulationWithAlgorithm(const int alg_num, simBuilding* this_building, transaction tran);
     void SimulationAlgorithmDefault(simBuilding* this_building, transaction tran);
     void SimulationAlgorithmRandom(simBuilding* this_building, transaction tran);
+    void SimulationAlgorithmShortestTransactionFirst(simBuilding* this_building, transaction tran);
 
 
     double getTimeBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);

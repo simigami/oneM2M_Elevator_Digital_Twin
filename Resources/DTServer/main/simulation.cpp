@@ -200,6 +200,7 @@ void simulation::update_main_trip_list_via_inside_data(vector<int> button_inside
 			add_floor_to_reserve_trip_list(floor, direction, 1);
 		}
     }
+
     for (const auto& floor : missing_elements) 
 	{
 		auto it = find_if(this->main_trip_list.begin(), this->main_trip_list.end(),[floor](const vector<int>& vec){return !vec.empty() && vec[0] == floor;});
@@ -224,7 +225,10 @@ void simulation::update_main_trip_list_via_inside_data(vector<int> button_inside
 				else
 				{
 					std::cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << std::endl;
-					exit(0);
+					
+					//ersae this->prev_button_inside_data2 missing element
+					auto it = find_if(this->prev_button_inside_data2.begin(), this->prev_button_inside_data2.end(),[floor](const int& vec){return vec == floor;});
+					this->prev_button_inside_data2.erase(it);
 				}
 			}
 		}
@@ -451,8 +455,11 @@ bool simulation::update_main_trip_list_via_outside_data(vector<vector<int>> butt
 					}
 					else
 					{
-						std::cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_inside_data : del floor doesn't exist in trip lists..." << std::endl;
-						exit(0);
+						std::cout << "ERROR OCCURRED ON simulation::update_main_trip_list_via_outside_data : del floor doesn't exist in trip lists..." << std::endl;
+
+						//ersae this->prev_button_inside_data2 missing element
+						auto it = find_if(prev.begin(), prev.end(), [floor](const vector<int>& vec) {return vec[0] == floor; });
+						prev.erase(it);
 					}
 				}
 			}
@@ -601,10 +608,6 @@ const void simulation::dev_print_trip_list()
 	{
 		string temp = elem[1]==1 ? "INSIDE" : "OUTSIDE";
 		std::cout << " " << elem[0] << " " << temp << " , ";
-
-		if (elem[0] == 2024) {
-			std::cout << "2024 IS IN MAIN TRIP LIST...";
-		}
 	}
 	std::cout << std::endl;
 
@@ -746,7 +749,6 @@ const void physics::clear_data()
 
 	p->s->clear_data();
 
-	p->init =true;
 	p->lock = true;
 	p->current_direction = NULL;
 	p->current_velocity = 0.0; 
@@ -950,36 +952,46 @@ vector<vector<double>> physics::getElevatorTrajectory(double current_altimeter, 
 	    	t_constant_speed = 0.0;
 	    	t_max_to_zero_deceleration = timeToAccelerate;
 
-            double temp_altimeter = current_altimeter;
-            double previous_temp;
+            double this_time_altimeter = current_altimeter;
+            double this_time_distance;
+            double t_p = 0.0;
+			double t = 0.0;
 
             trajectory.push_back({0.0, 0.0, current_altimeter});
 
-			for (double t = 0; t <= timeToAccelerate; t) 
+			for (t ; t <= timeToAccelerate; t) 
             {
+				const double this_time_velocity = 0 + t * acceleration;
 				t += dt;
-                previous_temp = (0.5 * acceleration * (t-dt) * (t-dt));
+                this_time_distance = this_time_velocity * dt + (0.5 * acceleration * (t- t_p) * (t- t_p));
 
                 if(timeToAccelerate < t && t < timeToAccelerate + dt)
                 {
-                    temp_altimeter += multiplyFactor * 2 * ((0.5 * acceleration * timeToAccelerate * timeToAccelerate) - previous_temp);
-                    temp_altimeter = floor(temp_altimeter * 10000) / 10000.0f;
-	                trajectory.push_back({t, reachableVelocity, temp_altimeter});
+					double t_p_to_max_distance = (0.5 * acceleration * (timeToAccelerate - t_p)* (timeToAccelerate - t_p));
+					double max_to_t_distance = (0.5 * acceleration * (t - timeToAccelerate)* (t - timeToAccelerate));
+
+					this_time_altimeter += multiplyFactor * (t_p_to_max_distance + max_to_t_distance);
+					this_time_altimeter = floor(this_time_altimeter * 10000) / 10000.0f;
+	                trajectory.push_back({t, reachableVelocity, this_time_altimeter});
                 }
                 else
                 {
-	                temp_altimeter += multiplyFactor * (0.5 * acceleration * t * t) - previous_temp;
-	                trajectory.push_back({t, current_velocity + t * acceleration, temp_altimeter});
+	                this_time_altimeter += multiplyFactor * this_time_distance;
+	                trajectory.push_back({t, current_velocity + t * acceleration, this_time_altimeter });
                 }
+				t_p = t;
             }
 
+			t -= timeToAccelerate;
+			t_p = t;
+
 			// 2. 목표 속도부터 0으로 감속
-			for (double t = 0; t <= timeToDecelerate - dt; t) 
+			for (t ; t <= timeToDecelerate - dt; t)
             {
-                previous_temp = (0.5 * acceleration * (timeToDecelerate-t-dt) * (timeToDecelerate-t-dt));
+				const double this_time_velocity = reachableVelocity - t * acceleration;
 				t += dt;
-                temp_altimeter += multiplyFactor * fabs((0.5 * acceleration * (timeToDecelerate-t-dt) * (timeToDecelerate-t-dt)) - previous_temp);
-                temp_altimeter = floor(temp_altimeter * 10000) / 10000.0f;
+				this_time_altimeter += multiplyFactor * (this_time_velocity * dt + fabs((0.5 * acceleration * (t - t_p) * (t - t_p))));
+				this_time_altimeter = floor(this_time_altimeter * 10000) / 10000.0f;
 
                 if(timeToDecelerate - dt < t)
                 {
@@ -987,8 +999,9 @@ vector<vector<double>> physics::getElevatorTrajectory(double current_altimeter, 
                 }
                 else
                 {
-	                trajectory.push_back({t + timeToAccelerate, reachableVelocity - t * acceleration, temp_altimeter});
+	                trajectory.push_back({t + timeToAccelerate, reachableVelocity - t * acceleration, this_time_altimeter});
                 }
+				t_p = t;
             }
         }
 	}

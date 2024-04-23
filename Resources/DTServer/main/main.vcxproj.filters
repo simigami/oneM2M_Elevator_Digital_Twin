@@ -66,7 +66,10 @@
     <ClCompile Include="DT_Simulation.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="main2.cpp">
+    <ClCompile Include="main.cpp">
+      <Filter>리소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="elevatorAlgorithmSingle2.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -108,9 +111,6 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="DT_Simulation.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="main2.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="config.h">

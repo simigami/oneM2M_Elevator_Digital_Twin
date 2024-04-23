@@ -1,10 +1,8 @@
-#include "main2.h"
 #include "DT_RealTime.h"
 #include "DT_Simulation.h"
 #include <csignal>
 
 #define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0600
 
 void signalHandler(int signum)
 {
@@ -28,7 +26,20 @@ int main()
 			std::wofstream logFile(LOGFILEPATH, ios::app);
 			logFile.close();
 
+			int visualizer = 0;
+			std::cout << "PRESS 1 FOR VISUALIZER, 0 FOR NO VISUALIZER : ";
+			std::cin >> visualizer;
+
+			while (visualizer != 0 && visualizer != 1)
+			{
+				std::cout << "Invalid Input" << std::endl;
+				std::cout << "PRESS 1 FOR VISUALIZER, 0 FOR NO VISUALIZER : ";
+				
+				std::cin >> visualizer;
+			}
+
 			dt_real_time dt_realtime_instance;
+			dt_realtime_instance.VisualizeMod = visualizer;
 			dt_realtime_instance.Run();
 		}
 		else if (input == "2")

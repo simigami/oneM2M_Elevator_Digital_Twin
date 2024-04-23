@@ -18,6 +18,10 @@ public:
     std::chrono::system_clock::time_point start_time;
     std::chrono::system_clock::time_point measure_time;
 
+    int dilation = 1;
+
+    bool isElevatorStopped = false;
+
     double wake_up_time = 0.0;
     double velocity = 0.0;
     double altimeter = 0.0;
@@ -127,7 +131,7 @@ struct notificationContent
 struct flags
 {
     //각 반복문을 돌기 위해 사용되는 플래그
-	bool isRunning = true;
+	bool isRunning = false;
 
     //처리 받는 입력이 맨 처음의 입력인지 확인하는 플래그
     bool firstOperation = true;
@@ -160,7 +164,7 @@ public:
     virtual void startThread(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy);
     virtual void stopThread();
 	virtual void run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* p);
-    virtual void stop(physics* p);
+    virtual void stop(physics* p, flags* this_flag);
 
     virtual void writeLog();
     virtual void appendLogToLogList(int code, ...);
@@ -171,20 +175,33 @@ public:
     virtual void STOPLog(va_list args);
     virtual void MOVLog(va_list args);
 
+    virtual bool checkReachability(elevatorStatus* stats, double current_altimeter, int dest_floor);
+
+    virtual vector<int> getNewButtonInsideList(vector<int> prev, vector<int> current);
+    virtual vector<int> getRemoveButtonInsideList(vector<int> prev, vector<int> current);
+
     virtual void set_physical_information(physics* p);
 	virtual void rearrangeVector(elevatorStatus* stats, socket_UnrealEngine* ueSock, physics* p);
+	virtual void rearrangeMainTripList(elevatorStatus* stats, physics* p);
 
     virtual void set_elevator_Status_JSON_STRING();
  
 	virtual void printThisElevatorEnergyConsumptionInfos();
-
+	virtual void printTimeDeltaWhenSpawn();
 	virtual void printTimeDeltaWhenRearrange();
     virtual int printTimeDeltaNow();
 	virtual void printTimeDeltaWhenStop();
+
     virtual void updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
+    virtual void insideLogic(elevatorStatus* status, physics* phy, vector<int> new_elem, vector<int> remove_elem);
+    virtual void outsideLogic(elevatorStatus* status, physics* phy, int outside_button, bool outside_direction);
+
+    virtual void updateMainTripList(elevatorStatus* status, physics* phy, int elem);
 
     virtual string wstringToString(const std::wstring& wstr) const;
     virtual wstring stringToWstring(const std::string& str) const;
+
+    double getAltimeterDifferenceBetweenTwoFloors(vector<double> each_floor_alt, int underground, int floor1, double alt2);
 
     elevatorStatus* getElevatorStatus();
     flags* getElevatorFlag();
@@ -197,4 +214,6 @@ protected:
 
     //각 Loop를 돌 간격
     int RETRIEVE_interval_millisecond;
+
+    std::mutex mtx;
 };

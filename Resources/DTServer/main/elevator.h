@@ -35,4 +35,6 @@ public:
     wstring getDeviceName() const;
 
     int algorithmNumber;
+
+    int VisualizationMod = 0;
 };

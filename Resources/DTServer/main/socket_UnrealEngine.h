@@ -8,6 +8,8 @@ public:
 	socket_UnrealEngine();
 	void send_data_to_UE5(std::string request_content);
 
+	int VisualizationMod = 0;
+
 private:
 	boost::asio::io_context context;
 	boost::asio::ip::tcp::socket UE5AcceptSocket;

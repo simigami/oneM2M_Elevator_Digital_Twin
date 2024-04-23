@@ -24,7 +24,7 @@ public:
 	bool erase_floor_of_trip_list(vector<vector<int>> trip_list, int floor);
 
 	void update_main_trip_list_via_inside_data(vector<int> button_inside, bool direction);
-;
+
 	void check_and_set_trip_list(int req_floor, bool direction, bool req_direction, double current_altimeter, double req_altimeter);
 	void check_and_set_trip_list_Nearest_N(
 		int req_floor, 
@@ -82,7 +82,6 @@ public:
 	simulation* s;
 	default_building_info info;
 
-	bool init =true;
 	bool lock = true;
 	bool current_direction;
 	long double current_velocity; 

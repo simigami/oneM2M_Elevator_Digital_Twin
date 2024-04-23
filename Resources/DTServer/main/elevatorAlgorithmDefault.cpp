@@ -34,31 +34,162 @@ void elevatorAlgorithmDefault::stopThread()
 {
 }
 
-void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* p)
+void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy)
 {
-	char timeString[128];
-	time_t timeNow = std::chrono::system_clock::to_time_t(this->worldClock);
+	socket_UnrealEngine* us = ueSock;
+	physics* p = phy;
 
-	struct tm tstruct;
-	localtime_s(&tstruct, &timeNow);
+	elevatorStatus* thisElevatorStatus = getElevatorStatus();
+	flags* thisElevatorFlag = getElevatorFlag();
 
-	auto duration = worldClock.time_since_epoch();
-	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration)%1000;
+	vector<vector<int>> main_trip_list = p->s->main_trip_list;
 
-	std::wcout << L"IN " <<  this->thisElevatorStatus->get_building_name() << L" -> " << this->thisElevatorStatus->get_device_name() << L" Spawned At TIME : ";
+	const wstring building_name = this->thisElevatorStatus->get_building_name();
+	const wstring device_name = this->thisElevatorStatus->get_device_name();
 
-	sprintf_s(timeString, "%04d/%02d/%02d - %02d:%02d:%02d.%03lld\n",
-		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour , tstruct.tm_min,
-		tstruct.tm_sec, milliseconds.count()
-		);
-	std::puts(timeString);
+	std::chrono::steady_clock::time_point free_time;
+	std::chrono::steady_clock::time_point start_time;
+	std::chrono::steady_clock::time_point end_time;
+
+	try
+	{
+		while (true)
+		{
+			start_time = std::chrono::steady_clock::now();
+
+			if ((thisElevatorFlag->isRunning == false) && (thisElevatorFlag->IDLEFlag == true) && (p->s->bCheckAllListEmpty() == true))
+			{
+				continue;
+			}
+
+			// CHECK IF THIS ELEVATOR TURNS TO IDLE STATE
+			else if ((p->s->bCheckAllListEmpty() == true) and (thisElevatorFlag->firstOperation == false) and (thisElevatorFlag->IDLEFlag == true))
+			{
+				std::wcout << "IN " << building_name << " -> " << device_name << " TURNS TO IDLE, " << " TOTAL MOVE DISTANCE : " << p->total_move_distance << std::endl;
+
+				const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
+				appendLogToLogList(IDLE, 3, building_name, device_name, delta_second);
+				writeLog();
+
+				elevatorAlgorithmDefault::printTimeDeltaWhenStop();
+				stop(p, thisElevatorFlag);
+			}
+
+			else
+			{
+				auto this_elevator_goto_floor_vector = this->thisElevatorStatus->current_goTo_floor_vector_info;
+
+				// CHECK MAIN TRIP LIST IS EMPTY
+				if (this_elevator_goto_floor_vector->empty())
+				{
+					continue;
+				}
+				else
+				{
+					// GET ITERATOR FROM ALGORITHM DEFAULT
+					auto iter = this->it;
+					vector<double> this_elevator_goto_floor_single = *it;
+
+					this->thisElevatorStatus->current_goTo_Floor_single_info = this_elevator_goto_floor_single;
+
+					// THIS MEANS THAT ELEVATOR IS MOVING, so move the this_elevator_goto_floor_vector to next vector
+					p->total_move_distance += this->thisElevatorStatus->current_goTo_Floor_single_info[1] * ((int)(TICK) / (SECOND));
+					p->current_velocity = this->thisElevatorStatus->current_goTo_Floor_single_info[1];
+					p->current_altimeter = this->thisElevatorStatus->current_goTo_Floor_single_info[2];
+
+					thisElevatorStatus->total_move_distance = p->total_move_distance;
+					thisElevatorStatus->velocity = p->current_velocity;
+					thisElevatorStatus->altimeter = p->current_altimeter;
+
+					// CHECK IF this_elevator_goto_floor_vector IS END OF current_goTo_Floor_vector_info
+					if (this_elevator_goto_floor_single == this->thisElevatorStatus->current_goTo_floor_vector_info->back())
+					{
+						rearrangeMainTripList(thisElevatorStatus, p);
+
+						std::wcout << "IN " << building_name << " -> " << device_name << " STOPPED AT FLOOR : " << this->thisElevatorStatus->go_to_floor << std::endl;
+						elevatorAlgorithmDefault::printTimeDeltaWhenStop();
+
+						getElevatorStatus()->number_of_trips += 1;
+						getElevatorStatus()->set_this_elevator_daily_energy_consumption(0);
+						//printThisElevatorEnergyConsumptionInfos();
+
+						const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
+						appendLogToLogList(STOP, 4, building_name, device_name, this->thisElevatorStatus->go_to_floor, delta_second);
+
+						getElevatorStatus()->isElevatorStopped = true;
+						std::this_thread::sleep_for(std::chrono::milliseconds((int)thisElevatorStatus->door_open_time * 1000));
+						getElevatorStatus()->isElevatorStopped = false;
+
+						// CHECK IF current_goTo_floor_vector_info is empty
+						if (p->s->bCheckAllListEmpty() == true)
+						{
+							// THIS MEANS THAT ELEVATOR HAS STOPPED AT THE LAST FLOOR, so clear the main_trip_list
+							p->s->main_trip_list.clear();
+							thisElevatorFlag->IDLEFlag = true;
+						}
+						else
+						{
+							// THIS MEANS THAT ELEVATOR HAS STOPPED AT THE FLOOR, so erase the this_elevator_goto_floor_vector
+							// CHECK IF MAIN TRIP LIST IS EMPTY
+							if (p->s->main_trip_list.empty())
+							{
+								// CHECK RESERVE UP TRIP LIST
+								if (p->s->reserved_trip_list_up.empty())
+								{
+									p->s->main_trip_list = p->s->reserved_trip_list_down;
+									p->s->reserved_trip_list_down.clear();
+								}
+								else
+								{
+									// move reserved_trip_list_up to main_trip_list
+									p->s->main_trip_list = p->s->reserved_trip_list_up;
+									p->s->reserved_trip_list_up.clear();
+								}
+							}
+							rearrangeVector(this->getElevatorStatus(), ueSock, p);
+
+							const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
+							appendLogToLogList(MOV, 4, building_name, device_name, p->s->main_trip_list[0][0], delta_second);
+
+							if (us->VisualizationMod == 1)
+							{
+								this->set_elevator_Status_JSON_STRING();
+								us->send_data_to_UE5(this->elevatorStatus_JSON_STRING);
+							}
+						}
+					}
+					else
+					{
+						this->it++;
+					}
+				}
+
+				thisElevatorStatus->wake_up_time += 0.1;
+			}
+			// Sleep 0.1 - elapsed_seconds
+			end_time = std::chrono::steady_clock::now();
+			std::chrono::duration<double> elapsed_seconds = end_time - start_time;
+			std::this_thread::sleep_for(std::chrono::milliseconds(100) - elapsed_seconds);
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::wcout << "IN " << building_name << " -> " << device_name << " ERROR OCCURR AT : elevatorAlgorithmDefault::run " << e.what() << std::endl;
+	}
 }
 
-void elevatorAlgorithmDefault::stop(physics* p)
+void elevatorAlgorithmDefault::stop(physics* p, flags* this_flag)
 {
 	this->thisNotificationContent = new notificationContent;
-	this->thisFlags = new flags;
+	
+	this_flag->isRunning = false;
+	this_flag->firstOperation = true;
+	this_flag->IDLEFlag = true;
+
 	this->log_list = vector<wstring>{};
+
+	this->thisElevatorStatus->button_inside->clear();
+	this->thisElevatorStatus->button_outside->clear();
 
 	this->thisElevatorStatus->current_goTo_floor_vector_info = new vector<vector<double>>{};
 	this->thisElevatorStatus->current_goTo_Floor_single_info = vector<double>{};
@@ -298,6 +429,100 @@ void elevatorAlgorithmDefault::MOVLog(va_list args)
 	this->log_list.push_back(logMessage);
 }
 
+bool elevatorAlgorithmDefault::checkReachability(elevatorStatus* stats, double current_altimeter, int dest_floor)
+{
+	// THIS FUNCTION IS FOR CHECKING REACHABILITY OF DESTINATION FLOOR
+	// FIRST GET A CURRENT VELOCITY OF ELEVATOR
+	// SECOND GET A CURRENT ACCELERATION OF ELEVATOR
+	// THIRD GET A ALTITUDE OF DESTINATION FLOOR
+	// FOURTH CALCULATE WHETHER ALTIMETER WILL EXCEED DESTINATION ALTITUDE IF IT DECELERATE TO ZERO VELOCITY SINCE NOW
+	// IF IT EXCEEDS, RETURN FALSE, ELSE RETURN TRUE
+
+	// GET CURRENT VELOCITY
+	double current_velocity = stats->velocity;
+
+	// GET CURRENT ACCELERATION
+	double current_acceleration = stats->get_acceleration();
+
+	// GET DESTINATION ALTITUDE
+	double dest_altitude = dest_floor > 0 ? stats->get_each_floor_altimeter()[stats->get_underground_floor() + dest_floor - 1] : stats->get_each_floor_altimeter()[stats->get_underground_floor() + dest_floor];
+
+	// CALCULATE WHETHER ALTIMETER WILL EXCEED DESTINATION ALTITUDE IF IT DECELERATE TO ZERO VELOCITY SINCE NOW
+	// THIS WILL USE ABS
+	double time_to_zero_velocity = current_velocity / current_acceleration;
+	double distance = ((current_velocity + 0) / 2) * time_to_zero_velocity;
+
+	// IF DESTINATION ALTITUDE IS HIGHER THAN CURRENT ALTITUDE + DISTANCE, RETURN TRUE
+	if (abs(dest_altitude - current_altimeter) >  distance)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+vector<int> elevatorAlgorithmDefault::getNewButtonInsideList(vector<int> prev, vector<int> current)
+{
+	// return new elem list that is not in prev
+	// if prev is empty, return current
+	// if current is empty, return empty vector
+	// if prev is not empty and current is not empty, return new elem list that is not in prev
+	if (prev.empty())
+	{
+		return current;
+	}
+	else if (current.empty())
+	{
+		return vector<int>();
+	}
+	else
+	{
+		vector<int> temp;
+		for (const auto& elem : current)
+		{
+			if (find(prev.begin(), prev.end(), elem) == prev.end())
+			{
+				temp.push_back(elem);
+			}
+		}
+		return temp;
+	}
+
+	return vector<int>();
+}
+
+vector<int> elevatorAlgorithmDefault::getRemoveButtonInsideList(vector<int> prev, vector<int> current)
+{
+	// return remove elem list that is in prev but not in current
+	// if prev is empty, return empty vector
+	// if current is empty, return prev
+	// if prev is not empty and current is not empty, return remove elem list that is in prev but not in current
+	if (prev.empty())
+	{
+		return vector<int>();
+	}
+	else if (current.empty())
+	{
+		return prev;
+	}
+	else
+	{
+		vector<int> temp;
+		for (const auto& elem : prev)
+		{
+			if (find(current.begin(), current.end(), elem) == current.end())
+			{
+				temp.push_back(elem);
+			}
+		}
+		return temp;
+	}
+
+	return vector<int>();
+}
+
 void elevatorAlgorithmDefault::writeLog()
 {
 	const auto logs = this->log_list;
@@ -392,66 +617,115 @@ void elevatorAlgorithmDefault::rearrangeVector(elevatorStatus* stats, socket_Unr
 
 	printTimeDeltaWhenRearrange();
 	//SEND MODIFY goTo Floor Data To Unreal Engine
-	this->set_elevator_Status_JSON_STRING();
-	ueSock->send_data_to_UE5(this->elevatorStatus_JSON_STRING);
+
+	if (ueSock->VisualizationMod == 1)
+	{
+		this->set_elevator_Status_JSON_STRING();
+		ueSock->send_data_to_UE5(this->elevatorStatus_JSON_STRING);
+	}
 
 	this->thisFlags->IDLEFlag = false;
+}
+
+void elevatorAlgorithmDefault::rearrangeMainTripList(elevatorStatus* stats, physics* p)
+{
+	int current_floor = p->s->main_trip_list.front()[0];
+
+	//	CHECK IF THIE MAIN TRIP IS FROM BUTTON INSIDE OR OUTSIDE
+	if (p->s->main_trip_list.front()[1] == 1)
+	{
+		// THIS MEANS THAT MAIN TRIP IS FROM BUTTON INSIDE
+		auto temp = this->thisElevatorStatus->button_inside;
+		temp->erase(remove(temp->begin(), temp->end(), p->s->main_trip_list.front()[0]), temp->end());
+	}
+	else
+	{
+		const int target = p->s->main_trip_list.front()[0];
+		auto temp = this->thisElevatorStatus->button_outside;
+		temp->erase(remove_if(temp->begin(), temp->end(),
+			[target](vector<int>& arr) { return arr[0] == target; }),
+			temp->end());
+	}
+
+	// REMOVE CURRENT TRIP FROM main_trip_list, and set current_goTo_floor_vector_info to empty
+	p->s->main_trip_list.erase(p->s->main_trip_list.begin());
+
+	// CHECK IF MAIN TRIP LIST IS EMPTY
+	if (!p->s->main_trip_list.empty())
+	{
+		// IF FRONT FLOOR IS SAME AS CURRENT FLOOR, DELETE THIS TRIP
+		if (p->s->main_trip_list.front()[0] == current_floor)
+		{
+			p->s->main_trip_list.erase(p->s->main_trip_list.begin());
+		}
+	}
+
+	this->thisElevatorStatus->current_goTo_floor_vector_info->clear();
+	this->thisElevatorStatus->current_goTo_Floor_single_info.clear();
 }
 
 void elevatorAlgorithmDefault::set_elevator_Status_JSON_STRING()
 {
 	nlohmann::json jsonObj;
-
-	jsonObj["building_name"] = wstringToString(thisElevatorStatus->get_building_name());
-	jsonObj["device_name"] = wstringToString(thisElevatorStatus->get_device_name());
-
-	jsonObj["acceleration"] = thisElevatorStatus->get_acceleration();
-	jsonObj["max_velocity"] = thisElevatorStatus->get_max_velocity();
-
-	jsonObj["underground_floor"] = thisElevatorStatus->get_underground_floor();
-	jsonObj["ground_floor"] = thisElevatorStatus->get_ground_floor();
-
-	//set energy consumption to jsonObj
-	jsonObj["calculate_this_elevator_energy_consumption"] = thisElevatorStatus->get_this_elevator_energy_consumption();
-	
-	if (thisElevatorStatus->get_this_elevator_energy_consumption())
+	try
 	{
-		// Put Energy Consumption Information
-		jsonObj["IDLE_Power"] = thisElevatorStatus->getIDLEPower();
-		jsonObj["Standby_Power"] = thisElevatorStatus->getStandbyPower();
-		jsonObj["ISO_Reference_Cycle_Energy"] = thisElevatorStatus->getISOReferenceCycleEnergy();
+		jsonObj["building_name"] = wstringToString(thisElevatorStatus->get_building_name());
+		jsonObj["device_name"] = wstringToString(thisElevatorStatus->get_device_name());
 
-		jsonObj["Erd"] = thisElevatorStatus->erd;
-		jsonObj["Esd"] = thisElevatorStatus->esd;
-		jsonObj["Ed"] = thisElevatorStatus->ed;
-	}
+		jsonObj["dilation"] = thisElevatorStatus->dilation;
 
-	auto revised_altimeter = thisElevatorStatus->get_each_floor_altimeter();
-	double lowest_altimeter = abs(revised_altimeter[0]);
+		jsonObj["acceleration"] = thisElevatorStatus->get_acceleration();
+		jsonObj["max_velocity"] = thisElevatorStatus->get_max_velocity();
 
-	if (revised_altimeter[0] > 0)
-	{
-		for (auto& elem : revised_altimeter)
+		jsonObj["underground_floor"] = thisElevatorStatus->get_underground_floor();
+		jsonObj["ground_floor"] = thisElevatorStatus->get_ground_floor();
+
+		//set energy consumption to jsonObj
+		jsonObj["calculate_this_elevator_energy_consumption"] = thisElevatorStatus->get_this_elevator_energy_consumption();
+
+		if (thisElevatorStatus->get_this_elevator_energy_consumption())
 		{
-			elem -= lowest_altimeter;
+			// Put Energy Consumption Information
+			jsonObj["IDLE_Power"] = thisElevatorStatus->getIDLEPower();
+			jsonObj["Standby_Power"] = thisElevatorStatus->getStandbyPower();
+			jsonObj["ISO_Reference_Cycle_Energy"] = thisElevatorStatus->getISOReferenceCycleEnergy();
+
+			jsonObj["Erd"] = thisElevatorStatus->erd;
+			jsonObj["Esd"] = thisElevatorStatus->esd;
+			jsonObj["Ed"] = thisElevatorStatus->ed;
 		}
-	}
-	else
-	{
-		for (auto& elem : revised_altimeter)
+
+		auto revised_altimeter = thisElevatorStatus->get_each_floor_altimeter();
+		double lowest_altimeter = abs(revised_altimeter[0]);
+
+		if (revised_altimeter[0] > 0)
 		{
-			elem += lowest_altimeter;
+			for (auto& elem : revised_altimeter)
+			{
+				elem -= lowest_altimeter;
+			}
 		}
+		else
+		{
+			for (auto& elem : revised_altimeter)
+			{
+				elem += lowest_altimeter;
+			}
+		}
+
+		jsonObj["each_floor_altimeter"] = revised_altimeter;
+		jsonObj["goToFloor"] = thisElevatorStatus->go_to_floor;
+
+		jsonObj["tta"] = thisElevatorStatus->tta;
+		jsonObj["ttm"] = thisElevatorStatus->ttm;
+		jsonObj["ttd"] = thisElevatorStatus->ttd;
+
+		this->elevatorStatus_JSON_STRING = jsonObj.dump();
 	}
-
-	jsonObj["each_floor_altimeter"] = revised_altimeter;
-	jsonObj["goToFloor"] = thisElevatorStatus->go_to_floor;
-
-	jsonObj["tta"] = thisElevatorStatus->tta;
-	jsonObj["ttm"] = thisElevatorStatus->ttm;
-	jsonObj["ttd"] = thisElevatorStatus->ttd;
-
-	this->elevatorStatus_JSON_STRING = jsonObj.dump();
+	catch (const std::exception& e)
+	{
+		std::cerr << "JSON Parsing Error" << e.what() << std::endl;
+	}
 }
 
 void elevatorAlgorithmDefault::printThisElevatorEnergyConsumptionInfos()
@@ -467,6 +741,26 @@ void elevatorAlgorithmDefault::printThisElevatorEnergyConsumptionInfos()
 
 	// print ed
 	std::wcout << L"Estimated Daily Energy Consumption : " << temp->ed << std::endl;
+}
+
+void elevatorAlgorithmDefault::printTimeDeltaWhenSpawn()
+{
+	char timeString[128];
+	time_t timeNow = std::chrono::system_clock::to_time_t(this->worldClock);
+
+	struct tm tstruct;
+	localtime_s(&tstruct, &timeNow);
+
+	auto duration = worldClock.time_since_epoch();
+	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration) % 1000;
+
+	std::wcout << L"IN " << this->thisElevatorStatus->get_building_name() << L" -> " << this->thisElevatorStatus->get_device_name() << L" Spawned At TIME : ";
+
+	sprintf_s(timeString, "%04d/%02d/%02d - %02d:%02d:%02d.%03lld\n",
+		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour, tstruct.tm_min,
+		tstruct.tm_sec, milliseconds.count()
+	);
+	std::puts(timeString);
 }
 
 void elevatorAlgorithmDefault::printTimeDeltaWhenRearrange()
@@ -533,7 +827,292 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenStop()
 
 void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
 {
+	//notification Content Will hold Very New information about Elevator 
+	notificationContent* nofi_content = this->thisNotificationContent;
+	//elevatorStatus Will hold latest information before updating
+	elevatorStatus* thisElevatorStatus = getElevatorStatus();
 
+	flags* thisElevatorFlag = getElevatorFlag();
+
+	physics* p = phy;
+	simulation* sim = p->s;
+	socket_UnrealEngine* us = ueSock;
+
+	const wstring building_name = this->thisElevatorStatus->get_building_name();
+	const wstring device_name = this->thisElevatorStatus->get_device_name();
+
+	// check new button inside or outside information has been changed
+	vector<int> new_inside = getNewButtonInsideList(*(thisElevatorStatus->button_inside), nofi_content->button_inside);
+	vector<int> remove_inside = getRemoveButtonInsideList(*(thisElevatorStatus->button_inside), nofi_content->button_inside);
+
+	try
+	{
+		// lock mutex using mtx variable
+		std::lock_guard<std::mutex> guard(mtx);
+
+		if (thisElevatorFlag->firstOperation)
+		{
+			if (!nofi_content->button_inside.empty())
+			{
+				p->set_initial_elevator_direction(nofi_content->button_inside[0]);
+				insideLogic(thisElevatorStatus, p, new_inside, remove_inside);
+			}
+			else if (nofi_content->button_outside_floor != 0)
+			{
+				p->set_initial_elevator_direction(nofi_content->button_outside_floor);
+				outsideLogic(thisElevatorStatus, p, nofi_content->button_outside_floor, nofi_content->button_outside_direction);
+			}
+
+			std::wcout << "IN " << building_name << " -> " << device_name << " goTo Floor is Changed None to : " << p->s->main_trip_list[0][0] << std::endl;
+
+			//CHANGE V_T Graph
+			rearrangeVector(this->getElevatorStatus(), ueSock, p);
+
+			if (us->VisualizationMod == 1)
+			{
+				this->set_elevator_Status_JSON_STRING();
+				us->send_data_to_UE5(this->elevatorStatus_JSON_STRING);
+			}
+
+			const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
+			appendLogToLogList(MOV, 4, building_name, device_name, p->s->main_trip_list[0][0], delta_second);
+
+			//Logging
+			thisElevatorFlag->firstOperation = false;
+			thisElevatorFlag->isRunning = true;
+			thisElevatorFlag->IDLEFlag = false;
+		}
+
+		else if (p->s->main_trip_list.empty())
+		{
+
+			if (!nofi_content->button_inside.empty())
+			{
+				p->set_initial_elevator_direction(nofi_content->button_inside[0]);
+				insideLogic(thisElevatorStatus, p, new_inside, remove_inside);
+			}
+			else if (nofi_content->button_outside_floor != 0)
+			{
+				p->set_initial_elevator_direction(nofi_content->button_outside_floor);
+				outsideLogic(thisElevatorStatus, p, nofi_content->button_outside_floor, nofi_content->button_outside_direction);
+			}
+
+			if (!thisElevatorStatus->isElevatorStopped)
+			{
+				rearrangeVector(this->getElevatorStatus(), ueSock, p);
+			}
+		}
+
+		else
+		{
+			if (!nofi_content->button_inside.empty())
+			{
+				int nofi_content_floor = (thisElevatorStatus->button_inside)->empty() ? INT_MAX : (thisElevatorStatus->button_inside)->front();
+
+				insideLogic(thisElevatorStatus, p, new_inside, remove_inside);
+
+				if (nofi_content_floor != (thisElevatorStatus->button_inside)->front()) {
+					if (!thisElevatorStatus->isElevatorStopped)
+					{
+						rearrangeVector(this->getElevatorStatus(), ueSock, p);
+					}
+				}
+			}
+			if (nofi_content->button_outside_floor != 0)
+			{
+				//OUTSIDE FLOOR IS ADDED ONLY
+				bool flag = true;
+
+				//CHECK THIS CALLED FLOOR IS ALREADY EXISTS IN STATUS
+				for (const auto& elem : *(thisElevatorStatus->button_outside))
+				{
+					if (nofi_content->button_outside_floor == elem[0])
+					{
+						flag = false;
+						break;
+					}
+				}
+				if (flag)
+				{
+
+					int currentDestFloor;
+					// ERROR OCCURRS HERE
+					if (p->s->main_trip_list.empty())
+					{
+						currentDestFloor = thisElevatorStatus->go_to_floor;
+					}
+					else
+					{
+						currentDestFloor = p->s->main_trip_list[0][0];
+					}
+
+					outsideLogic(thisElevatorStatus, p, nofi_content->button_outside_floor, nofi_content->button_outside_direction);
+
+					if (!p->s->main_trip_list.empty() && currentDestFloor != p->s->main_trip_list[0][0])
+					{
+						if (!thisElevatorStatus->isElevatorStopped)
+						{
+							rearrangeVector(this->getElevatorStatus(), ueSock, p);
+						}
+						thisElevatorFlag->IDLEFlag = false;
+					}
+				}
+			}
+		}
+
+		thisElevatorFlag->isRunning = true;
+		thisElevatorFlag->IDLEFlag = false;
+	}
+	//CHECK THIS IS FIRST OPERATION
+	catch (const std::exception& e)
+	{
+		std::wcout << "IN " << building_name << " -> " << device_name << " ERROR OCCURR AT : elevatorAlgorithmSingle::updateElevatorTick " << e.what() << std::endl;
+	}
+}
+
+void elevatorAlgorithmDefault::insideLogic(elevatorStatus* status, physics* phy, vector<int> new_floors, vector<int> remove_floors)
+{
+	vector<int> change_inside_list;
+	// every elem in new_elem must be updated in main_trip_list
+	for (const auto elem : new_floors)
+	{
+		updateMainTripList(status, phy, elem);
+		status->button_inside->push_back(elem);
+	}
+
+	// if main_trip_list is not empty, set direction
+	if (!phy->s->main_trip_list.empty())
+	{
+		phy->current_direction = phy->set_direction(phy->s->main_trip_list[0][0]);
+	}
+
+	// every elem in remove_elem must be removed if and only if 
+	// current altimeter is far enough away from its remove elem floor altimeter
+	for (auto elem : remove_floors)
+	{
+		// check if this elem is close enough to current altimeter
+		if (getAltimeterDifferenceBetweenTwoFloors(status->get_each_floor_altimeter(), status->get_underground_floor(), elem, status->altimeter) > 0.5 * status->get_acceleration() * pow(status->get_max_velocity() / status->get_acceleration(), 2))
+		{
+			updateMainTripList(status, phy, elem);
+
+			// remove this elem from button_inside
+			status->button_inside->erase(remove(status->button_inside->begin(), status->button_inside->end(), elem), status->button_inside->end());
+		}
+	}
+
+	const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
+	appendLogToLogList(PRESS, 4, status->get_building_name(), status->get_device_name(), *(thisElevatorStatus->button_inside), delta_second);
+}
+
+void elevatorAlgorithmDefault::outsideLogic(elevatorStatus* status, physics* phy, int outside_button, bool outside_direction)
+{
+	// CHECK IF main_trip_list IS EMPTY, IF IT IS EMPTY THEN ADD OUTSIDE BUTTON TO main_trip_list
+	if (phy->s->main_trip_list.empty())
+	{
+		phy->s->add_floor_to_main_trip_list(outside_button, outside_direction, 0);
+		status->button_outside->push_back({ outside_button, outside_direction });
+		return;
+	}
+
+	// CHECK OUTSIDE BUTTON DIRECTION AND STATUS DIRECTION
+	if (outside_direction == phy->current_direction)
+	{
+		// THERE IS A CASE WHEN outside_button FLOOR IS ALREADY IN main_trip_list
+		// IN THIS CASE, IT COUNTS BOTH INSIDE AND OUTSIDE BUTTONS BUT NEVER MAKE MAIN TRIP LIST
+		// BECAUSE IT IS ALREADY IN main_trip_list AND IT WILL BE REMOVED WHEN ELEVATOR ARRIVES AT THAT FLOOR
+		// THIS CASE ONLY HAPPENS WHEN ELEVATOR DIRECTION IS SAME AS OUTSIDE BUTTON DIRECTION
+		// IF DIRECTION IS OPPOSITE IT SHOULD BE IN RESERVE TRIP LIST
+		// THEN MAIN TRIP LIST WILL BE UPDATED WHEN ELEVATOR STOPS A LAST FLOOR OF CURRENT CALL
+		bool flag = false;
+
+		for (const auto elem : phy->s->main_trip_list)
+		{
+			if (elem[0] == outside_button)
+			{
+				flag = true;
+				break;
+			}
+		}
+
+		if (flag)
+		{
+			phy->s->add_floor_to_main_trip_list(outside_button, outside_direction, 0);
+		}
+
+		else
+		{
+			// IN THIS CASE ELEVATOR HAS TO ANALYZE WHETHER IT SHOULD BE IN main_trip_list OR reserved_trip_list
+			// IT SHOULD BE IN RESERVED TRIP LIST IF THIS FLOOR CANNOT BE REACHED EVEN IF ELEVATOR DECELERATES TO 0 SINCE NOW
+			// OTHER CASES, IT SHOULD BE IN main_trip_list
+			bool flag2 = checkReachability(status, status->altimeter, outside_button);
+
+			if (flag2)
+			{
+				phy->s->add_floor_to_main_trip_list(outside_button, outside_direction, 0);
+			}
+			else
+			{
+				if (outside_direction == true)
+				{
+					phy->s->reserved_trip_list_up.push_back({ outside_button, outside_direction });
+				}
+				else
+				{
+					phy->s->reserved_trip_list_down.push_back({ outside_button, outside_direction });
+				}
+			}
+		}
+	}
+	else
+	{
+		if (outside_direction == true)
+		{
+			phy->s->reserved_trip_list_up.push_back({ outside_button, outside_direction });
+		}
+		else
+		{
+			phy->s->reserved_trip_list_down.push_back({ outside_button, outside_direction });
+		}
+	}
+	// set p->direction
+	phy->current_direction = phy->set_direction(phy->s->main_trip_list[0][0]);
+
+	status->button_outside->push_back({ outside_button, outside_direction });
+}
+
+void elevatorAlgorithmDefault::updateMainTripList(elevatorStatus* status, physics* phy, int floor)
+{
+	try
+	{
+		// check elem is already in main_trip_list
+		bool flag = false;
+		for (auto e : phy->s->main_trip_list)
+		{
+			if (e[0] == floor)
+			{
+				flag = true;
+				break;
+			}
+		}
+
+		// if flag, then remove elem from main_trip_list
+		if (flag)
+		{
+			// remove elem from main_trip_list
+			phy->s->main_trip_list.erase(remove_if(phy->s->main_trip_list.begin(), phy->s->main_trip_list.end(),
+				[floor](vector<int>& arr) { return arr[0] == floor; }),
+				phy->s->main_trip_list.end());
+		}
+
+		else
+		{
+			phy->s->add_floor_to_main_trip_list(floor, phy->current_direction, 1);
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cout << "Error Occurrs at elevatorAlgorithmDefault::updateMainTripList : " << e.what() << std::endl;
+	}
 }
 
 string elevatorAlgorithmDefault::wstringToString(const std::wstring& wstr) const
@@ -546,6 +1125,21 @@ wstring elevatorAlgorithmDefault::stringToWstring(const std::string& str) const
 {
 	std::wstring s(str.begin(), str.end());
 	return s;
+}
+
+double elevatorAlgorithmDefault::getAltimeterDifferenceBetweenTwoFloors(vector<double> each_floor_alt, int underground, int floor1, double alt2)
+{
+	double alt1, at2;
+	if (floor1 > 0)
+	{
+		alt1 = each_floor_alt[underground + floor1 - 1];
+	}
+	else
+	{
+		alt1 = each_floor_alt[underground + floor1];
+	}
+
+	return abs(alt1 - alt2);
 }
 
 elevatorStatus* elevatorAlgorithmDefault::getElevatorStatus()
@@ -745,11 +1339,11 @@ void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_del
 		}
 		else
 		{
-			if (ground_floor + underground_floor == 2 || number_of_trips == 1)
+			if (ground_floor + underground_floor == 2)
 			{
 				S_factor = 1.0;
 			}
-			else if (ground_floor + underground_floor == 3 || number_of_trips == 2)
+			else if (ground_floor + underground_floor == 3)
 			{
 				S_factor = 0.67;
 			}
@@ -811,7 +1405,8 @@ void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_del
 		const double estimated_daily_running_energy_consumption =
 			(estimated_daily_trip_count * S_factor * load_factor * ISO_Reference_Cycle_Energy) / 2.0;
 
-		const double average_travel_distance_per_trip = total_move_distance * S_factor;
+		const double average_travel_distance_per_trip = abs(this->each_floor_altimeter.front() - this->each_floor_altimeter.back()) * S_factor;
+
 		const double average_time_per_trip = 
 			average_travel_distance_per_trip / max_velocity +
 			max_velocity / acceleration +
@@ -825,9 +1420,8 @@ void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_del
 		if (estimated_daily_standing_energy_consumption < 0)
 		{
 			cout << "Error : Estimated Daily Standing Energy Consumption is Negative" << endl;
-			cout << "Estimated estimated_daily_trip_count : " << estimated_daily_trip_count << endl;
-			cout << "Estimated average_travel_distance_per_trip : " << average_travel_distance_per_trip << endl;
-			cout << "ADDED : " << ((estimated_daily_trip_count * average_time_per_trip) / 3600) << endl;
+			//cout << "Estimated estimated_daily_trip_count : " << estimated_daily_trip_count << endl;
+			//cout << "Estimated average_travel_distance_per_trip : " << average_travel_distance_per_trip << endl;
 		}
 
 		const double estimated_daily_energy_consumption = 

@@ -76,6 +76,8 @@ public:
 	wstring AE_NAME;
 	wstring CNT_NAME;
 
+	int VisualizeMod = 0;
+
 	boost::asio::io_service io;
 
 	std::wstring* httpRequest;

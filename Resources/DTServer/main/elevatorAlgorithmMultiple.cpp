@@ -61,7 +61,7 @@ void elevatorAlgorithmMultiple::run(socket_oneM2M* sock, socket_UnrealEngine* ue
 			//ELEVATOR TURN STATE TO IDLE
 			std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " TURNS TO IDLE..." << " TOTAL MOVE DISTANCE : " << p->total_move_distance << std::endl;
 			elevatorAlgorithmDefault::	printTimeDeltaWhenStop();
-			this->stop(p);
+			this->stop(p, thisElevatorFlag);
 
 			thisElevatorFlag->isRunning = true;
 			thisElevatorFlag->firstOperation = true;

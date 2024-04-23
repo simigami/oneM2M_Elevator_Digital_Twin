@@ -69,7 +69,6 @@ void dt_simulation::run()
     giveAllBuildingTransactions();
 
     runningthread();
-    //sendAllBuildingTransactions();
 
     WriteAllTransactionsToFile();
 
@@ -264,19 +263,6 @@ void dt_simulation::readFileAndCreateoneM2MResource(wstring TCName)
 
     wfile.close(); // Close the file
 }
-transaction dt_simulation::getPreviousTransaction(simBuilding this_building) 
-{
-    auto transactions = *(this_building.transactions);
-
-    if (transactions.size() > 1) 
-    {
-        return transactions[this_building.transactions->size() - 2];
-	}
-    else 
-    {
-        return transaction();
-    }
-}
 
 void dt_simulation::ReadAndAddAllTransactions()
 {
@@ -419,13 +405,17 @@ void dt_simulation::SimulationLogCALL(simBuilding this_building, std::wstring li
 
     iss >> keyword >> building_name >> device_name >> call_floor >> call_floor_direction >> timestamp_wstr;
 
-    // IF CALL THERE IS MUST A TRANSACTION
-    transaction new_transaction;
-    new_transaction.start_floor = std::stoi(call_floor);
-	new_transaction.timestamp = std::stod(timestamp_wstr);
-	new_transaction.transaction_owner = device_name;
+    // GET ELEVATOR FROM THIS BUILDING
+    simElevator* this_elevator = nullptr;
+    for (auto& each_elevator : *this_building.elevators) {
+        if (each_elevator.elevatorName == device_name) {
+			this_elevator = &each_elevator;
+        }
+    }
 
-	this_building.transactions->push_back(new_transaction);
+    // APPEND CURRENT_CALLED_FLOOR TO THIS ELEVATOR
+    this_elevator->current_called_floors.push_back(std::stoi(call_floor));
+
 	return;
 }
 
@@ -453,46 +443,117 @@ void dt_simulation::SimulationLogSTOP(simBuilding this_building, std::wstring li
 
     //std::wcout << L"STOP : " << building_name << L" " << device_name << L" " << new_transaction_start << L" " << timestamp << std::endl;
 
-    // STEP 0. if back is NULL add new_transaction_start to this_building.transactions
-    if (this_building.transactions->size() == 0)
+    // STEP1, FIRST, WE HAVE TO CHECK IF THIS STOP IS DEFINED BY CALL LOG
+    // THIS CAN BE DONE BY LOOKING CALLED_FLOOR_LIST OF THIS ELEVATOR
+    simElevator* this_elevator = nullptr;
+    for (auto& each_elevator : *this_building.elevators) {
+        if (each_elevator.elevatorName == device_name) {
+			this_elevator = &each_elevator;
+		}
+	}
+
+    bool flag = false;
+
+    // IF THIS ELEVATOR IS NOT FOUND, THEN THIS STOP IS NOT DEFINED BY CALL LOG
+    for (const auto elem : this_elevator->current_called_floors)
+    {
+        if (elem == std::stoi(new_transaction_start))
+        {
+            this_elevator->current_called_floors.erase(std::remove(this_elevator->current_called_floors.begin(), this_elevator->current_called_floors.end(), elem), this_elevator->current_called_floors.end());
+		    flag = true;
+			break;
+        }
+	}
+
+    if (flag)
     {
         transaction new_transaction;
-        new_transaction.start_floor = std::stoi(new_transaction_start);
-        new_transaction.timestamp = timestamp;
-        new_transaction.transaction_owner = device_name;
 
-        this_building.transactions->push_back(new_transaction);
-        return;
+        // THERE IS A UNIQUE CASE THAT STOP FLOOR IS ALREADY INSIDE A DESTINATION FLOOR
+        for (int i = this_building.transactions->size() - 1; i >= 0; i--)
+        {
+            if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && *(this_building.transactions->at(i).closed) == false)
+            {
+                for(auto elem : *(this_building.transactions->at(i).inside_floors))
+				{
+					if (elem == std::stoi(new_transaction_start))
+					{
+                        // ADD TO DETINATION FLOOR
+                        this_building.transactions->at(i).destination_floors->push_back(std::stoi(new_transaction_start));
+
+                        // ERASE FROM INSIDE FLOOR
+                        this_building.transactions->at(i).inside_floors->erase(this_building.transactions->at(i).inside_floors->find(elem));
+						
+                        new_transaction.start_floor = std::stoi(new_transaction_start);
+                        new_transaction.timestamp = timestamp;
+                        new_transaction.transaction_owner = device_name;
+                        new_transaction.inside_floors = new set<int>(this_building.transactions->at(i).inside_floors->begin(), this_building.transactions->at(i).inside_floors->end());
+
+                        this_building.transactions->push_back(new_transaction);
+                        
+                        return;
+					}
+				}
+            }
+        }
+
+        // THIS MEANS THAT THIS STOP IS CALLED FLOOR STOP
+        if(this_elevator->init == true)
+		{
+            this_elevator->init = false;
+
+			new_transaction.start_floor = std::stoi(new_transaction_start);
+			new_transaction.timestamp = timestamp;
+			new_transaction.transaction_owner = device_name;
+			new_transaction.inside_floors = new set<int>();
+
+			this_building.transactions->push_back(new_transaction);
+			return;
+		}
+
+        else
+        {
+            for(int i = this_building.transactions->size() - 1; i >= 0; i--)
+            {
+                if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && *(this_building.transactions->at(i).closed) == false)
+                {
+                    *(this_building.transactions->at(i).closed) = true;
+
+                    // IF THIS STOP IS DEFINED BY CALL LOG ERASE ELEM FROM THIS_ELEVATOR->CURRENT_CALLED_FLOORS
+                    new_transaction.start_floor = std::stoi(new_transaction_start);
+                    new_transaction.timestamp = timestamp;
+                    new_transaction.transaction_owner = device_name;
+                    new_transaction.inside_floors = new set<int>(this_building.transactions->at(i).inside_floors->begin(), this_building.transactions->at(i).inside_floors->end());
+
+                    this_building.transactions->push_back(new_transaction);
+
+                    break;
+                }
+            }
+        }
     }
-
-    // STEP1, FIRST, WE HAVE TO CHECK IF THIS STOP IS DEFINED BY CALL LOG
-    transaction latest_transaction = this_building.transactions->back();
-    if (latest_transaction.start_floor == std::stoi(new_transaction_start))
-	{
-		return;
-	}
-
-    transaction new_transaction;
-    new_transaction.start_floor = std::stoi(new_transaction_start);
-    new_transaction.timestamp = timestamp;
-    new_transaction.transaction_owner = device_name;
-
-    // STEP 1. CHECK LATEST TRANSACTION's vector<int> destination_floors length is 0
-    latest_transaction = this_building.transactions->back();
-
-    if (latest_transaction.destination_floors->size() == 0)
-    {
-		// STEP 2. POP latest_transaction from this_building.transactions
-        this_building.transactions->pop_back();
-        this_building.transactions->push_back(new_transaction);
-        return;
-	}
     else
     {
-		// STEP 3. ADD new_transaction_start to latest_transaction.destination_floors
-        this_building.transactions->push_back(new_transaction);
-        return;
-	}
+        // THIS MEANS THAT THIS STOP IS ONE OF A DESTINATION POINT OF THIS ELEVATOR CURRENT TRANSACTION
+        for(int i = this_building.transactions->size() - 1; i >= 0; i--)
+        {
+            if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && this_building.transactions->at(i).inside_floors->size() != 0)
+            {
+                // CHECK IF THERE IS new_transaction_start IN SET OF INSIDE_FLOORS
+                for (auto elem : *(this_building.transactions->at(i).inside_floors))
+                {
+                    if (elem == std::stoi(new_transaction_start))
+                    {
+						this_building.transactions->at(i).inside_floors->erase(this_building.transactions->at(i).inside_floors->find(elem));
+                        this_building.transactions->at(i).destination_floors->push_back(std::stoi(new_transaction_start));
+                        this_building.transactions->at(i).end_timestamp = timestamp;
+                        
+                        break;
+					}
+				}
+			}
+		}
+    }
 }
 
 void dt_simulation::SimulationLogPRESS(simBuilding this_building, std::wstring line)
@@ -515,35 +576,48 @@ void dt_simulation::SimulationLogPRESS(simBuilding this_building, std::wstring l
 
 	timestamp = std::stod(timestamp_wstr);
 
-    // CHECK PREVIOUS TRANSACTION
-    transaction latest_transaction = this_building.transactions->back();
-    transaction previous_transaction = getPreviousTransaction(this_building);
-
-    if (previous_transaction.timestamp == 0.0 || previous_transaction.transaction_owner != latest_transaction.transaction_owner)
+    simElevator* this_elevator = nullptr;
+    for (auto& each_elevator : *this_building.elevators) {
+        if (each_elevator.elevatorName == device_name) {
+            this_elevator = &each_elevator;
+        }
+    }
+    
+    // THERE IS A UNIQUE CASE THAT PRESS LOG APEARES AFTER IDLE LOG
+    if (this_elevator->init == true)
     {
-        latest_transaction.destination_floors->clear();
-
-        for (const auto& floor : pressed_floors)
+        for (int i = this_building.transactions->size() - 1; i >= 0; i--)
         {
-            latest_transaction.destination_floors->push_back(floor);
+            if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && *(this_building.transactions->at(i).idle_with_zero_trip) == true)
+            {
+                *(this_building.transactions->at(i).idle_with_zero_trip) = false;
+                // APPEND new_transaction_start TO THIS transaction
+                for (auto& elem : pressed_floors)
+                {
+                    this_building.transactions->at(i).inside_floors->insert(elem);
+                }
+
+                break;
+            }
         }
 
-        sort(latest_transaction.destination_floors->begin(), latest_transaction.destination_floors->end());
-		return;
-	}
-
-    vector<int> non_overlapping_pressed_floors(previous_transaction.destination_floors->size() + pressed_floors.size());
-    auto iter = set_difference(pressed_floors.begin(), pressed_floors.end(), previous_transaction.destination_floors->begin(), previous_transaction.destination_floors->end(), non_overlapping_pressed_floors.begin());
-    non_overlapping_pressed_floors.erase(iter, non_overlapping_pressed_floors.end());
-
-    latest_transaction.destination_floors->clear();
-
-    for (const auto& floor : non_overlapping_pressed_floors)
-    {
-        latest_transaction.destination_floors->push_back(floor);
+        this_elevator->init = false;
+        return;
     }
 
-    sort(latest_transaction.destination_floors->begin(), latest_transaction.destination_floors->end());
+    for (int i = this_building.transactions->size() - 1; i >= 0; i--)
+    {
+        if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && *(this_building.transactions->at(i).closed) == false)
+        {
+            // APPEND new_transaction_start TO THIS transaction
+            for (auto& elem : pressed_floors)
+            {
+                this_building.transactions->at(i).inside_floors->insert(elem);
+            }
+
+            break;
+        }
+    }
     return;
 }
 
@@ -566,16 +640,29 @@ void dt_simulation::SimulationLogIDLE(simBuilding this_building, std::wstring li
         return;
     }
 
+    simElevator* this_elevator = nullptr;
+    for (auto& each_elevator : *this_building.elevators) {
+        if (each_elevator.elevatorName == device_name) {
+            this_elevator = &each_elevator;
+        }
+    }
+
+    this_elevator->current_called_floors.clear();
+    this_elevator->init = true;
+
     transaction latest_transaction = this_building.transactions->back();
 
     if (latest_transaction.destination_floors->size() == 0)
     {
         // STEP 2. POP latest_transaction from this_building.transactions
-        this_building.transactions->pop_back();
+        *(latest_transaction.idle_with_zero_trip) = true;
         return;
     }
     else
     {
+        *(latest_transaction.closed) = true;
+        latest_transaction.inside_floors->clear();
+
         return;
     }
 }
@@ -649,10 +736,23 @@ void dt_simulation::runningthread() {
     std::vector<std::future<void>> futures;
     std::mutex mutex;
 
+    int world_time_dilation = 0;
+
+    // ASK IN CONSOLE HOW FAST DOES THE SIMULATION RUN(WORLD TIME DILATION)
+    std::wcout << L"PLEASE ENTER SIMULATION SPEED (1.0 = REAL TIME, MAX = 10x) : ";
+    std::wcin >> world_time_dilation;
+
+    // CHECK VARIABLE
+    while (world_time_dilation < 1 || world_time_dilation > 10)
+    {
+		std::wcout << L"PLEASE ENTER SIMULATION SPEED (1.0 = REAL TIME, MAX = 10x) : ";
+		std::wcin >> world_time_dilation;
+	}
+
     // EACH THREAD WILL BE DETACHED
     for (auto& building : *buildings) 
     {
-        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, &building, &mutex));
+        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, &building, &mutex, world_time_dilation));
     }
 
     // Wait for all threads to finish
@@ -713,7 +813,7 @@ void dt_simulation::send_data(std::string request_content)
 #endif
 }
 
-void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex) {
+void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation) {
     double count = 0.0;
 
     for (const UE5Transaction& each_transaction : *each_building->timestamp_for_each_floor) {
@@ -726,7 +826,7 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
 
             // GET TIMER DELTA
             const auto execution_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); // Calculate the execution time
-            auto remaining = MILLISECONDHUNDRED - execution_time.count();
+            auto remaining = (MILLISECONDHUNDRED / dilation - execution_time.count());
 
             // Sleep delta seconds
             if (remaining > 0.0)
@@ -736,11 +836,8 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
             count += 0.1;
             //std::wcout << L"COUNT SECOND : " << count << std::endl;
         }
-
-        //if (count > 10)
-        //{
-        //    return;
-        //}
+        // SET TIMER HERE using chrno
+        chrono::steady_clock::time_point start = chrono::steady_clock::now();
 
         this_mutex->lock();
 
@@ -764,6 +861,7 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
         thisElevator->this_elevator_algorithm->getElevatorStatus()->tta = each_transaction.tta;
         thisElevator->this_elevator_algorithm->getElevatorStatus()->ttm = each_transaction.ttm;
         thisElevator->this_elevator_algorithm->getElevatorStatus()->ttd = each_transaction.ttd;
+        thisElevator->this_elevator_algorithm->getElevatorStatus()->dilation = dilation;
 
         // wrap to json string
         thisElevator->this_elevator_algorithm->set_elevator_Status_JSON_STRING();
@@ -771,6 +869,19 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
         this_mutex->lock();
         send_data(thisElevator->this_elevator_algorithm->getJSONString());
         this_mutex->unlock();
+
+        // SET TIMER HERE
+        chrono::steady_clock::time_point end = chrono::steady_clock::now();
+
+        // GET TIMER DELTA
+        const auto execution_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); // Calculate the execution time
+        auto remaining = (MILLISECONDHUNDRED / dilation - execution_time.count());
+
+        // Sleep delta seconds
+        if (remaining > 0.0)
+        {
+            Sleep(remaining);
+        }
 	}
 }
 
@@ -839,14 +950,16 @@ const int dt_simulation::setSimulationAlgorithm(simBuilding this_building)
     wcout << L"Please Choose A Simulation Algorithm For Building : " << this_building.buildingName << endl;
     wcout << L"1. Default Simulation Algorithm" << endl;
     wcout << L"2. Random Simulation Algorithm" << endl;
+    wcout << L"3. Give Lowest Trip Count Elevator First" << endl;
 
     wcin >> algorithm;
 
-    while (algorithm < 1 || algorithm > 2)
+    while (algorithm < 1 || algorithm > 3)
     {
 		wcout << L"Please Choose A Simulation Algorithm For Building : " << this_building.buildingName << endl;
 		wcout << L"1. Default Simulation Algorithm" << endl;
 		wcout << L"2. Random Simulation Algorithm" << endl;
+        wcout << L"3. Give Lowest Trip Count Elevator First" << endl;
 
 		wcin >> algorithm;
 	}
@@ -869,9 +982,6 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
         // REALLOCATION ALL ELEVATOR POSITIONS TO timestamp_of_this_transaction
         reallocateAllElevatorOfThisBuilding(this_building, timestamp_of_this_transaction);
         SimulationWithAlgorithm(algorithm_number, &this_building, each_transaction);
-
-        //SimulationAlgorithmDefault(&this_building, each_transaction);
-        //SimulationAlgorithmRandom(&this_building, each_transaction);
 	}
 
     reallocateAllElevatorOfThisBuilding(this_building, INT_MAX);
@@ -1009,6 +1119,9 @@ void dt_simulation::SimulationWithAlgorithm(const int alg_num, simBuilding* this
 	case 2:
 		SimulationAlgorithmRandom(this_building, tran);
 		break;
+    case 3:
+        SimulationAlgorithmShortestTransactionFirst(this_building, tran);
+        break;
 	default:
 		SimulationAlgorithmDefault(this_building, tran);
 		break;
@@ -1215,6 +1328,89 @@ void dt_simulation::SimulationAlgorithmRandom(simBuilding* this_building, transa
     chosen_elevator->current_transaction.push_back(tran);
 }
 
+void dt_simulation::SimulationAlgorithmShortestTransactionFirst(simBuilding* this_building, transaction tran)
+{
+    srand(time(NULL));
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    vector<int> shortest_elevator_indexes;
+    simElevator* chosen_elevator = nullptr;
+
+    // GET Elevator that has minimum TRIP COUNT
+    int min_trip_count = INT_MAX;
+
+    for (int i = 0; i < this_building->elevators->size(); i++)
+    {
+        simElevator elevator = this_building->elevators->at(i);
+        if (min_trip_count == INT_MAX)
+        {
+            min_trip_count = elevator.current_transaction.size() + elevator.previous_transactions.size();
+            shortest_elevator_indexes.push_back(i);
+        }
+        else if (elevator.current_transaction.size() + elevator.previous_transactions.size() == min_trip_count)
+        {
+            shortest_elevator_indexes.push_back(i);
+        }
+        else if (elevator.current_transaction.size() + elevator.previous_transactions.size() < min_trip_count)
+        {
+            min_trip_count = elevator.current_transaction.size() + elevator.previous_transactions.size();
+            shortest_elevator_indexes.clear();
+            shortest_elevator_indexes.push_back(i);
+        }
+    }
+    // SET chosen elevator to random elevator
+    std::uniform_int_distribution<int> dist(0, shortest_elevator_indexes.size() - 1);
+    const int random_index = shortest_elevator_indexes[dist(gen)];
+    chosen_elevator = &this_building->elevators->at(random_index);
+
+    // CHECK IF CHOSEN ELEVATOR IS NULL
+    tran.transaction_owner = chosen_elevator->elevatorName;
+
+    // STEP 4. CALCULATE END TIME WHEN IT REACHES TO END OF DESTINATION FLOOR
+    // STEP 4-1. FIRST, WE HAVE TO CALCULATE TIME BETWEEN END DEST FLOOR TO TRANSACTION START FLOOR
+    // IF THRERE IS NO PREVIOUS TRANSACTION, START FLOOR WILL BE DEFAULT START FLOOR
+    int current_elevator_floor;
+    if (chosen_elevator->current_transaction.empty() && chosen_elevator->previous_transactions.empty())
+    {
+        current_elevator_floor = this_building->default_start_floor;
+        tran.end_timestamp = 0.0;
+    }
+    else if (chosen_elevator->current_transaction.empty())
+    {
+        current_elevator_floor = chosen_elevator->previous_transactions.back().destination_floors->back();
+        tran.end_timestamp = tran.timestamp;
+    }
+    else
+    {
+        tran.timestamp = chosen_elevator->current_transaction.back().end_timestamp;
+        current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
+        tran.end_timestamp = tran.timestamp;
+    }
+    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, current_elevator_floor, tran.start_floor);
+    tran.end_timestamp += this_building->default_elevator_stop_time;
+
+    // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
+    int start_floor = tran.start_floor;
+    for (const auto& each_destination_floor : *tran.destination_floors)
+    {
+        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, start_floor, each_destination_floor);
+        tran.end_timestamp += time_to_reach_destination;
+
+        // ADD STOP TIME
+        tran.end_timestamp += this_building->default_elevator_stop_time;
+
+        // SET START FLOOR TO DESTINATION FLOOR
+        start_floor = each_destination_floor;
+    }
+    tran.end_timestamp += this_building->default_elevator_stop_time;
+    tran.end_timestamp = round(tran.end_timestamp * 10) / 10;
+
+    chosen_elevator->current_transaction.push_back(tran);
+}
+
+
 double dt_simulation::getDisatanceBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor)
 {
     double start_altitude = 0.0;
@@ -1279,10 +1475,12 @@ double dt_simulation::getTimeBetweenTwoFloors(simBuilding this_building, int sta
 
     if (2 * distance_covered_during_acceleration > distance_between_two_altimeter)
     {
-		// Elevator will exceed end altimeter if it reaches Max Velocity
-		// Then getTimeBetweenTwoFloors will be time to max velocity + time to zero deceleration(which is same as time to max velocity)
-		double t_to_max_velocity = sqrt(2 * distance_between_two_altimeter / max_acceleration);
-        return t_to_max_velocity + t_to_max_velocity;
+        double total_time = sqrt((4* distance_between_two_altimeter) / max_acceleration);
+        
+        // round to .2
+        total_time = round(total_time * 10) / 10;
+        
+        return total_time;
 	}
     else
     {

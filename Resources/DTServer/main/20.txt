@@ -1,0 +1,7 @@
+LOG SejongAI START
+start Floor : 1/destination Floors : 2,4,7,9/Timestamp : 10
+start Floor : -1/destination Floors : 5,8/Timestamp : 15
+start Floor : 9/destination Floors : 1,-2/Timestamp : 25
+start Floor : 1/destination Floors : -2/Timestamp : 43
+start Floor : 2/destination Floors : /Timestamp : 63
+LOG SejongAI END
