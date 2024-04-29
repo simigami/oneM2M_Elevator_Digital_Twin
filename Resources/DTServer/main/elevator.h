@@ -29,6 +29,8 @@ public:
 
     elevatorStatus* getElevatorStatus();
 
+    elevatorAlgorithmDefault* getElevatorAlgorithm();
+
     double getAltimeterFromFloor(int floor);
 
     wstring getBuildingName() const;

@@ -1,0 +1,16 @@
+IN SejongAI -> EV3 Spawned At TIME : 2024/04/27 - 18:01:18.556
+
+SejongAI -> EV3 is SELECTED FOR CALL -1
+IN SejongAI -> EV3 goTo Floor is Changed None to : -1
+IN SejongAI -> EV3 Rearranged At TIME : 2024/04/27 - 18:01:25.556, Time Delta is 6 Seconds
+
+IN SejongAI -> EV3 STOPPED AT FLOOR : -1
+IN SejongAI -> EV3 STOPPED AT TIME : 2024/04/27 - 18:01:33.556, Time Delta is 14 Seconds
+
+IN SejongAI -> EV3 IDLE AT TIME : 2024/04/27 - 18:01:37.556, TOTAL MOVE DISTANCE : 13.737500 Time Delta is 18 Seconds
+
+IN SejongAI -> EV3 goTo Floor is Changed None to : 4
+IN SejongAI -> EV3 Rearranged At TIME : 2024/04/27 - 18:01:38.556, Time Delta is 19 Seconds
+
+IN SejongAI -> EV3 Rearranged At TIME : 2024/04/27 - 18:01:40.556, Time Delta is 21 Seconds
+

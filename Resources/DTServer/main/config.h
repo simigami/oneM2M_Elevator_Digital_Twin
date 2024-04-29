@@ -1,4 +1,7 @@
 #pragma once
+#include <boost/filesystem.hpp>
+
+namespace fs = boost::filesystem;
 
 //THIS IS FOR DT_SERVER information
 #define DT_SERVER_ADDR L"192.168.0.134"
@@ -16,7 +19,8 @@
 // DT SERVER NEEDS WHEN IT USES HTTP PROTOCOL TO oneM2M CSE SERVER
 #ifdef HTTP
 	#define PROTOCOL_NAME L"http://"
-	#define CSE_ADDR L"192.168.0.178"
+	#define CSE_ADDRW L"192.168.0.178"
+	#define CSE_ADDRS "192.168.0.178"
 	#define CSE_LISTEN_PORT 10051
 	#define BUFFER_SIZE 65536
 #endif // HTTP
@@ -62,6 +66,7 @@
 #define MAXFILEPATHLENGTH 1024
 
 // THIS IS FOR DT SERVER LOG FILE FOR RTS MODE TO SIMULATION MODE
+#define LOGFILEPATH_FOR_SIMULATION fs::current_path().parent_path().wstring() + L"\\Log\\" + get_file_name_as_timestamp() + L"_result.txt"
 #define LOGFILEPATH "log.txt"
 
 enum elevator_resource_status

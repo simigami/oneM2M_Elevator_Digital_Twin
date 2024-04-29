@@ -8,6 +8,7 @@
 #include "parse_json.h"
 
 using namespace std;
+class logger;
 
 struct UE5Transaction {
     int goTo_floor;
@@ -59,9 +60,11 @@ public:
     vector<transaction> previous_transactions;
 };
 
-class simBuilding {
+class simBuilding{
 public:
     simBuilding();
+
+    logger* thisLogger = new logger;
 
     vector<simElevator>* elevators = new vector<simElevator>{};
     vector<transaction>* transactions = new vector<transaction>{};
@@ -100,6 +103,9 @@ public:
 
     dt_simulation();
 
+    bool checkFileCriteria(const std::wstring file_path);
+    string chooseLog();
+
     void setSimulatedFileLocation();
     wchar_t getSimulatedFileLocation() const;
 
@@ -121,11 +127,11 @@ public:
     void SimulationLogIDLE(simBuilding this_building, std::wstring line);
     void sortTransactions(simBuilding this_building);
 
-    void runningthread();
+    void runSimulation();
     void calculateEnergyConsumption(simBuilding* thisBuilding, UE5Transaction each_transaction);
     void send_data(std::string json_string);
     string set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp);
-    void sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation);
+    void sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation, int visualtion_mode);
     void giveAllBuildingTransactions();
     void giveElevatorTransaction(simBuilding this_building);
 
@@ -142,6 +148,8 @@ public:
     simElevator* findIDLEElevator(vector<simElevator>* this_building_elevators, transaction this_transaction);
     simElevator* findNearestElevator(simBuilding this_building, vector<simElevator>* this_building_elevators, transaction this_transaction);
 
-    void readFileAndCreateoneM2MResource(wstring TCName);
     void putSimulatedStringTooneM2M(Wparsed_struct parsedStruct);
+
+private:
+    string log_file_path;
 };

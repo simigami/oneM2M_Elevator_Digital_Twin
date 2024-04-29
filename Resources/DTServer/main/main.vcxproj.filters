@@ -39,9 +39,6 @@
     <ClCompile Include="elevator.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="test.cpp">
-      <Filter>리소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="send_UnrealEngine.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
@@ -54,12 +51,6 @@
     <ClCompile Include="elevatorAlgorithmSingle.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="elevator2.cpp">
-      <Filter>리소스 파일\Deprecate</Filter>
-    </ClCompile>
-    <ClCompile Include="elevator2.h">
-      <Filter>헤더 파일\Deprecate</Filter>
-    </ClCompile>
     <ClCompile Include="elevatorAlgorithmMultiple.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
@@ -69,7 +60,7 @@
     <ClCompile Include="main.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="elevatorAlgorithmSingle2.cpp">
+    <ClCompile Include="logger.cpp">
       <Filter>리소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -92,9 +83,6 @@
     <ClInclude Include="elevator.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="test.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
     <ClInclude Include="send_UnrealEngine.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
@@ -114,6 +102,9 @@
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="config.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="logger.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>

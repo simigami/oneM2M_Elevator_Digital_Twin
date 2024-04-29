@@ -14,6 +14,8 @@ elevatorAlgorithmDefault::elevatorAlgorithmDefault(wstring buildingName, wstring
 	thisElevatorStatus->start_time = std::chrono::system_clock::now();
 	worldClock = this_building_creation_time;
 	RETRIEVE_interval_millisecond = 10;
+
+	thisLogger.log_file_name = thisLogger.get_file_name_as_timestamp() + L"_" + buildingName + L"_" + deviceName + L".txt";
 }
 
 elevatorAlgorithmDefault::~elevatorAlgorithmDefault()
@@ -65,13 +67,13 @@ void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueS
 			// CHECK IF THIS ELEVATOR TURNS TO IDLE STATE
 			else if ((p->s->bCheckAllListEmpty() == true) and (thisElevatorFlag->firstOperation == false) and (thisElevatorFlag->IDLEFlag == true))
 			{
-				std::wcout << "IN " << building_name << " -> " << device_name << " TURNS TO IDLE, " << " TOTAL MOVE DISTANCE : " << p->total_move_distance << std::endl;
-
+				//std::wcout << "IN " << building_name << " -> " << device_name << " TURNS TO IDLE, " << " TOTAL MOVE DISTANCE : " << p->total_move_distance << std::endl;
 				const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
 				appendLogToLogList(IDLE, 3, building_name, device_name, delta_second);
-				writeLog();
+				writeEnergyLog();
+				
+				printTimeDeltaWhenIDLE();
 
-				elevatorAlgorithmDefault::printTimeDeltaWhenStop();
 				stop(p, thisElevatorFlag);
 			}
 
@@ -93,11 +95,10 @@ void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueS
 					this->thisElevatorStatus->current_goTo_Floor_single_info = this_elevator_goto_floor_single;
 
 					// THIS MEANS THAT ELEVATOR IS MOVING, so move the this_elevator_goto_floor_vector to next vector
-					p->total_move_distance += this->thisElevatorStatus->current_goTo_Floor_single_info[1] * ((int)(TICK) / (SECOND));
 					p->current_velocity = this->thisElevatorStatus->current_goTo_Floor_single_info[1];
 					p->current_altimeter = this->thisElevatorStatus->current_goTo_Floor_single_info[2];
 
-					thisElevatorStatus->total_move_distance = p->total_move_distance;
+					thisElevatorStatus->total_move_distance += this->thisElevatorStatus->current_goTo_Floor_single_info[1] * ((int)(TICK) / (SECOND));
 					thisElevatorStatus->velocity = p->current_velocity;
 					thisElevatorStatus->altimeter = p->current_altimeter;
 
@@ -106,7 +107,10 @@ void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueS
 					{
 						rearrangeMainTripList(thisElevatorStatus, p);
 
-						std::wcout << "IN " << building_name << " -> " << device_name << " STOPPED AT FLOOR : " << this->thisElevatorStatus->go_to_floor << std::endl;
+						//std::wcout << "IN " << building_name << " -> " << device_name << " STOPPED AT FLOOR : " << this->thisElevatorStatus->go_to_floor << std::endl;
+						wstring log_string = L"IN " + building_name + L" -> " + device_name + L" STOPPED AT FLOOR : " + std::to_wstring(this->thisElevatorStatus->go_to_floor);
+						thisLogger.write_log(log_string);
+						
 						elevatorAlgorithmDefault::printTimeDeltaWhenStop();
 
 						getElevatorStatus()->number_of_trips += 1;
@@ -197,6 +201,16 @@ void elevatorAlgorithmDefault::stop(physics* p, flags* this_flag)
 	p->s = new simulation();
 }
 
+void elevatorAlgorithmDefault::write_logs(std::vector<std::wstring> strings)
+{
+	thisLogger.write_logs(strings);
+}
+
+void elevatorAlgorithmDefault::write_log(std::wstring string)
+{
+	thisLogger.write_log(string);
+}
+
 void elevatorAlgorithmDefault::appendLogToLogList(int code, ...)
 {
 	va_list args;
@@ -234,28 +248,7 @@ void elevatorAlgorithmDefault::IDLELog(va_list args)
 	// arg[1] = Building Name
 	// arg[2] = Device Name
 	// arg[3] = Timestamp
-
-	// 인자 개수 검사
-	int expectedArgCount = 3;
-	int actualArgCount = va_arg(args, int);
-
-	if (expectedArgCount != actualArgCount) {
-		// 에러 메시지 출력
-		std::cerr << "IDLELog Argument Count Does Not Match " << std::endl;
-		std::cerr << "Expected : " << expectedArgCount << ", Actual : " << actualArgCount << std::endl;
-		return;
-	}
-
-	// 각 인자 형변환 및 wstring으로 변환
-	std::wstring buildingName = va_arg(args, const wstring);
-	std::wstring deviceName = va_arg(args, const wstring);
-	const int timestamp = va_arg(args, const int);
-
-	// 로그 메시지 생성
-	std::wstring logMessage = L"IDLE " + buildingName + L" " + deviceName + L" " + std::to_wstring(timestamp);
-
-	// 로그 리스트에 추가
-	this->log_list.push_back(logMessage);
+	this->log_list.push_back(thisLogger.IDLELog(args));
 }
 
 void elevatorAlgorithmDefault::CALLLog(va_list args)
@@ -266,28 +259,7 @@ void elevatorAlgorithmDefault::CALLLog(va_list args)
 	// arg[3] = Called Floor
 	// arg[4] = Called Floor Direction
 	// arg[5] = Timestamp
-
-	const int expectedArgCount = 5;
-	int actualArgCount = va_arg(args, int);
-
-	if (expectedArgCount != actualArgCount) {
-		std::cerr << "IDLELog Argument Count Does Not Match " << std::endl;
-		std::cerr << "Expected : " << expectedArgCount << ", Actual : " << actualArgCount << std::endl;
-		return;
-	}
-
-	// 각 인자 형변환 및 wstring으로 변환
-	std::wstring buildingName = va_arg(args, const wstring);
-	std::wstring deviceName = va_arg(args, const wstring);
-	int calledFloor = va_arg(args, int);
-	wstring calledFloorDirection = va_arg(args, int) == 1 ? L"Up" : L"Down";
-	const int timestamp = va_arg(args, const int);
-
-	// 로그 메시지 생성
-	std::wstring logMessage = L"CALL " + buildingName + L" " + deviceName + L" " + std::to_wstring(calledFloor) + L" " + calledFloorDirection + L" " + std::to_wstring(timestamp);
-
-	// 로그 리스트에 추가
-	this->log_list.push_back(logMessage);
+	this->log_list.push_back(thisLogger.CALLLog(args));
 }
 
 void elevatorAlgorithmDefault::PRESSLog(va_list args)
@@ -297,36 +269,7 @@ void elevatorAlgorithmDefault::PRESSLog(va_list args)
 	// arg[2] = Device Name
 	// arg[3] = Pressed Floor List
 	// arg[4] = Timestamp
-
-	int expectedArgCount = 4;
-	int actualArgCount = va_arg(args, int);
-
-	if (expectedArgCount != actualArgCount) {
-		std::cerr << "IDLELog Argument Count Does Not Match " << std::endl;
-		std::cerr << "Expected : " << expectedArgCount << ", Actual : " << actualArgCount << std::endl;
-		return;
-	}
-
-	// 각 인자 형변환 및 wstring으로 변환
-	const std::wstring buildingName = va_arg(args, const wstring);
-	const std::wstring deviceName = va_arg(args, const wstring);
-	const std::vector<int> pressedFloorList = va_arg(args, std::vector<int>);
-	const int timestamp = va_arg(args, const int);
-
-	// 로그 메시지 생성
-	std::wstring logMessage = L"PRESS " + buildingName + L" " + deviceName + L" [";
-
-	for (int i = 0; i < pressedFloorList.size(); i++) {
-		logMessage += std::to_wstring(pressedFloorList[i]);
-		if (i != pressedFloorList.size() - 1) {
-			logMessage += L",";
-		}
-	}
-
-	logMessage.append(L"] " + std::to_wstring(timestamp));
-
-	// 로그 리스트에 추가
-	this->log_list.push_back(logMessage);
+	this->log_list.push_back(thisLogger.PRESSLog(args));
 }
 
 void elevatorAlgorithmDefault::UNPRESSLog(va_list args)
@@ -336,36 +279,7 @@ void elevatorAlgorithmDefault::UNPRESSLog(va_list args)
 	// arg[2] = Device Name
 	// arg[3] = Unpressed Floor List
 	// arg[4] = Timestamp
-
-	int expectedArgCount = 4;
-	int actualArgCount = va_arg(args, int);
-
-	if (expectedArgCount != actualArgCount) {
-		std::cerr << "IDLELog Argument Count Does Not Match " << std::endl;
-		std::cerr << "Expected : " << expectedArgCount << ", Actual : " << actualArgCount << std::endl;
-		return;
-	}
-
-	// 각 인자 형변환 및 wstring으로 변환
-	const std::wstring buildingName = va_arg(args, const wstring);
-	const std::wstring deviceName = va_arg(args, const wstring);
-	std::vector<int> unpressedFloorList = va_arg(args, std::vector<int>);
-	const int timestamp = va_arg(args, const int);
-
-	// 로그 메시지 생성
-	std::wstring logMessage = L"UNPRESS " + buildingName + L" " + deviceName + L" [";
-
-	for (int i = 0; i < unpressedFloorList.size(); i++) {
-		logMessage += std::to_wstring(unpressedFloorList[i]);
-		if (i != unpressedFloorList.size() - 1) {
-			logMessage += L", ";
-		}
-	}
-
-	logMessage += L"] " + timestamp;
-
-	// 로그 리스트에 추가
-	this->log_list.push_back(logMessage);
+	this->log_list.push_back(thisLogger.UNPRESSLog(args));
 }
 
 void elevatorAlgorithmDefault::STOPLog(va_list args)
@@ -375,27 +289,7 @@ void elevatorAlgorithmDefault::STOPLog(va_list args)
 	// arg[2] = Device Name
 	// arg[3] = Stopped Floor
 	// arg[4] = Timestamp
-
-	int expectedArgCount = 4;
-	int actualArgCount = va_arg(args, int);
-	
-	if (expectedArgCount != actualArgCount) {
-		std::cerr << "IDLELog Argument Count Does Not Match " << std::endl;
-		std::cerr << "Expected : " << expectedArgCount << ", Actual : " << actualArgCount << std::endl;
-		return;
-	}
-
-	// 각 인자 형변환 및 wstring으로 변환
-	const std::wstring buildingName = va_arg(args, const wstring);
-	const std::wstring deviceName = va_arg(args, const wstring);
-	int stoppedFloor = va_arg(args, int);
-	const int timestamp = va_arg(args, const int);
-
-	// 로그 메시지 생성
-	std::wstring logMessage = L"STOP " + buildingName + L" " + deviceName + L" " + std::to_wstring(stoppedFloor) + L" " + std::to_wstring(timestamp);
-
-	// 로그 리스트에 추가
-	this->log_list.push_back(logMessage);
+	this->log_list.push_back(thisLogger.STOPLog(args));
 }
 
 void elevatorAlgorithmDefault::MOVLog(va_list args)
@@ -405,28 +299,7 @@ void elevatorAlgorithmDefault::MOVLog(va_list args)
 	// arg[2] = Device Name
 	// arg[3] = Moving Floor
 	// arg[4] = Timestamp
-
-	int expectedArgCount = 4;
-	int actualArgCount = va_arg(args, int);
-
-	if (expectedArgCount != actualArgCount) {
-		std::cerr << "IDLELog Argument Count Does Not Match " << std::endl;
-		std::cerr << "Expected : " << expectedArgCount << ", Actual : " << actualArgCount << std::endl;
-		return;
-	}
-
-	// 각 인자 형변환 및 wstring으로 변환
-	const std::wstring buildingName = va_arg(args, const wstring);
-	const std::wstring deviceName = va_arg(args, const wstring);
-	const int movingFloor = va_arg(args, int);
-	const int timestamp = va_arg(args, const int);
-	va_end(args);
-
-	// 로그 메시지 생성
-	std::wstring logMessage = L"MOV " + buildingName + L" " + deviceName + L" " + std::to_wstring(movingFloor) + L" " + std::to_wstring(timestamp);
-
-	// 로그 리스트에 추가
-	this->log_list.push_back(logMessage);
+	this->log_list.push_back(thisLogger.MOVLog(args));
 }
 
 bool elevatorAlgorithmDefault::checkReachability(elevatorStatus* stats, double current_altimeter, int dest_floor)
@@ -452,15 +325,44 @@ bool elevatorAlgorithmDefault::checkReachability(elevatorStatus* stats, double c
 	double time_to_zero_velocity = current_velocity / current_acceleration;
 	double distance = ((current_velocity + 0) / 2) * time_to_zero_velocity;
 
-	// IF DESTINATION ALTITUDE IS HIGHER THAN CURRENT ALTITUDE + DISTANCE, RETURN TRUE
-	if (abs(dest_altitude - current_altimeter) >  distance)
+	if (stats->direction)
 	{
-		return true;
+		if (current_altimeter > dest_altitude)
+		{
+			return false;
+		}
+		else
+		{
+			if (abs(dest_altitude - current_altimeter) > distance)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
 	else
 	{
-		return false;
+		if(current_altimeter < dest_altitude)
+		{
+			return false;
+		}
+		else
+		{
+			if (abs(dest_altitude - current_altimeter) > distance)
+			{
+				return true;
+			}
+			else
+			{
+				return false;
+			}
+		}
 	}
+
+	// IF DESTINATION ALTITUDE IS HIGHER THAN CURRENT ALTITUDE + DISTANCE, RETURN TRUE
 }
 
 vector<int> elevatorAlgorithmDefault::getNewButtonInsideList(vector<int> prev, vector<int> current)
@@ -523,18 +425,18 @@ vector<int> elevatorAlgorithmDefault::getRemoveButtonInsideList(vector<int> prev
 	return vector<int>();
 }
 
-void elevatorAlgorithmDefault::writeLog()
+void elevatorAlgorithmDefault::writeEnergyLog()
 {
 	const auto logs = this->log_list;
 	const auto logSize = logs.size();
-	const auto wirtePath = LOGFILEPATH;
+	const auto wirtePath = thisLogger.log_directory_StateCode + L"\\" + thisLogger.log_file_name_for_building_logs;
 	const auto temp = this->getElevatorStatus();
 	const wstring buildingName = temp->get_building_name();
 	const wstring deviceName = temp->get_device_name();
 
 	std::mutex logMutex;
 
-	std::wifstream logFile(wirtePath);
+	std::wifstream logFile(wirtePath, ios::app);
 	if (logFile) {
 		std::wstring fileContent;
 		std::getline(logFile, fileContent);
@@ -583,6 +485,7 @@ void elevatorAlgorithmDefault::writeLog()
 			for (const auto& log : logs) {
 				logFile << log << std::endl;
 			}
+
 			logFile << L"LOG END " << buildingName << L" " << deviceName << std::endl;
 
 			logFile.close();
@@ -753,14 +656,17 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenSpawn()
 
 	auto duration = worldClock.time_since_epoch();
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration) % 1000;
-
-	std::wcout << L"IN " << this->thisElevatorStatus->get_building_name() << L" -> " << this->thisElevatorStatus->get_device_name() << L" Spawned At TIME : ";
-
-	sprintf_s(timeString, "%04d/%02d/%02d - %02d:%02d:%02d.%03lld\n",
+	
+	sprintf_s(timeString, "IN %ls -> %ls Spawned At TIME : %04d/%02d/%02d - %02d:%02d:%02d.%03lld\n",
+		this->thisElevatorStatus->get_building_name().c_str(),
+		this->thisElevatorStatus->get_device_name().c_str(),
 		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour, tstruct.tm_min,
 		tstruct.tm_sec, milliseconds.count()
 	);
-	std::puts(timeString);
+	//std::puts(timeString);
+
+	std::wstring log_string(timeString, timeString + strlen(timeString));
+	write_log(log_string);
 }
 
 void elevatorAlgorithmDefault::printTimeDeltaWhenRearrange()
@@ -780,22 +686,25 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenRearrange()
 	auto duration = worldClock.time_since_epoch();
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration)%1000;
 
-	std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " Rearranged At TIME : ";
-	sprintf_s(timeString, "%04d/%02d/%02d - %02d:%02d:%02d.%03lld, Time Delta is %lld Seconds\n",
-		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour , tstruct.tm_min,
+	sprintf_s(timeString, "IN %ls -> %ls Rearranged At TIME : %04d/%02d/%02d - %02d:%02d:%02d.%03lld, Time Delta is %lld Seconds\n", 
+		this->thisElevatorStatus->get_building_name().c_str(),
+		this->thisElevatorStatus->get_device_name().c_str(),
+		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour, tstruct.tm_min,
 		tstruct.tm_sec, milliseconds.count(), diffSeconds
 		);
-	puts(timeString);
+	//puts(timeString);
+
+	// change timeString to wstring
+	std::wstring log_string(timeString, timeString + strlen(timeString));
+
+	write_log(log_string);
 }
 
 int elevatorAlgorithmDefault::printTimeDeltaNow()
 {
-	char timeString[128];
-	struct tm tstruct;
-
 	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
-	int diffSeconds = chrono::duration_cast<chrono::seconds>(now - this->worldClock).count();
+	int diffSeconds = (int)chrono::duration_cast<chrono::seconds>(now - this->worldClock).count();
 
 	return diffSeconds;
 }
@@ -817,12 +726,49 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenStop()
 	auto duration = worldClock.time_since_epoch();
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration)%1000;
 
-	std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " Stopped At TIME : ";
-	sprintf_s(timeString, "%04d/%02d/%02d - %02d:%02d:%02d.%03lld, Time Delta is %lld Seconds\n",
-		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour , tstruct.tm_min,
+	//std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " Stopped At TIME : ";
+	sprintf_s(timeString, "IN %ls -> %ls STOPPED AT TIME : %04d/%02d/%02d - %02d:%02d:%02d.%03lld, Time Delta is %lld Seconds\n",
+		this->thisElevatorStatus->get_building_name().c_str(),
+		this->thisElevatorStatus->get_device_name().c_str(),
+		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour, tstruct.tm_min,
 		tstruct.tm_sec, milliseconds.count(), diffSeconds
-		);
+	);
+	//puts(timeString);
+
+	std::wstring log_string(timeString, timeString + strlen(timeString));
+	write_log(log_string);
+}
+
+void elevatorAlgorithmDefault::printTimeDeltaWhenIDLE()
+{
+	char timeString[1024];
+	struct tm tstruct;
+
+	std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+	std::chrono::duration<double> delta = now - this->worldClock;
+
+	time_t timeNow = std::chrono::system_clock::to_time_t(now);
+	time_t timeDelta = std::chrono::duration_cast<std::chrono::seconds>(delta).count();
+
+	auto diffSeconds = chrono::duration_cast<chrono::seconds>(now - this->worldClock).count();
+	localtime_s(&tstruct, &timeNow);
+
+	auto duration = worldClock.time_since_epoch();
+	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration) % 1000;
+
+	//std::wcout << "IN " <<  this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " Stopped At TIME : ";
+	sprintf_s(timeString, "IN %ls -> %ls IDLE AT TIME : %04d/%02d/%02d - %02d:%02d:%02d.%03lld, TOTAL MOVE DISTANCE : %f Time Delta is %lld Seconds\n",
+		this->thisElevatorStatus->get_building_name().c_str(),
+		this->thisElevatorStatus->get_device_name().c_str(),
+		tstruct.tm_year + 1900, tstruct.tm_mon + 1, tstruct.tm_mday, tstruct.tm_hour, tstruct.tm_min,
+		tstruct.tm_sec, milliseconds.count(), 
+		this->thisElevatorStatus->total_move_distance,
+		diffSeconds
+	);
 	puts(timeString);
+
+	std::wstring log_string(timeString, timeString + strlen(timeString));
+	write_log(log_string);
 }
 
 void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
@@ -863,7 +809,9 @@ void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, p
 				outsideLogic(thisElevatorStatus, p, nofi_content->button_outside_floor, nofi_content->button_outside_direction);
 			}
 
-			std::wcout << "IN " << building_name << " -> " << device_name << " goTo Floor is Changed None to : " << p->s->main_trip_list[0][0] << std::endl;
+			//std::wcout << "IN " << building_name << " -> " << device_name << " goTo Floor is Changed None to : " << p->s->main_trip_list[0][0] << std::endl;
+			wstring log_string = L"IN " + building_name + L" -> " + device_name + L" goTo Floor is Changed None to : " + std::to_wstring(p->s->main_trip_list[0][0]);
+			thisLogger.write_log(log_string);
 
 			//CHANGE V_T Graph
 			rearrangeVector(this->getElevatorStatus(), ueSock, p);
@@ -907,7 +855,7 @@ void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, p
 		{
 			if (!nofi_content->button_inside.empty())
 			{
-				int nofi_content_floor = (thisElevatorStatus->button_inside)->empty() ? INT_MAX : (thisElevatorStatus->button_inside)->front();
+				int nofi_content_floor = (thisElevatorStatus->button_inside)->empty() ? INT_MAX : p->current_direction ? (thisElevatorStatus->button_inside)->front() : (thisElevatorStatus->button_inside)->back();
 
 				insideLogic(thisElevatorStatus, p, new_inside, remove_inside);
 
@@ -926,7 +874,7 @@ void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, p
 				//CHECK THIS CALLED FLOOR IS ALREADY EXISTS IN STATUS
 				for (const auto& elem : *(thisElevatorStatus->button_outside))
 				{
-					if (nofi_content->button_outside_floor == elem[0])
+					if (nofi_content->button_outside_floor == elem[0] && nofi_content->button_outside_direction == elem[1])
 					{
 						flag = false;
 						break;
@@ -1027,7 +975,7 @@ void elevatorAlgorithmDefault::outsideLogic(elevatorStatus* status, physics* phy
 
 		for (const auto elem : phy->s->main_trip_list)
 		{
-			if (elem[0] == outside_button)
+			if (elem[0] == outside_button && elem[1] == outside_direction)
 			{
 				flag = true;
 				break;
@@ -1127,19 +1075,19 @@ wstring elevatorAlgorithmDefault::stringToWstring(const std::string& str) const
 	return s;
 }
 
-double elevatorAlgorithmDefault::getAltimeterDifferenceBetweenTwoFloors(vector<double> each_floor_alt, int underground, int floor1, double alt2)
+double elevatorAlgorithmDefault::getAltimeterDifferenceBetweenTwoFloors(vector<double> each_floor_alt, int underground, int dest_floor, double current_altimeter)
 {
-	double alt1, at2;
-	if (floor1 > 0)
+	double dest_altimeter;
+	if (dest_floor > 0)
 	{
-		alt1 = each_floor_alt[underground + floor1 - 1];
+		dest_altimeter = each_floor_alt[underground + dest_floor - 1];
 	}
 	else
 	{
-		alt1 = each_floor_alt[underground + floor1];
+		dest_altimeter = each_floor_alt[underground + dest_floor];
 	}
 
-	return abs(alt1 - alt2);
+	return abs(dest_altimeter - current_altimeter);
 }
 
 elevatorStatus* elevatorAlgorithmDefault::getElevatorStatus()
@@ -1246,15 +1194,17 @@ double elevatorStatus::get_jerk()
 	return this->jerk;
 }
 
-void elevatorStatus::set_this_elevator_energy_consumption(bool flag)
+void elevatorStatus::set_this_elevator_energy_flag(bool flag)
 {
 	calculate_this_elevator_energy_consumption = flag;
 }
-void elevatorStatus::set_this_elevator_energy_consumption(double energy1, double energy2, double energy3)
+
+void elevatorStatus::set_this_elevator_energy_consumption(double energy1, double energy2, double energy3, double door_closing_time)
 {
 	IDLE_Power = energy1;
 	Standby_Power_5Min = energy2;
 	ISO_Reference_Cycle_Energy = energy3;
+	door_open_time = door_closing_time;
 }
 bool elevatorStatus::get_this_elevator_energy_consumption()
 {
@@ -1288,7 +1238,7 @@ void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_del
 		ratio = round(ratio * 100) / 100;
 
 		// Get Estimated Daily Trip Count
-		int estimated_daily_trip_count = ratio * number_of_trips * (0.5 *(1 + night_time_shorten_ratio));
+		int estimated_daily_trip_count = floor(ratio * number_of_trips * (0.5 *(1 + night_time_shorten_ratio)));
 
 		if (estimated_daily_trip_count < 50) 
 		{
@@ -1419,7 +1369,7 @@ void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_del
 
 		if (estimated_daily_standing_energy_consumption < 0)
 		{
-			cout << "Error : Estimated Daily Standing Energy Consumption is Negative" << endl;
+			//cout << "Error : Estimated Daily Standing Energy Consumption is Negative" << endl;
 			//cout << "Estimated estimated_daily_trip_count : " << estimated_daily_trip_count << endl;
 			//cout << "Estimated average_travel_distance_per_trip : " << average_travel_distance_per_trip << endl;
 		}

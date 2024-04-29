@@ -16,8 +16,7 @@ public:
 	virtual void rearrangeVector(elevatorStatus* stats, socket_UnrealEngine* ueSock, physics* phy) override;
 	virtual void updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy) override;
 
-	virtual void appendLogToLogList(int code, ...) override;
-	virtual void writeLog() override;
+	virtual void writeEnergyLog() override;
 
 	virtual int printTimeDeltaNow() override;
 	void moveToDeterminedFloor(socket_UnrealEngine* ueSock, physics* phy);

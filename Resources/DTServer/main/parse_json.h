@@ -29,9 +29,7 @@ struct Wparsed_struct
 	bool inFlag = true;
 	bool outFlag = true;
 
-	vector<double> each_floor_altimeter = {
-	-55, -51.5, -48, -44.5, -41, -38, -32, -28, -25, -22, -19, -16, -13, -10, -7, -4, 1
-	};
+	vector<double> each_floor_altimeter = vector<double>{};
 
 	vector<wstring> button_inside = vector<wstring>{};
 	vector<vector<int>> button_outside = vector<vector<int>>{};
@@ -46,7 +44,7 @@ public:
 
 	Wparsed_struct parsingOnlyBuildingName(wstring json_data);
 	Wparsed_struct parsingDedicatedButtonBuilding(wstring json_data);
-	Wparsed_struct parsingCCButtonBuliding(wstring json_data);
+	Wparsed_struct parsingCrowdControlButtonBuliding(wstring json_data);
 
 	Wparsed_struct parsingText(wstring text);
 
@@ -56,5 +54,4 @@ public:
 
 	void modify_inside_data_to_oneM2M(Wparsed_struct p);
 	void modify_outside_data_to_oneM2M(Wparsed_struct p);
-
 };

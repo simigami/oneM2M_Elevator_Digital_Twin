@@ -6,6 +6,12 @@ Elevator::Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, ve
 	this->p = new physics(parsed_struct);
 	this->UEsock = new socket_UnrealEngine();
 
+	if (sc == ELEVATOR_DATA_NOT_FOUND)
+	{
+		const auto each_floor_altimeter_from_oneM2M = this->sock->retrieveEachFloorAltimeter();
+		this->p->s->each_floor_altimeter = each_floor_altimeter_from_oneM2M;
+	}
+
 	this->thisElevatorAlgorithmSingle = new elevatorAlgorithmSingle(parsed_struct.building_name, parsed_struct.device_name, this_building_creation_time);
 	this->thisElevatorAlgorithmMultiple = new elevatorAlgorithmMultiple(parsed_struct.building_name, parsed_struct.device_name, this_building_creation_time);
 
@@ -77,6 +83,22 @@ elevatorStatus* Elevator::getElevatorStatus()
 		break;
 	}
 	return nullptr;
+}
+
+elevatorAlgorithmDefault* Elevator::getElevatorAlgorithm()
+{
+	if (this->algorithmNumber == 1)
+	{
+		return this->thisElevatorAlgorithmSingle;
+	}
+	else if (this->algorithmNumber == 2)
+	{
+		return this->thisElevatorAlgorithmMultiple;
+	}
+	else
+	{
+		return this->thisElevatorAlgorithmSingle;
+	}
 }
 
 double Elevator::getAltimeterFromFloor(int floor)

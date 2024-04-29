@@ -1,0 +1,16 @@
+IN SejongAI -> EV1 Spawned At TIME : 2024/04/27 - 18:02:53.723
+
+SejongAI -> EV1 is SELECTED FOR CALL 1
+IN SejongAI -> EV1 goTo Floor is Changed None to : 1
+IN SejongAI -> EV1 Rearranged At TIME : 2024/04/27 - 18:02:55.723, Time Delta is 1 Seconds
+
+IN SejongAI -> EV1 STOPPED AT FLOOR : 1
+IN SejongAI -> EV1 STOPPED AT TIME : 2024/04/27 - 18:03:04.723, Time Delta is 11 Seconds
+
+IN SejongAI -> EV1 Rearranged At TIME : 2024/04/27 - 18:03:08.723, Time Delta is 15 Seconds
+
+IN SejongAI -> EV1 STOPPED AT FLOOR : 2
+IN SejongAI -> EV1 STOPPED AT TIME : 2024/04/27 - 18:03:22.723, Time Delta is 28 Seconds
+
+IN SejongAI -> EV1 Rearranged At TIME : 2024/04/27 - 18:03:42.723, Time Delta is 48 Seconds
+

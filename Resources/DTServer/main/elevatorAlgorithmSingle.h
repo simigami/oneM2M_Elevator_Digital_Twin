@@ -4,6 +4,7 @@
 class elevatorAlgorithmSingle : public elevatorAlgorithmDefault
 {
 public:
+
 	elevatorAlgorithmSingle(wstring buildingName, wstring deviceName, std::chrono::system_clock::time_point this_building_creation_time);
 	~elevatorAlgorithmSingle();
 
@@ -24,8 +25,10 @@ public:
 	virtual void run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* phy) override;
 	virtual void stop(physics* p, flags* this_flag) override;
 
-	virtual void appendLogToLogList(int code, ...) override;
-	virtual void writeLog() override;
+	virtual void writeEnergyLog() override;
+
+	void write_logs(std::vector<std::wstring> strings) override;
+	void write_log(std::wstring string) override;
 
 	virtual void printThisElevatorEnergyConsumptionInfos() override;
 

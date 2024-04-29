@@ -16,7 +16,7 @@ send_oneM2M::send_oneM2M(Wparsed_struct parsed_struct)
 {
 #ifdef HTTP
     uri_to_ip = PROTOCOL_NAME;
-    uri_to_ip.append(CSE_ADDR);
+    uri_to_ip.append(CSE_ADDRW);
     uri_to_ip.append(L":");
     uri_to_ip.append(to_wstring(CSE_LISTEN_PORT));
 
@@ -781,11 +781,7 @@ http_response send_oneM2M::cin_retrieve_la(wstring originator, int num, ...)
     {
 	    json::value response_json = response.extract_json().get();
         std::wstring ri = response_json[U("m2m:cin")][U("ri")].as_string();
-
-        //std::wcout  << L"RI is : " << ri << std::endl;
     }
-    // Print the HTTP response
-    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
 
     return response;
 }

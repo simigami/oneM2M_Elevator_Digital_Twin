@@ -18,24 +18,41 @@ struct class_of_one_Building
 	vector<Elevator*> classOfAllElevators;
 	map<wstring, wstring> subscriptionRI_to_RN;
 	wstring ACP_NAME = L"";
+	wstring log_name_for_building = L"";
+};
+
+struct hash_function{
+	size_t operator()(const vector<int>& vec) const
+	{
+		std::hash<int> hasher;
+		size_t answer = 0;
+
+		for (int i = 0; i < vec.size(); i++)
+		{
+			answer ^= hasher(i) + 0x9e3779b9 +
+				(answer << 6) + (answer >> 2);
+		}
+
+		return answer;
+	}
 };
 
 class Building
 {
 public:
-	Building(int buttonMod);
+	Building(wstring building_name, int buttonMod);
 
 	//const time for this building created time
 	std::chrono::system_clock::time_point buliding_start_time;
 
 	class_of_one_Building* buildingElevatorInfo;
 	vector<vector<int>>* currentButtonOutsideInfos;
+	logger* this_log;
 
 	int getButtonMod();
 	void getWhichElevatorToGetButtonOutside(vector<vector<int>> button_outside);
 
-	vector<vector<int>> getCurrentElevatorsButtonOutsideLists();
-	vector<vector<int>> getDiffBetweenCurrentAndEmbedded(vector<vector<int>> newList, vector<vector<int>> oldList);
+	vector<vector<int>> getDiffBetweenNewAndCurrent(vector<vector<int>> newList, vector<vector<int>> oldList);
 };
 
 class dt_real_time
@@ -45,23 +62,20 @@ public:
 
 	void Run();
 
-	void startAsyncAccept(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
-	void startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
+	void startAsyncAccept_Embedded(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
+	void startAsyncAccept_Notification(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
 
 	void Running_Embedded(const wstring& httpResponse);
-	void Create_New_Building_And_Elevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status);
+	void CreateNewBuildingAndElevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status);
 	void setConstructArgumentsOfElevator(Building* this_buliding, Elevator* new_elevator);
 
 	void Running_Notification(const string& httpResponse);
 
-	bool existsElevator(Building* one_building, const wstring& device_name);
+	bool bExistsElevator(Building* one_building, const wstring& device_name);
 
-	string get_RN_Path_From_SubscriptionRI(const string& substring);
-
-	Building* get_building_vector(const wstring& ACOR_NAME);
+	Building* getBuilding(const wstring& building_name);
 	Elevator* getElevator(Building* class_of_one_building, const wstring& device_name);
-	socket_oneM2M get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const wstring& AE_ID);
 
 	//MAIN 함수에서 알고리즘에 전달할 notificationContent 구조체
     notificationContent* noti_content;
@@ -70,19 +84,16 @@ public:
 	vector<thread> one_building_threads;
 	vector<wstring> ACP_NAMES;
 
-	parse_json c;
+	parse_json data_parser;
 	Wparsed_struct parsed_struct;
 	wstring ACOR_NAME;
 	wstring AE_NAME;
 	wstring CNT_NAME;
+	wstring building_name;
 
 	int VisualizeMod = 0;
-
-	boost::asio::io_service io;
 
 	std::wstring* httpRequest;
 
 private:
-
-
 };

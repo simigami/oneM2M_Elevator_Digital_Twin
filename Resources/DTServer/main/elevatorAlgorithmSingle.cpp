@@ -69,52 +69,19 @@ void elevatorAlgorithmSingle::updateElevatorTick(socket_UnrealEngine* ueSock, ph
 	elevatorAlgorithmDefault::updateElevatorTick(ueSock, phy);
 }
 
-void elevatorAlgorithmSingle::appendLogToLogList(int code, ...)
+void elevatorAlgorithmSingle::writeEnergyLog()
 {
-	va_list args;
-	va_start(args, code);
-
-	try
-	{
-		switch (code)
-		{
-		case IDLE:
-			elevatorAlgorithmDefault::IDLELog(args);
-			break;
-		case CALL:
-			elevatorAlgorithmDefault::CALLLog(args);
-			//this->CALLLog(args);
-			break;
-		case PRESS:
-			elevatorAlgorithmDefault::PRESSLog(args);
-			//this->PRESSLog(args);
-			break;
-		case UNPRESS:
-			elevatorAlgorithmDefault::UNPRESSLog(args);
-			//this->UNPRESSLog(args);
-			break;
-		case STOP:
-			elevatorAlgorithmDefault::STOPLog(args);
-			//this->STOPLog(args);
-			break;
-		case MOV:
-			elevatorAlgorithmDefault::MOVLog(args);
-			//this->MOVLog(args);
-			break;
-		default:
-			wcerr << L"LOG CODE ERROR" << endl;
-			break;
-		}
-	}
-	catch (const std::exception& e)
-	{
-		std::wcout << "IN " << this->thisElevatorStatus->get_building_name() << " -> " << this->thisElevatorStatus->get_device_name() << " ERROR OCCURR AT : elevatorAlgorithmSingle::appendLogToLogList " << e.what() << std::endl;
-	}
+	elevatorAlgorithmDefault::writeEnergyLog();
 }
 
-void elevatorAlgorithmSingle::writeLog()
+void elevatorAlgorithmSingle::write_logs(std::vector<std::wstring> strings)
 {
-	elevatorAlgorithmDefault::writeLog();
+	elevatorAlgorithmDefault::write_logs(strings);
+}
+
+void elevatorAlgorithmSingle::write_log(std::wstring string)
+{
+	elevatorAlgorithmDefault::write_log(string);
 }
 
 void elevatorAlgorithmSingle::printThisElevatorEnergyConsumptionInfos()

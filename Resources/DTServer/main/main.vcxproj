@@ -147,13 +147,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="elevator.cpp" />
-    <ClCompile Include="elevator2.cpp" />
-    <ClCompile Include="elevator2.h" />
     <ClCompile Include="elevatorAlgorithmDefault.cpp" />
     <ClCompile Include="elevatorAlgorithmMultiple.cpp" />
     <ClCompile Include="elevatorAlgorithmSingle.cpp" />
     <ClCompile Include="DT_RealTime.cpp" />
-    <ClCompile Include="elevatorAlgorithmSingle2.cpp" />
+    <ClCompile Include="logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parse_json.cpp" />
     <ClCompile Include="send_oneM2M.cpp" />
@@ -162,7 +160,6 @@
     <ClCompile Include="DT_Simulation.cpp" />
     <ClCompile Include="socket_oneM2M.cpp" />
     <ClCompile Include="socket_UnrealEngine.cpp" />
-    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="config.h" />
@@ -171,6 +168,7 @@
     <ClInclude Include="elevatorAlgorithmMultiple.h" />
     <ClInclude Include="elevatorAlgorithmSingle.h" />
     <ClInclude Include="DT_RealTime.h" />
+    <ClInclude Include="logger.h" />
     <ClInclude Include="parse_json.h" />
     <ClInclude Include="send_oneM2M.h" />
     <ClInclude Include="send_UnrealEngine.h" />
@@ -178,7 +176,6 @@
     <ClInclude Include="DT_Simulation.h" />
     <ClInclude Include="socket_oneM2M.h" />
     <ClInclude Include="socket_UnrealEngine.h" />
-    <ClInclude Include="test.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

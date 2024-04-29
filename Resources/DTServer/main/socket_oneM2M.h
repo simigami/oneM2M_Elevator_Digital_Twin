@@ -26,10 +26,6 @@ public:
 
 	void init(Wparsed_struct parseStruct);
 
-	bool createBuilding(Wparsed_struct parseStruct);
-
-	bool createElevator(Wparsed_struct parseStruct);
-
 	bool create_oneM2M_under_CNTs(Wparsed_struct parseStruct);
 
 	bool create_oneM2M_CNTs(Wparsed_struct parseStruct);
@@ -50,6 +46,8 @@ public:
 	bool create_oneM2M_CIN_Only_Button_Outside(vector<vector<int>> button_outside);
 
 	bool check_oneM2M_CNT(Wparsed_struct parseStruct);
+
+	vector<double> retrieveEachFloorAltimeter();
 
 	vector<vector<wstring>> retrieve_oneM2M_cins(vector<int> floor_info);
 

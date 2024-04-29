@@ -1,5 +1,6 @@
 #include <cstdarg>
 #include <codecvt>
+#include <string>
 #include <unordered_set>
 #include <cpprest/http_client.h>
 
@@ -25,6 +26,7 @@ socket_oneM2M::socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseSt
             Default_CNTs.emplace_back(L"Elevator_physics");
             Default_CNTs.emplace_back(L"Elevator_button_inside");
             Default_CNTs.emplace_back(L"Elevator_button_outside");
+            Default_CNTs.emplace_back(L"Elevator_altimeter");
 
             create_oneM2M_CNTs(parseStruct);
             break;
@@ -37,6 +39,7 @@ socket_oneM2M::socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseSt
 			Default_CNTs.emplace_back(L"Elevator_physics");
 			Default_CNTs.emplace_back(L"Elevator_button_inside");
 			Default_CNTs.emplace_back(L"Elevator_button_outside");
+            Default_CNTs.emplace_back(L"Elevator_altimeter");
 
 			create_oneM2M_CNTs(parseStruct);
 			break;
@@ -52,6 +55,7 @@ socket_oneM2M::socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseSt
             Default_CNTs.emplace_back(L"Elevator_physics");
             Default_CNTs.emplace_back(L"Elevator_button_inside");
             Default_CNTs.emplace_back(L"Elevator_button_outside");
+            Default_CNTs.emplace_back(L"Elevator_altimeter");
 
             create_oneM2M_CNTs(parseStruct);
 
@@ -65,6 +69,7 @@ socket_oneM2M::socket_oneM2M(elevator_resource_status sc, Wparsed_struct parseSt
             Default_CNTs.emplace_back(L"Elevator_physics");
             Default_CNTs.emplace_back(L"Elevator_button_inside");
             Default_CNTs.emplace_back(L"Elevator_button_outside");
+            Default_CNTs.emplace_back(L"Elevator_altimeter");
 
             Default_PHYSICS_CNTs.emplace_back(device_name + L"_Velocity");
             Default_PHYSICS_CNTs.emplace_back(device_name + L"_Altimeter");
@@ -111,211 +116,6 @@ void socket_oneM2M::init(Wparsed_struct parseStruct)
 
     building_name = parseStruct.building_name;
     device_name = parseStruct.device_name;
-}
-
-bool socket_oneM2M::createBuilding(Wparsed_struct parseStruct)
-{
-	try
-    {
-        send_oneM2M s = this->socket;
-
-        building_name = parseStruct.building_name;
-        device_name = parseStruct.device_name;
-
-        const wstring building_name = this->building_name;
-        const wstring originator_name = L"C" + building_name;
-        const wstring device_name = this->device_name;
-        const wstring timestamp = to_wstring(parseStruct.timestampOffset);
-
-        s.cnt_create(1, building_name);
-        s.cnt_create(2, building_name, device_name);
-
-        Default_CNTs.emplace_back(L"Elevator_physics");
-        Default_CNTs.emplace_back(L"Elevator_button_inside");
-        Default_CNTs.emplace_back(L"Elevator_button_outside");
-
-        Default_PHYSICS_CNTs.emplace_back(device_name +L"_Velocity");
-        Default_PHYSICS_CNTs.emplace_back(device_name +L"_Altimeter");
-        Default_PHYSICS_CNTs.emplace_back(device_name +L"_Temperature");
-        Default_PHYSICS_CNTs.emplace_back(device_name +L"_Trip");
-        Default_PHYSICS_CNTs.emplace_back(device_name +L"_Distance");
-
-        Default_INSIDE_CNTs.emplace_back(device_name +L"_Button_List");
-        Default_INSIDE_CNTs.emplace_back(device_name +L"_GoTo");
-
-	    for(const wstring& CNT_NAME : Default_CNTs)
-        {
-            s.cnt_create(3, building_name, device_name, CNT_NAME);
-        }
-
-        for(const wstring& CNT_NAME : Default_PHYSICS_CNTs)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[0], CNT_NAME);
-        }
-        for(const wstring& CNT_NAME : Default_INSIDE_CNTs)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[1], CNT_NAME);
-        }
-
-        for(int i = parseStruct.underground_floor ; i>=1 ; i--)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[2], L"B"+to_wstring(i));
-        }
-        for(int i = 1 ; i<=parseStruct.ground_floor ; i++)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[2], to_wstring(i));
-        }
-
-        wstring payload;
-		// Create or Update Velocity, Altimeter, Temperature
-        if(parseStruct.velocity != -1)
-        {
-            payload = to_wstring(parseStruct.velocity) + L" " + timestamp;
-            s.cin_create(L"velocity", payload, 4, building_name, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[0]);
-        }
-        if(parseStruct.altimeter != -1)
-        {
-            payload = to_wstring(parseStruct.altimeter) + L" " + timestamp;
-            s.cin_create( L"altimeter", payload, 4, building_name, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[1]);
-        }
-        if(parseStruct.temperature != -1)
-        {
-            payload = to_wstring(parseStruct.temperature) + L" " + timestamp;
-            s.cin_create( L"temperature", payload, 4, building_name, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[2]);
-        }
-        if(!parseStruct.button_inside.empty())
-        {
-            payload = L"";
-            for(const wstring& temp : parseStruct.button_inside)
-            {
-                payload += L" " + temp;
-            }
-            payload += L" " + timestamp;
-
-            s.cin_create( L"button_inside", payload, 4, building_name, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
-        }
-
-        if(!parseStruct.button_outside.empty())
-        {
-	        for(const vector<int> each_floor : parseStruct.button_outside)
-	        {
-                wstring floor = each_floor[0] < 0 ? L"B"+ to_wstring((each_floor[0]*-1)) : to_wstring(each_floor[0]);
-                int direction = each_floor[1];
-
-                if(direction)
-                {
-                    payload = L"Up " + timestamp;
-	                s.cin_create(L"status", payload, 4, building_name, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
-                }
-                else
-                {
-	                payload = L"Down " + timestamp;
-                    s.cin_create(L"status", payload, 4, building_name, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
-                }
-	        }
-        }
-        return true;
-    }
-    catch (const std::exception& e)
-    {
-	    std::cerr << "Exception caught on main.cpp: " << e.what() << std::endl;
-        return false;
-    }
-}
-
-bool socket_oneM2M::createElevator(Wparsed_struct parseStruct)
-{
-	try
-    {
-        device_name = parseStruct.device_name;
-
-        send_oneM2M s = this->socket;
-
-        const wstring building_name = this->building_name;
-        const wstring originator_name = L"C" + building_name;
-        const wstring device_name = this->device_name;
-        const wstring timestamp = to_wstring(parseStruct.timestampOffset);
-
-        s.cnt_create(2, building_name, device_name);
-
-	    for(const wstring& CNT_NAME : Default_CNTs)
-        {
-            s.cnt_create(3, building_name, device_name, CNT_NAME);
-        }
-
-        for(const wstring& CNT_NAME : Default_PHYSICS_CNTs)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[0], CNT_NAME);
-        }
-        for(const wstring& CNT_NAME : Default_INSIDE_CNTs)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[1], CNT_NAME);
-        }
-
-        for(int i = parseStruct.underground_floor ; i>=1 ; i--)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[2], L"B"+to_wstring(i));
-        }
-        for(int i = 1 ; i<=parseStruct.ground_floor ; i++)
-        {
-            s.cnt_create(4, building_name, device_name, Default_CNTs[2], to_wstring(i));
-        }
-
-        wstring payload;
-		// Create or Update Velocity, Altimeter, Temperature
-        if(parseStruct.velocity != -1)
-        {
-            payload = to_wstring(parseStruct.velocity) + L" " + timestamp;
-            s.cin_create(L"velocity", payload, 4, building_name, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[0]);
-        }
-        if(parseStruct.altimeter != -1)
-        {
-            payload = to_wstring(parseStruct.altimeter) + L" " + timestamp;
-            s.cin_create( L"altimeter", payload, 4, building_name, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[1]);
-        }
-        if(parseStruct.temperature != -1)
-        {
-            payload = to_wstring(parseStruct.temperature) + L" " + timestamp;
-            s.cin_create( L"temperature", payload, 4, building_name, device_name, Default_CNTs[0], Default_PHYSICS_CNTs[2]);
-        }
-        if(!parseStruct.button_inside.empty())
-        {
-            payload = L"";
-            for(const wstring& temp : parseStruct.button_inside)
-            {
-                payload += L" " + temp;
-            }
-            payload += L" " + timestamp;
-
-            s.cin_create( L"button_inside", payload, 4, building_name, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
-        }
-
-        if(!parseStruct.button_outside.empty())
-        {
-	        for(const vector<int> each_floor : parseStruct.button_outside)
-	        {
-                wstring floor = each_floor[0] < 0 ? L"B"+ to_wstring((each_floor[0]*-1)) : to_wstring(each_floor[0]);
-                int direction = each_floor[1];
-
-                if(direction)
-                {
-                    payload = L"Up " + timestamp;
-	                s.cin_create(L"status", payload, 4, building_name, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
-                }
-                else
-                {
-	                payload = L"Down " + timestamp;
-                    s.cin_create(L"status", payload, 4, building_name, device_name, Default_CNTs[1], Default_INSIDE_CNTs[0]);
-                }
-	        }
-        }
-        return true;
-    }
-    catch (const std::exception& e)
-    {
-	    std::cerr << "Exception caught on main.cpp: " << e.what() << std::endl;
-        return false;
-    }
 }
 
 bool socket_oneM2M::create_oneM2M_under_CNTs(Wparsed_struct parseStruct)
@@ -478,6 +278,20 @@ bool socket_oneM2M::create_oneM2M_CNTs(Wparsed_struct parseStruct)
         {
             s.cnt_create(3, device_name, Default_CNTs[2], to_wstring(i));
         }
+
+        // if parseStruct.each floor altimeter is not empty then create CINs
+        wstring payload = L"";
+
+        if (parseStruct.each_floor_altimeter.size() != 0)
+        {
+            for (const auto elem : parseStruct.each_floor_altimeter)
+			{
+				payload.append(to_wstring(elem));
+				payload.append(L" ");
+			}
+            s.cin_create(L"each_floor_altimeter", payload, 2, device_name, Default_CNTs[3]);
+        }
+
         return true;
     }
     catch (const std::exception& e)
@@ -903,6 +717,39 @@ bool socket_oneM2M::check_oneM2M_CNT(Wparsed_struct parseStruct)
 	    std::cerr << "Exception caught on socket_oneM2M::create_oneM2M_CNTs: " << e.what() << std::endl;
         exit(0);
     }
+}
+
+vector<double> socket_oneM2M::retrieveEachFloorAltimeter()
+{
+    send_oneM2M s = this->socket;
+
+    std::wstring res, value;
+    vector<double> each_floor_altimeter = vector<double>{};
+
+    const wstring building_name = this->building_name;
+    const wstring originator_name = L"C" + building_name;
+    const wstring device_name = this->device_name;
+
+    try
+    {
+        http_response response = socket.cin_retrieve_la(originator_name, 2, device_name, Default_CNTs[3]);
+
+        auto response_json = response.extract_json().get();
+        wstring res = response_json[U("m2m:cin")][U("con")].as_string();
+
+        // CHANGE wstring res -> vector double each_floor_altimeter by using wstringstream
+        wstringstream iss(res);
+        while (std::getline(iss, value, L' ')) {
+            // Convert the token to integer and add to the vector
+            each_floor_altimeter.push_back(stod(value));
+        }
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Exception Caught : " << e.what() << std::endl;
+    }
+
+    return each_floor_altimeter;
 }
 
 vector<vector<wstring>> socket_oneM2M::retrieve_oneM2M_cins(vector<int> floor_info)

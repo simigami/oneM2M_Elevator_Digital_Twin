@@ -5,11 +5,25 @@
 #include <random>
 #include <cctype>
 #include <mutex>
+#include <Windows.h>
+#include <shellapi.h>
 
 dt_simulation::dt_simulation()
 {
-	this->fileLocation = new wchar_t[MAXFILEPATHLENGTH];
-	ZeroMemory(&ofn, sizeof(ofn));
+}
+
+simBuilding::simBuilding()
+{
+    this->buildingName = L"";
+    this->undergroundFloor = 0;
+    this->abovegroundFloor = 0;
+
+    this->default_start_floor = -5;
+
+    this->default_elevator_max_velocity = 2.5;
+    this->default_elevator_max_acceleration = 1.25;
+
+    this->default_elevator_stop_time = 4.0;
 }
 
 void dt_simulation::setSimulatedFileLocation()
@@ -61,18 +75,104 @@ void dt_simulation::run()
 {
     std::unordered_map<std::string, std::string> elevatorMap;
 
-    elevatorMap = findLogStart(LOGFILEPATH, elevatorMap);
+    log_file_path = chooseLog();
+
+    elevatorMap = findLogStart(log_file_path, elevatorMap);
+
     this->buildings = createBuildings(elevatorMap);
 
     ReadAndAddAllTransactions();
 
     giveAllBuildingTransactions();
 
-    runningthread();
+    runSimulation();
 
     WriteAllTransactionsToFile();
 
     return;
+}
+
+bool dt_simulation::checkFileCriteria(const std::wstring file_path)
+{
+    // Check file length
+    WIN32_FILE_ATTRIBUTE_DATA fileAttr;
+    if (!GetFileAttributesEx(file_path.c_str(), GetFileExInfoStandard, &fileAttr)) {
+        std::cerr << "Error getting file attributes.\n";
+        return false;
+    }
+    if (file_path.size() > 2048) {
+        std::cerr << "File Name exceeds 1024 bytes.\n";
+        return false;
+    }
+
+    // Check file extension
+    std::wstring::size_type dotIndex = file_path.find_last_of(L".");
+    if (dotIndex == std::wstring::npos || file_path.substr(dotIndex) != L".txt") {
+        std::cerr << "File extension is not '.txt'.\n";
+        return false;
+    }
+
+    return true;
+}
+
+string dt_simulation::chooseLog()
+{
+    OPENFILENAME ofn;       // structure to store information about the file dialog
+    TCHAR szFile[512];      // buffer to store the selected file name
+
+    // Get parent directory of current directory
+    wstring log_dir_path = fs::current_path().parent_path().wstring() + L"\\Log\\StateCode";
+    wstring log_path = L"";
+
+    // Initialize OPENFILENAME structure
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFile = szFile;
+    ofn.lpstrFile[0] = '\0';
+    ofn.nMaxFile = sizeof(szFile);
+    ofn.lpstrFilter = TEXT("All Files\0*.*\0");   // Filter for file types
+    ofn.nFilterIndex = 1;
+    ofn.lpstrFileTitle = NULL;
+    ofn.nMaxFileTitle = 0;
+    ofn.lpstrInitialDir = log_dir_path.c_str();
+    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
+
+    do {
+        if (GetOpenFileName(&ofn) == TRUE) {
+            // User selected a file, you can use ofn.lpstrFile to get the selected file path.
+            log_path = ofn.lpstrFile;
+
+            if (checkFileCriteria(log_path))
+            {
+                MessageBox(NULL, ofn.lpstrFile, TEXT("Selected file is valid"), MB_OK);
+                break;
+            }
+            else
+            {
+                MessageBox(NULL, TEXT("Please select a valid text file with a file path <= 1024 bytes."), TEXT("Invalid File"), MB_OK | MB_ICONERROR);
+                log_path = L"";
+            }
+        }
+
+        else
+        {
+            // User cancelled the dialog
+			MessageBox(NULL, TEXT("No file was selected."), TEXT("No File Selected"), MB_OK | MB_ICONERROR);
+            break;
+        }
+    } while (true);
+
+    if (log_path == L"")
+    {
+        std::cerr << "No file was selected.\n";
+        exit(1);
+    }
+
+    // Convert log_path wstring to string
+    std::string log_path_str(log_path.begin(), log_path.end());
+
+	return log_path_str;
 }
 
 std::unordered_map<std::string, std::string> dt_simulation::findLogStart(const std::string& fileAddress, std::unordered_map<std::string, std::string>& elevatorMap)
@@ -157,6 +257,9 @@ std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_ma
             building.each_floor_altimeter.push_back(std::stoi(altimeter));
 		}
 
+        building.thisLogger->set_log_directory_Simulation();
+        building.thisLogger->log_file_name = building.thisLogger->get_file_name_as_timestamp() + L"_" + building.buildingName + L"_TransactionList.txt";
+
         while (iss >> elevatorName >> max_velocity >> acceleration >> jerk >> door_open_time >> energy_flag) {
             // Convert string to wstring
             const wstring wElevatorName(elevatorName.begin(), elevatorName.end());
@@ -175,6 +278,8 @@ std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_ma
             elevator.this_elevator_algorithm->getElevatorStatus()->set_max_velocity(std::stod(max_velocity));
             elevator.this_elevator_algorithm->getElevatorStatus()->set_acceleration(std::stod(acceleration));
             elevator.this_elevator_algorithm->getElevatorStatus()->door_open_time = std::stod(door_open_time);
+
+            elevator.this_elevator_algorithm->thisLogger.set_log_directory_Simulation();
 
             bool flag = false;
 
@@ -195,14 +300,14 @@ std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_ma
             if (energy_flag == "1")
             {
 				iss >> idle_e >> standby_e >> iso_e;
-                elevator.this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+                elevator.this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_flag(true);
 				elevator.this_elevator_algorithm->getElevatorStatus()->setIDLEPower(std::stod(idle_e));
                 elevator.this_elevator_algorithm->getElevatorStatus()->setStandbyPower(std::stod(standby_e));
                 elevator.this_elevator_algorithm->getElevatorStatus()->setISOReferenceCycleEnergy(std::stod(iso_e));
 			}
             else
             {
-                elevator.this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_consumption(false);
+                elevator.this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_flag(false);
             }
 
             // Add elevator to building
@@ -216,57 +321,9 @@ std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_ma
     return buildings;
 }
 
-void dt_simulation::readFileAndCreateoneM2MResource(wstring TCName)
-{
-	wchar_t path = getSimulatedFileLocation();
-    parse_json parsingClass;
-	wstring wline;
-    wifstream wfile;
-
-    wfile.open(L"E:\\ML\\Elevator Git\\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\\Resources\\Sensors\\testlog2.txt");
-
-    if (!wfile.is_open()) 
-    {
-        std::wcerr << L"IN SERVER -> dt_simulation ERROR : Unable to open file." << std::endl;
-        return;
-    }
-
-    while (getline(wfile, wline)) // Read each line from the file
-    {
-        Wparsed_struct eachLineParsedStruct = parsingClass.parsingText(wline);
-        eachLineParsedStruct.TCName = TCName;
-
-    	oneM2MSocket->init(eachLineParsedStruct);
-
-        auto it = thisTestCaseResourceInfo.find(eachLineParsedStruct.building_name);
-
-        if(it == thisTestCaseResourceInfo.end())
-        {
-            oneM2MSocket->createBuilding(eachLineParsedStruct);
-            thisTestCaseResourceInfo.emplace(make_pair(eachLineParsedStruct.building_name, map<wstring, int>()));
-            thisTestCaseResourceInfo[eachLineParsedStruct.building_name].emplace(make_pair(eachLineParsedStruct.device_name, 1));
-        }
-        else
-        {
-            auto itit = thisTestCaseResourceInfo[eachLineParsedStruct.building_name].find(eachLineParsedStruct.device_name);
-            if(itit == thisTestCaseResourceInfo[eachLineParsedStruct.building_name].end())
-			{
-            	oneM2MSocket->createElevator(eachLineParsedStruct);
-	            thisTestCaseResourceInfo[eachLineParsedStruct.building_name].emplace(make_pair(eachLineParsedStruct.device_name, 1));
-			}
-            else
-            {
-            	oneM2MSocket->createNewData(eachLineParsedStruct);
-            }
-        }
-    }
-
-    wfile.close(); // Close the file
-}
-
 void dt_simulation::ReadAndAddAllTransactions()
 {
-    std::wifstream file(LOGFILEPATH);
+    std::wifstream file(log_file_path);
     if (!file.is_open()) {
         std::cerr << "Unable to open the file.\n";
         return;
@@ -295,47 +352,30 @@ void dt_simulation::ReadAndAddAllTransactions()
 }
 
 void dt_simulation::WriteAllTransactionsToFile() {
-    std::wcout << "SIMULATION COMLPETE PLEASE ENTER LOG NAME TO SAVE THE SIMULATION DATA" << std::endl;
-    wstring logName;
-    const wstring logExt = L".txt";
+    std::wcout << "SIMULATION COMLPETE AND SAVING THE SIMULATION DATA" << std::endl;
+    wstring log_string;
 
-    std::wcin >> logName;
-    while (logName.empty())
+    for (auto& building : *buildings)
     {
-        std::wcout << "LOG NAME CANNOT BE EMPTY, PLEASE ENTER LOG NAME TO SAVE THE SIMULATION DATA" << std::endl;
-        std::wcin >> logName;
-    }
+        log_string = L"";
 
-    logName.append(logExt);
-
-    while (wifstream(logName).good())
-    {
-        std::wcout << "LOG NAME ALREADY EXISTS, PLEASE ENTER LOG NAME TO SAVE THE SIMULATION DATA" << std::endl;
-		std::wcin >> logName;
-		logName.append(logExt);
-	}
-
-    wofstream logFile(logName, ios::app);
-    for (const auto& building : *buildings)
-    {
-        logFile << L"LOG " << building.buildingName << " START" << std::endl;
+        log_string.append(L"LOG " + building.buildingName + L" START\n");
         for (const auto& transaction : *building.transactions)
         {
-            logFile << L"start Floor : " << transaction.start_floor << L"/" << L"destination Floors : ";
+            log_string.append(L"start Floor : " + std::to_wstring(transaction.start_floor) + L"/" + L" destination Floors : ");
             for (const auto& floor : *(transaction.destination_floors))
             {
-                logFile << floor;
+                log_string.append(std::to_wstring(floor));
                 if (floor != transaction.destination_floors->back()) {
-                    logFile << L",";
+                    log_string.append(L",");
                 }
             }
-            logFile << L"/Timestamp : " << transaction.timestamp << std::endl;
+            log_string.append(L"/ Timestamp : " + std::to_wstring(transaction.timestamp) + L"\n");
         }
-        logFile << L"LOG " << building.buildingName << " END" << std::endl;
-    }
-    logFile.close();
+        log_string.append(L"LOG " + building.buildingName + L" END\n");
 
-    return;
+        building.thisLogger->write_log(log_string);
+    }
 }
 
 void dt_simulation::PrintAllTransactions()
@@ -731,28 +771,40 @@ string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building,
     return json_string;
 }
 
-void dt_simulation::runningthread() {
+void dt_simulation::runSimulation() {
     // EACH THREAD WILL RUN sendAllBuildingTransactions FUNCTION FOR EACH BUILDING
     std::vector<std::future<void>> futures;
     std::mutex mutex;
 
     int world_time_dilation = 0;
+    int visualtion_mode = 0;
 
     // ASK IN CONSOLE HOW FAST DOES THE SIMULATION RUN(WORLD TIME DILATION)
     std::wcout << L"PLEASE ENTER SIMULATION SPEED (1.0 = REAL TIME, MAX = 10x) : ";
-    std::wcin >> world_time_dilation;
+    std::cin >> world_time_dilation;
 
     // CHECK VARIABLE
     while (world_time_dilation < 1 || world_time_dilation > 10)
     {
 		std::wcout << L"PLEASE ENTER SIMULATION SPEED (1.0 = REAL TIME, MAX = 10x) : ";
-		std::wcin >> world_time_dilation;
+		std::cin >> world_time_dilation;
 	}
+
+    // ASK IN CONSOLE IF USER WANTS TO SEE VISUALIZATION
+    std::wcout << L"DO YOU WANT TO SEE VISUALIZATION? (1 = YES, 0 = NO) : ";
+    std::cin >> visualtion_mode;
+
+    // CHECK VARIABLE
+    while (visualtion_mode < 0 || visualtion_mode > 1)
+    {
+        std::wcout << L"PLEASE PRESS 1 or 0 (1 = YES, 0 = NO) : ";
+        std::cin >> visualtion_mode;
+    }
 
     // EACH THREAD WILL BE DETACHED
     for (auto& building : *buildings) 
     {
-        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, &building, &mutex, world_time_dilation));
+        futures.push_back(std::async(std::launch::async, &dt_simulation::sendAllBuildingTransactions, this, &building, &mutex, world_time_dilation, visualtion_mode));
     }
 
     // Wait for all threads to finish
@@ -796,12 +848,12 @@ void dt_simulation::send_data(std::string request_content)
         // Check response content and exit function if successful
         if (response_content == "BuildingDataNULL")
         {
-            std::cout << "FROM UE5 TO SERVER -> Error : Building Data NULL" << std::endl;
+            std::cout << "FROM UE5 TO SERVER -> Error : Building Data NULL\n\n";
             return;
         }
         if (response_content == "Received")
         {
-            std::cout << "FROM UE5 TO SERVER -> DATA SEND AND RECEIVED COMPLETE" << std::endl;
+            std::cout << "FROM UE5 TO SERVER -> DATA SEND AND RECEIVED COMPLETE\n\n";
             return;
         }
 
@@ -813,13 +865,59 @@ void dt_simulation::send_data(std::string request_content)
 #endif
 }
 
-void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation) {
+void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation, int visualtion_mode) {
     double count = 0.0;
 
     for (const UE5Transaction& each_transaction : *each_building->timestamp_for_each_floor) {
-        while (count < each_transaction.timestamp) {
+        if (visualtion_mode)
+        {
+            while (count < each_transaction.timestamp) {
+                // SET TIMER HERE using chrno
+                chrono::steady_clock::time_point start = chrono::steady_clock::now();
+
+                // SET TIMER HERE
+                chrono::steady_clock::time_point end = chrono::steady_clock::now();
+
+                // GET TIMER DELTA
+                const auto execution_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); // Calculate the execution time
+                auto remaining = (MILLISECONDHUNDRED / dilation - execution_time.count());
+
+                // Sleep delta seconds
+                if (remaining > 0.0)
+                {
+                    Sleep(remaining);
+                }
+                count += 0.1;
+                //std::wcout << L"COUNT SECOND : " << count << std::endl;
+            }
             // SET TIMER HERE using chrno
             chrono::steady_clock::time_point start = chrono::steady_clock::now();
+
+            // get this elevator from this building
+            calculateEnergyConsumption(each_building, each_transaction);
+
+            // find this elevator from this building
+            simElevator* thisElevator = nullptr;
+            for (auto& each_elevator : *each_building->elevators) {
+                if (each_elevator.elevatorName == each_transaction.owner) {
+                    thisElevator = &each_elevator;
+                }
+            }
+
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->go_to_floor = each_transaction.goTo_floor;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->tta = each_transaction.tta;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->ttm = each_transaction.ttm;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->ttd = each_transaction.ttd;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->dilation = dilation;
+
+            this_mutex->lock();
+            thisElevator->this_elevator_algorithm->set_elevator_Status_JSON_STRING();
+            send_data(thisElevator->this_elevator_algorithm->getJSONString());
+            wstring log_string = L"TRANSACTION AT : " + std::to_wstring(each_transaction.timestamp) + L" Seconds BY BUILDING : " + each_building->buildingName + L" EV : " + each_transaction.owner + L" DEST FLOOR : " + std::to_wstring(each_transaction.goTo_floor) + L"\n";
+
+            thisElevator->this_elevator_algorithm->thisLogger.write_log(log_string);
+            wcout << log_string;
+            this_mutex->unlock();
 
             // SET TIMER HERE
             chrono::steady_clock::time_point end = chrono::steady_clock::now();
@@ -833,54 +931,32 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
             {
                 Sleep(remaining);
             }
-            count += 0.1;
-            //std::wcout << L"COUNT SECOND : " << count << std::endl;
         }
-        // SET TIMER HERE using chrno
-        chrono::steady_clock::time_point start = chrono::steady_clock::now();
 
-        this_mutex->lock();
-
-        std::wcout << L"TRANSACTION OCCURRED AT : " << count << " BY BUILDING : " << each_building->buildingName << " EV : " << each_transaction.owner << " DEST FLOOR : " << each_transaction.goTo_floor;
-        std::wcout << L" TTA : " << each_transaction.tta << " TTM : " << each_transaction.ttm << " TTD : " << each_transaction.ttd << std::endl;
-
-        this_mutex->unlock();
-
-        // get this elevator from this building
-        calculateEnergyConsumption(each_building, each_transaction);
-
-        // find this elevator from this building
-        simElevator* thisElevator = nullptr;
-        for (auto& each_elevator : *each_building->elevators) {
-            if (each_elevator.elevatorName == each_transaction.owner) {
-                thisElevator = &each_elevator;
-			}
-		}
-
-        thisElevator->this_elevator_algorithm->getElevatorStatus()->go_to_floor = each_transaction.goTo_floor;
-        thisElevator->this_elevator_algorithm->getElevatorStatus()->tta = each_transaction.tta;
-        thisElevator->this_elevator_algorithm->getElevatorStatus()->ttm = each_transaction.ttm;
-        thisElevator->this_elevator_algorithm->getElevatorStatus()->ttd = each_transaction.ttd;
-        thisElevator->this_elevator_algorithm->getElevatorStatus()->dilation = dilation;
-
-        // wrap to json string
-        thisElevator->this_elevator_algorithm->set_elevator_Status_JSON_STRING();
-
-        this_mutex->lock();
-        send_data(thisElevator->this_elevator_algorithm->getJSONString());
-        this_mutex->unlock();
-
-        // SET TIMER HERE
-        chrono::steady_clock::time_point end = chrono::steady_clock::now();
-
-        // GET TIMER DELTA
-        const auto execution_time = std::chrono::duration_cast<std::chrono::milliseconds>(end - start); // Calculate the execution time
-        auto remaining = (MILLISECONDHUNDRED / dilation - execution_time.count());
-
-        // Sleep delta seconds
-        if (remaining > 0.0)
+        else
         {
-            Sleep(remaining);
+            // get this elevator from this building
+            calculateEnergyConsumption(each_building, each_transaction);
+
+            // find this elevator from this building
+            simElevator* thisElevator = nullptr;
+            for (auto& each_elevator : *each_building->elevators) {
+                if (each_elevator.elevatorName == each_transaction.owner) {
+                    thisElevator = &each_elevator;
+                }
+            }
+
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->go_to_floor = each_transaction.goTo_floor;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->tta = each_transaction.tta;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->ttm = each_transaction.ttm;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->ttd = each_transaction.ttd;
+            thisElevator->this_elevator_algorithm->getElevatorStatus()->dilation = dilation;
+
+            this_mutex->lock();
+            wstring log_string = L"TRANSACTION AT : " + std::to_wstring(each_transaction.timestamp) + L" Seconds BY BUILDING : " + each_building->buildingName + L" EV : " + each_transaction.owner + L" DEST FLOOR : " + std::to_wstring(each_transaction.goTo_floor) + L"\n";
+            thisElevator->this_elevator_algorithm->thisLogger.write_log(log_string);
+            wcout << log_string;
+            this_mutex->unlock();
         }
 	}
 }
@@ -1566,18 +1642,4 @@ simElevator::simElevator(wstring building_name, wstring device_name)
     this->move_distance = 0.0;
     this->current_transaction = vector<transaction>();
     this->previous_transactions = vector<transaction>();
-}
-
-simBuilding::simBuilding()
-{
-	this->buildingName = L"";
-    this->undergroundFloor = 0;
-    this->abovegroundFloor = 0;
-
-    this->default_start_floor = -5;
-
-    this->default_elevator_max_velocity = 2.5;
-    this->default_elevator_max_acceleration = 1.25;
-
-    this->default_elevator_stop_time = 4.0;
 }

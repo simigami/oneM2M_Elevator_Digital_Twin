@@ -1,5 +1,6 @@
 #pragma once
 #include "config.h"
+#include "logger.h"
 #include "socket_UnrealEngine.h"
 #include "socket_oneM2M.h"
 #include "simulation.h"
@@ -69,8 +70,8 @@ public:
     double get_acceleration();
     double get_jerk();
 
-    void set_this_elevator_energy_consumption(bool flag);
-    void set_this_elevator_energy_consumption(double energy1, double energy2, double energy3);
+    void set_this_elevator_energy_flag(bool flag);
+    void set_this_elevator_energy_consumption(double energy1, double energy2, double energy3, double door_closing_time);
     bool get_this_elevator_energy_consumption();
 
     void set_this_elevator_daily_energy_consumption(int sim_mode_delta);
@@ -152,6 +153,8 @@ public:
     //알고리즘에 사용되는 flag들을 모은 구조체
     flags* thisFlags;
 
+    logger thisLogger;
+
     std::chrono::system_clock::time_point worldClock;
     std::chrono::system_clock::time_point someClock;
 
@@ -166,8 +169,11 @@ public:
 	virtual void run(socket_oneM2M* sock, socket_UnrealEngine* ueSock, physics* p);
     virtual void stop(physics* p, flags* this_flag);
 
-    virtual void writeLog();
-    virtual void appendLogToLogList(int code, ...);
+    virtual void write_logs(std::vector<std::wstring> strings);
+    virtual void write_log(std::wstring string);
+
+    virtual void writeEnergyLog();
+    void appendLogToLogList(int code, ...);
     virtual void IDLELog(va_list args);
     virtual void CALLLog(va_list args);
     virtual void PRESSLog(va_list args);
@@ -191,6 +197,7 @@ public:
 	virtual void printTimeDeltaWhenRearrange();
     virtual int printTimeDeltaNow();
 	virtual void printTimeDeltaWhenStop();
+    virtual void printTimeDeltaWhenIDLE();
 
     virtual void updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy);
     virtual void insideLogic(elevatorStatus* status, physics* phy, vector<int> new_elem, vector<int> remove_elem);

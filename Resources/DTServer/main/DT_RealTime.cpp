@@ -10,35 +10,54 @@
 #include <codecvt>
 #include <locale>
 #include <sstream>
+#include <unordered_set>
 
 using namespace boost::asio;
 using ip::tcp;
-using std::string;
-using std::vector;
 using std::chrono::system_clock;
 
-void print_elapsed_time()
+Building::Building(wstring building_name, int buttonMod)
 {
-	int elapsed = 0;
-    while(true)
-    {
-	    std::this_thread::sleep_for(std::chrono::seconds(1));
-        elapsed++;
-        std::wcout << "Elapsed Time " << elapsed << "seconds \n";
-    }
-}
+	this_log = new logger;
 
-Building::Building(int buttonMod)
-{
 	this->buliding_start_time = system_clock::now();
     this->buildingElevatorInfo = new class_of_one_Building;
     this->buildingElevatorInfo->outsideButtonMod = buttonMod;
+
+	this->buildingElevatorInfo->ACP_NAME = L"C" + building_name;
+	this->buildingElevatorInfo->log_name_for_building = this_log->get_file_name_as_timestamp() + L"_" + building_name + L".txt";
+
+	// All Outside Button Infos in Single Building
 	this->currentButtonOutsideInfos = new vector<vector<int>>;
 }
 
 int Building::getButtonMod()
 {
     return this->buildingElevatorInfo->outsideButtonMod;
+}
+
+vector<vector<int>> Building::getDiffBetweenNewAndCurrent(vector<vector<int>> newList, vector<vector<int>> oldList)
+{
+	vector<vector<int>> newElements;
+	vector<vector<int>> deletedElements;
+
+	unordered_set<vector<int>, hash_function> oldSet(oldList.begin(), oldList.end());
+
+	for (const auto& vec : newList)
+	{
+		if (oldSet.find(vec) == oldSet.end()) {
+			newElements.push_back(vec);
+		}
+	}
+
+	for (const auto& vec : oldList)
+	{
+		if (oldSet.find(vec) == oldSet.end()) {
+			deletedElements.push_back(vec);
+		}
+	}
+
+	return newElements;
 }
 
 void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_outside)
@@ -64,7 +83,7 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
     //CHECK DIFF BETWEEN current Elevator and Embedded Call
 	try
 	{
-		addedButtonOutsideList = getDiffBetweenCurrentAndEmbedded(button_outside, *(this->currentButtonOutsideInfos));
+		addedButtonOutsideList = getDiffBetweenNewAndCurrent(button_outside, *(this->currentButtonOutsideInfos));
 
 		if (addedButtonOutsideList.size() == 0)
 		{
@@ -109,16 +128,12 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 							selectedElevator = elem;
 						}
 						idleElevators.push_back(elem);
-						std::wcout << elem->getBuildingName() << " -> " << elem->getDeviceName() << " IS IN IDLE..." << std::endl;
+						//std::wcout << elem->getBuildingName() << " -> " << elem->getDeviceName() << " IS IN IDLE..." << std::endl;
 					}
 					else
 					{
 						if (calledDirection)
 						{
-							if (!elem->p->lock) // IF CHOSEN ELEVATOR IS STOPPED AT SOME FLOOR
-							{
-
-							}
 							if (elem->p->current_direction)
 							{
 								double dist = elem->p->floorToAltimeter(calledFloor, elem->p->info.altimeter_of_each_floor) - 2.5;
@@ -181,7 +196,10 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 
 			if (selectedElevatorIDLE != NULL)
 			{
-				std::wcout << selectedElevatorIDLE->getBuildingName() << " -> " << selectedElevatorIDLE->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
+				//std::wcout << selectedElevatorIDLE->getBuildingName() << " -> " << selectedElevatorIDLE->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
+				std::wstring log_string = selectedElevatorIDLE->getBuildingName() + L" -> " + selectedElevatorIDLE->getDeviceName() + L" is SELECTED FOR CALL " + std::to_wstring(calledFloor);
+				selectedElevatorIDLE->getElevatorAlgorithm()->write_log(log_string);
+
 				temp.push_back(eachCall);
 
 				const int delta_second = selectedElevatorIDLE->thisElevatorAlgorithmSingle->printTimeDeltaNow();
@@ -192,7 +210,10 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 
 			else if (selectedElevator != NULL)
 			{
-				std::wcout << selectedElevator->getBuildingName() << " -> " << selectedElevator->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
+//				std::wcout << selectedElevator->getBuildingName() << " -> " << selectedElevator->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
+				std::wstring log_string = selectedElevator->getBuildingName() + L" -> " + selectedElevator->getDeviceName() + L" is SELECTED FOR CALL " + std::to_wstring(calledFloor);
+				selectedElevator->getElevatorAlgorithm()->write_log(log_string);
+
 				temp.push_back(eachCall);
 
 				const int delta_second = selectedElevator->thisElevatorAlgorithmSingle->printTimeDeltaNow();
@@ -233,7 +254,10 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 
 				if (selectedElevatorDifferentDirection != NULL)
 				{
-					std::wcout << selectedElevatorDifferentDirection->getBuildingName() << " -> " << selectedElevatorDifferentDirection->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
+//					std::wcout << selectedElevatorDifferentDirection->getBuildingName() << " -> " << selectedElevatorDifferentDirection->getDeviceName() << " is SELECTED FOR CALL " << calledFloor << std::endl;
+					std::wstring log_string = selectedElevatorDifferentDirection->getBuildingName() + L" -> " + selectedElevatorDifferentDirection->getDeviceName() + L" is SELECTED FOR CALL " + std::to_wstring(calledFloor);
+					selectedElevatorDifferentDirection->getElevatorAlgorithm()->write_log(log_string);
+
 					temp.push_back(eachCall);
 
 					const int delta_second = selectedElevatorDifferentDirection->thisElevatorAlgorithmSingle->printTimeDeltaNow();
@@ -257,91 +281,13 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 	return;
 }
 
-vector<vector<int>> Building::getCurrentElevatorsButtonOutsideLists()
-{
-    vector<vector<int>> retValue;
-
-    for(Elevator* eachElevator : this->buildingElevatorInfo->classOfAllElevators)
-    {
-        // eachTrip[1] = 1  -> inside, 0 -> outside
-	    for(vector<int> eachTrip : eachElevator->p->s->main_trip_list)
-	    {
-		    if(eachTrip[1] == 0)
-		    {
-			    retValue.push_back(eachTrip);
-		    }
-	    }
-        for(vector<int> eachTrip : eachElevator->p->s->reserved_trip_list_up)
-	    {
-		    if(eachTrip[1] == 0)
-		    {
-			    retValue.push_back(eachTrip);
-		    }
-	    }
-        for(vector<int> eachTrip : eachElevator->p->s->reserved_trip_list_down)
-	    {
-		    if(eachTrip[1] == 0)
-		    {
-			    retValue.push_back(eachTrip);
-		    }
-	    }
-    }
-
-    return retValue;
-}
-
-vector<vector<int>> Building::getDiffBetweenCurrentAndEmbedded(vector<vector<int>> newList, vector<vector<int>> oldList)
-{
-	vector<vector<int>> newElements; // 'current'에만 있는 새로운 원소들
-	vector<vector<int>> deletedElements; // 'call'에만 있는 삭제된 원소들
-
-    int i = 0;
-	int j = 0;
-
-	while (i < newList.size() && j < oldList.size()) {
-    	if (newList[i][0] == oldList[j][0])
-        {
-            // 첫 번째 원소가 같다면, 동일한 원소이므로 다음 원소로 넘어간다
-            i++;
-            j++;
-        }
-		else if (newList[i][0] < oldList[j][0]) 
-        {
-            // old 값이 new보다 크다면 어떤 층 값이 새롭게 생긴 것
-            newElements.push_back(newList[i]);
-            i++;
-        }
-		else 
-        {
-            // call[j]가 current[i]보다 작다면, call[j]는 삭제된 원소이다
-            deletedElements.push_back(oldList[j]);
-            j++;
-        }
-    }
-
-    // 남아있는 원소들 처리
-    while (i < newList.size()) 
-    {
-        newElements.push_back(newList[i]);
-        i++;
-    }
-    while (j < oldList.size()) 
-    {
-        deletedElements.push_back(oldList[j]);
-        j++;
-    }
-
-    // 결과 벡터 준비
-    return newElements;
-}
-
 dt_real_time::dt_real_time() : parsed_struct()
 {
 	this->httpRequest = new std::wstring;
 	this->noti_content = new notificationContent;
 }
 
-bool dt_real_time::existsElevator(Building* one_building, const wstring& device_name)
+bool dt_real_time::bExistsElevator(Building* one_building, const wstring& device_name)
 {
     try
 	{
@@ -361,41 +307,11 @@ bool dt_real_time::existsElevator(Building* one_building, const wstring& device_
 	}
 }
 
-string dt_real_time::get_RN_Path_From_SubscriptionRI(const string& substring)
-{
-#ifdef oneM2M_ACME
-	std::ifstream file(DEFAULT_SUB_RI_FILE_NAME);
-	if (!file.is_open()) {
-		std::cerr << "Error: Unable to open file " << DEFAULT_SUB_RI_FILE_NAME << std::endl;
-		return ""; // Return empty string if file cannot be opened
-	}
-
-	std::string line;
-	std::string result;
-
-	while (std::getline(file, line)) {
-		std::stringstream ss(line);
-		std::string string1;
-
-		// Read string1 (the first string separated by spaces)
-		ss >> string1;
-
-		// Check if string1 contains the substring
-		if (string1.find(substring) != std::string::npos) {
-			// If substring exists in string1, return the rest of the line (string2)
-			std::getline(ss, result);
-			return result;
-		}
-	}
-#endif // oneM2M_ACME
-	return ""; // Return empty string if no matching string1 found
-}
-
-Building* dt_real_time::get_building_vector(const wstring& ACOR_NAME)
+Building* dt_real_time::getBuilding(const wstring& building_name)
 {
     for(size_t i = 0 ; i < this->allBuildingInfo.size() ; i++)
     {
-        if(this->allBuildingInfo[i]->buildingElevatorInfo->ACP_NAME == ACOR_NAME)
+		if (this->allBuildingInfo[i]->buildingElevatorInfo->ACP_NAME == L"C" + building_name)
 	    {
 		    return this->allBuildingInfo[i];
 	    }
@@ -424,20 +340,6 @@ Elevator* dt_real_time::getElevator(Building* class_of_one_building, const wstri
 	return NULL;
 }
 
-socket_oneM2M dt_real_time::get_oneM2M_socket_based_on_AE_ID(vector<Elevator*> elevator_array, const wstring& AE_ID)
-{
-    for(const Elevator* each_elevator_class : elevator_array)
-    {
-        socket_oneM2M socket = *(each_elevator_class->sock);
-	    if(socket.building_name == AE_ID)
-	    {
-            return socket;
-	    }
-    }
-    std::wcout << "Error occurred in Class dt_real_time::get_oneM2M_socket_based_on_AE_ID -> AE_ID Not Found : " << AE_ID << std::endl;
-    exit(0);
-}
-
 void dt_real_time::Run()
 {
     boost::asio::io_context ioContext;
@@ -451,33 +353,29 @@ void dt_real_time::Run()
 
     acceptor1.async_accept([&](const boost::system::error_code& error, ip::tcp::socket socket) {
         if (!error) {
-            //std::wcout << "Accepted connection on port " << PORT_EMBEDDED << std::endl;
             handleConnection(socket, EMBEDDED_LISTEN_PORT);
         }
     	else 
         {
             std::cerr << "Error accepting connection on port " << EMBEDDED_LISTEN_PORT << ": " << error.message() << std::endl;
         }
-        // Start accepting again
-        startAsyncAccept(acceptor1,  ioContext);
+		startAsyncAccept_Embedded(acceptor1,  ioContext);
     });
 
     acceptor2.async_accept([&](const boost::system::error_code& error, ip::tcp::socket socket) {
         if (!error) {
-            //std::wcout << "Accepted connection on port " << PORT_NOTIFICATION << std::endl;
             handleConnection(socket, oneM2M_NOTIFICATION_LISTEN_PORT);
         }
     	else 
         {
             std::cerr << "Error accepting connection on port " << oneM2M_NOTIFICATION_LISTEN_PORT << ": " << error.message() << std::endl;
         }
-        // Start accepting again
-        startAsyncAccept2(acceptor2,  ioContext);
+		startAsyncAccept_Notification(acceptor2,  ioContext);
     });
     ioContext.run();
 }
 
-void dt_real_time::startAsyncAccept(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext)
+void dt_real_time::startAsyncAccept_Embedded(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext)
 {
     acceptor.async_accept([&](const boost::system::error_code& error, ip::tcp::socket socket) {
         if (!error) {
@@ -489,11 +387,11 @@ void dt_real_time::startAsyncAccept(boost::asio::ip::tcp::acceptor& acceptor, bo
             std::cerr << "Error accepting connection on port " << EMBEDDED_LISTEN_PORT << ": " << error.message() << std::endl;
         }
         // Start accepting again
-        startAsyncAccept(acceptor, ioContext);
+		startAsyncAccept_Embedded(acceptor, ioContext);
     });
 }
 
-void dt_real_time::startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext)
+void dt_real_time::startAsyncAccept_Notification(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext)
 {
     acceptor.async_accept([&](const boost::system::error_code& error, ip::tcp::socket socket) {
         if (!error) {
@@ -505,7 +403,7 @@ void dt_real_time::startAsyncAccept2(boost::asio::ip::tcp::acceptor& acceptor, b
             std::cerr << "Error accepting connection on port " << oneM2M_NOTIFICATION_LISTEN_PORT << ": " << error.message() << std::endl;
         }
         // Start accepting again
-        startAsyncAccept2(acceptor, ioContext);
+		startAsyncAccept_Notification(acceptor, ioContext);
     });
 }
 
@@ -574,17 +472,17 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 void dt_real_time::Running_Embedded(const wstring& httpResponse)
 {
 	Elevator* thisBuildingElevator;
-
-	parsed_struct = c.parsingOnlyBuildingName(httpResponse);
 	send_oneM2M ACP_Validation_Socket(parsed_struct);
 
+	parsed_struct = data_parser.parsingOnlyBuildingName(httpResponse);
+	building_name = parsed_struct.building_name;
 	ACOR_NAME = parsed_struct.building_name;
 	AE_NAME = parsed_struct.building_name;
 	CNT_NAME = parsed_struct.device_name;
 
 	try
 	{
-		std::wcout << endl << "FROM EMBEDDED -> SERVER : " << " Receive Data From : " << parsed_struct.device_name << std::endl;
+		std::wcout << endl << "FROM EMBEDDED -> TO SERVER : " << " Receive Data From " << parsed_struct.building_name << " - " << parsed_struct.device_name << std::endl;
 
 		int ACP_FLAG = ACP_Validation_Socket.acp_validate(ACOR_NAME, 0);
 
@@ -602,7 +500,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 			// 임베디드 장치로 온 신호가 엘리베이터 내부 신호인 경우 -> ACCEPT
 			else
 			{
-				Create_New_Building_And_Elevator(httpResponse, ACOR_NAME, ACP_NOT_FOUND);
+				CreateNewBuildingAndElevator(httpResponse, ACOR_NAME, ACP_NOT_FOUND);
 				allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_SUBs(parsed_struct, &(allBuildingInfo.back()->buildingElevatorInfo->subscriptionRI_to_RN));
 				allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_CINs(parsed_struct);
 			}
@@ -623,7 +521,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 			{
 				// GET ALL ACP NAMES FROM RETRIEVE DT_SERVER ACP
 				this->ACP_NAMES = ACP_Validation_Socket.acp_retrieve(0);
-				Create_New_Building_And_Elevator(httpResponse, ACOR_NAME, THIS_ACP_NOT_FOUND);
+				CreateNewBuildingAndElevator(httpResponse, ACOR_NAME, THIS_ACP_NOT_FOUND);
 				allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_SUBs(parsed_struct, &(allBuildingInfo.back()->buildingElevatorInfo->subscriptionRI_to_RN));
 				allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_CINs(parsed_struct);
 			}
@@ -632,13 +530,13 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 		// oneM2M에 빌딩 ACP가 존재하는 경우
 		else
 		{
-			std::wcout << "IN SERVER -> Building ACP Exists, Check Building " << AE_NAME << " Exists In Server" << std::endl;
+			//std::wcout << "IN SERVER -> Building ACP Exists, Check Building " << AE_NAME << " Exists In Server" << std::endl;
 
 			// GET THIS BUILDING CLASS and CHECK THIS CNT(Device Name) Exists
-			Building* thisBuildingFlag = this->get_building_vector(ACOR_NAME);
+			Building* thisBuilding = this->getBuilding(ACOR_NAME);
 
 			// oneM2M에 빌딩 ACP가 존재하는데 서버에 데이터가 없는 경우
-			if (thisBuildingFlag == NULL)
+			if (thisBuilding == NULL)
 			{
 				if (CNT_NAME == L"OUT")
 				{
@@ -648,7 +546,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 				}
 				else
 				{
-					std::wcout << "IN SERVER -> Building Resource Not Exist in Server Create New " << AE_NAME << " Resource with " << CNT_NAME << std::endl;
+					//std::wcout << "IN SERVER -> Building Resource Not Exist in Server Create New " << AE_NAME << " Resource with " << CNT_NAME << std::endl;
 
 					this->ACP_NAMES.push_back(ACOR_NAME);
 
@@ -666,11 +564,11 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
 					// Create THIS AE(Building) Class
 					Building* newBuilding;
-					newBuilding = new Building(buildingAlgorithmNumber);
+					newBuilding = new Building(building_name, buildingAlgorithmNumber);
 
 					int algNumber = 1;
 
-					parsed_struct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
+					parsed_struct = data_parser.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
 					send_oneM2M ACP_Validation_Socket(parsed_struct);
 
 					//서버에서 빌딩 클래스 재생성 하고, 이제 해당 엘리베이터가 oneM2M에 존재하는지 확인
@@ -691,7 +589,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
 							// Create THIS CNT(Building's Elevator) Class
 							thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
-							thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+							thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_flag(true);
 
 							thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setIDLEPower(energy_info[0]);
 							thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setStandbyPower(energy_info[1]);
@@ -709,9 +607,10 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 
 						allBuildingInfo.push_back(newBuilding);
 						newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-						newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
 
 						allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_CINs(parsed_struct);
+						thisBuildingElevator->getElevatorAlgorithm()->thisLogger.set_log_directory_RTS();
+						thisBuildingElevator->getElevatorAlgorithm()->thisLogger.log_file_name_for_building_logs = newBuilding->buildingElevatorInfo->log_name_for_building;
 
 						thisBuildingElevator->runElevator();
 
@@ -725,10 +624,13 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 						Elevator* thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
 
 						newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-						newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+
 						allBuildingInfo.back()->buildingElevatorInfo->classOfAllElevators.back()->sock->create_oneM2M_SUBs(parsed_struct, &(allBuildingInfo.back()->buildingElevatorInfo->subscriptionRI_to_RN));
 						allBuildingInfo.push_back(newBuilding);
+
 						setConstructArgumentsOfElevator(newBuilding, thisBuildingElevator);
+						thisBuildingElevator->getElevatorAlgorithm()->thisLogger.set_log_directory_RTS();
+						thisBuildingElevator->getElevatorAlgorithm()->thisLogger.log_file_name_for_building_logs = newBuilding->buildingElevatorInfo->log_name_for_building;
 
 						thisBuildingElevator->runElevator();
 
@@ -749,27 +651,27 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 			// oneM2M에 빌딩 ACP가 존재하고 서버에도 데이터가 존재하는 경우
 			else
 			{
-				std::wcout << "IN SERVER -> Building Resource Exists, Check Elevator " << CNT_NAME << " Resource Exists IN Server" << std::endl;
-				thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN = map<wstring, wstring>();
+				//std::wcout << "IN SERVER -> Building Resource Exists, Check Elevator " << CNT_NAME << " Resource Exists IN Server" << std::endl;
+				thisBuilding->buildingElevatorInfo->subscriptionRI_to_RN = map<wstring, wstring>();
 
-				parsed_struct = c.parsingWithBulidingAlgorithms(httpResponse, thisBuildingFlag->getButtonMod());
+				parsed_struct = data_parser.parsingWithBulidingAlgorithms(httpResponse, thisBuilding->getButtonMod());
 				send_oneM2M ACP_Validation_Socket(parsed_struct);
 
 				// 해당 빌딩이 군중화 알고리즘을 사용하는 경우
-				if (thisBuildingFlag->getButtonMod())
+				if (thisBuilding->getButtonMod())
 				{
 					if (CNT_NAME == L"OUT")
 					{
-						thisBuildingFlag->getWhichElevatorToGetButtonOutside(parsed_struct.button_outside);
+						thisBuilding->getWhichElevatorToGetButtonOutside(parsed_struct.button_outside);
 					}
 					else
 					{
 						Elevator* thisBuildingElevator;
-						bool flag = this->existsElevator(thisBuildingFlag, CNT_NAME);
+						bool flag = this->bExistsElevator(thisBuilding, CNT_NAME);
 						// oneM2M과 서버에 해당 엘리베이터 클래스가 모두 존재하는 경우
 						if (flag)
 						{
-							thisBuildingElevator = this->getElevator(thisBuildingFlag, CNT_NAME);
+							thisBuildingElevator = this->getElevator(thisBuilding, CNT_NAME);
 
 							// Update CIN Value
 							std::wcout << "IN SERVER -> Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
@@ -789,16 +691,16 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 								int algNumber = 1;
 
 								// Create THIS CNT(Building's Elevator) Class
-								thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+								thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuilding->buliding_start_time);
 
-								thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-								setConstructArgumentsOfElevator(thisBuildingFlag, thisBuildingElevator);
+								thisBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+								setConstructArgumentsOfElevator(thisBuilding, thisBuildingElevator);
 
 								parsed_struct.idle_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getIDLEPower();
 								parsed_struct.standby_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getStandbyPower();
 								parsed_struct.iso_power = thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->getISOReferenceCycleEnergy();
 
-								thisBuildingElevator->sock->create_oneM2M_SUBs(parsed_struct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
+								thisBuildingElevator->sock->create_oneM2M_SUBs(parsed_struct, &(thisBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
 								thisBuildingElevator->sock->create_oneM2M_CIN_EnergyConsumption(parsed_struct);
 							}
 							// oneM2M에 해당 엘리베이터 클래스가 존재하는데 서버에 없는 경우
@@ -815,8 +717,8 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 									int algNumber = 1;
 
 									// Create THIS CNT(Building's Elevator) Class
-									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
-									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuilding->buliding_start_time);
+									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_flag(true);
 
 									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setIDLEPower(energy_info[0]);
 									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setStandbyPower(energy_info[1]);
@@ -835,16 +737,18 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 									int algNumber = 1;
 
 									// Create THIS CNT(Building's Elevator) Class
-									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuilding->buliding_start_time);
 								}
 
-								thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-								thisBuildingFlag->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+								thisBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
 							}
+
+							thisBuildingElevator->getElevatorAlgorithm()->thisLogger.set_log_directory_RTS();
+							thisBuildingElevator->getElevatorAlgorithm()->thisLogger.log_file_name_for_building_logs = thisBuilding->buildingElevatorInfo->log_name_for_building;
 
 							thisBuildingElevator->runElevator();
 
-							if (thisBuildingFlag->getButtonMod() && CNT_NAME == L"OUT")
+							if (thisBuilding->getButtonMod() && CNT_NAME == L"OUT")
 							{
 								thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 							}
@@ -862,13 +766,13 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 					}
 					else
 					{
-						bool flag = this->existsElevator(thisBuildingFlag, CNT_NAME);
+						bool flag = this->bExistsElevator(thisBuilding, CNT_NAME);
 
 						// oneM2M과 서버에 해당 엘리베이터 클래스가 모두 존재하는 경우
 						if (flag)
 						{
 							// THIS CNT Exists
-							Elevator* thisBuildingElevator = this->getElevator(thisBuildingFlag, CNT_NAME);
+							Elevator* thisBuildingElevator = this->getElevator(thisBuilding, CNT_NAME);
 
 							// Update CIN Value
 							std::wcout << "IN SERVER -> Elevator Found, Updating CIN based on this Elevator : " << CNT_NAME << std::endl;
@@ -891,13 +795,16 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 								int algNumber = 1;
 
 								// Create THIS CNT(Building's Elevator) Class
-								thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+								thisBuildingElevator = new Elevator(ELEVATOR_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuilding->buliding_start_time);
 
-								thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-								setConstructArgumentsOfElevator(thisBuildingFlag, thisBuildingElevator);
+								thisBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+								setConstructArgumentsOfElevator(thisBuilding, thisBuildingElevator);
+								
+								thisBuildingElevator->getElevatorAlgorithm()->thisLogger.set_log_directory_RTS();
+								thisBuildingElevator->getElevatorAlgorithm()->thisLogger.log_file_name_for_building_logs = thisBuilding->buildingElevatorInfo->log_name_for_building;
 
 								thisBuildingElevator->runElevator();
-								thisBuildingElevator->sock->create_oneM2M_SUBs(parsed_struct, &(thisBuildingFlag->buildingElevatorInfo->subscriptionRI_to_RN));
+								thisBuildingElevator->sock->create_oneM2M_SUBs(parsed_struct, &(thisBuilding->buildingElevatorInfo->subscriptionRI_to_RN));
 								thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
 							}
 
@@ -916,8 +823,8 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 									int algNumber = 1;
 
 									// Create THIS CNT(Building's Elevator) Class
-									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
-									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuilding->buliding_start_time);
+									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_flag(true);
 
 									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setIDLEPower(energy_info[0]);
 									thisBuildingElevator->thisElevatorAlgorithmSingle->getElevatorStatus()->setStandbyPower(energy_info[1]);
@@ -938,11 +845,13 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 									int algNumber = 1;
 
 									// Create THIS CNT(Building's Elevator) Class
-									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuildingFlag->buliding_start_time);
+									thisBuildingElevator = new Elevator(ELEVATOR_DATA_NOT_FOUND, parsed_struct, this->ACP_NAMES, algNumber, thisBuilding->buliding_start_time);
 								}
 
-								thisBuildingFlag->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-								thisBuildingFlag->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
+								thisBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
+
+								thisBuildingElevator->getElevatorAlgorithm()->thisLogger.set_log_directory_RTS();
+								thisBuildingElevator->getElevatorAlgorithm()->thisLogger.log_file_name_for_building_logs = thisBuilding->buildingElevatorInfo->log_name_for_building;
 
 								thisBuildingElevator->runElevator();
 								thisBuildingElevator->sock->create_oneM2M_CINs(parsed_struct);
@@ -960,7 +869,7 @@ void dt_real_time::Running_Embedded(const wstring& httpResponse)
 	}
 }
 
-void dt_real_time::Create_New_Building_And_Elevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status)
+void dt_real_time::CreateNewBuildingAndElevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status)
 {
 	this->ACP_NAMES.push_back(ACOR_NAME);
 
@@ -976,19 +885,18 @@ void dt_real_time::Create_New_Building_And_Elevator(const wstring& httpResponse,
 		std::cin >> buildingAlgorithmNumber;
 	}
 
-	Building* newBuilding = new Building(buildingAlgorithmNumber);
+	Building* newBuilding = new Building(building_name, buildingAlgorithmNumber);
 
 	// Create THIS AE(Building) Class
 	int algNumber = 1;
 
-	parsed_struct = c.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
+	parsed_struct = data_parser.parsingWithBulidingAlgorithms(httpResponse, newBuilding->getButtonMod());
 	send_oneM2M ACP_Validation_Socket(parsed_struct);
 
 	// Create THIS CNT(Building's Elevator) Class
 	Elevator* thisBuildingElevator = new Elevator(status, parsed_struct, this->ACP_NAMES, algNumber, newBuilding->buliding_start_time);
 
 	newBuilding->buildingElevatorInfo->classOfAllElevators.push_back(thisBuildingElevator);
-	newBuilding->buildingElevatorInfo->ACP_NAME = ACOR_NAME;
 
 	allBuildingInfo.push_back(newBuilding);
 
@@ -1000,6 +908,10 @@ void dt_real_time::Create_New_Building_And_Elevator(const wstring& httpResponse,
 	
 	thisBuildingElevator->sock->create_oneM2M_CIN_EnergyConsumption(parsed_struct);
 	thisBuildingElevator->UEsock->VisualizationMod = this->VisualizeMod;
+
+	thisBuildingElevator->getElevatorAlgorithm()->thisLogger.set_log_directory_RTS();
+	thisBuildingElevator->getElevatorAlgorithm()->thisLogger.log_file_name_for_building_logs = newBuilding->buildingElevatorInfo->log_name_for_building;
+
 	thisBuildingElevator->runElevator();
 }
 
@@ -1040,16 +952,18 @@ void dt_real_time::setConstructArgumentsOfElevator(Building* this_buliding, Elev
 
 		else 
 		{
-			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(true);
+			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_flag(true);
 			Elevator* first_elevator = this_buliding->buildingElevatorInfo->classOfAllElevators[0];
 
 			// PORT first_elevator's energy consumption to new_elevator
 			auto first_elevator_status = first_elevator->thisElevatorAlgorithmSingle->getElevatorStatus();
+
 			const double IDLE_power = first_elevator_status->getIDLEPower();
 			const double STANDBY_power = first_elevator_status->getStandbyPower();
 			const double ISO_power = first_elevator_status->getISOReferenceCycleEnergy();
+			const double door_closing_time = first_elevator_status->door_open_time;
 
-			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(IDLE_power, STANDBY_power, ISO_power);
+			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(IDLE_power, STANDBY_power, ISO_power, door_closing_time);
 		}
 
 	}
@@ -1060,7 +974,7 @@ void dt_real_time::setConstructArgumentsOfElevator(Building* this_buliding, Elev
 		double double_value2 = 0;
 		double double_value3 = 0;
 
-		new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(command);
+		new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_flag(command);
 	
 		std::wcout << "We Need To Get Measuremented Data To Calculate Energy Consumption" << std::endl;
 		std::wcout << "0 : Set this Elevator As Default, This Will User Default Consumption Values" << std::endl;
@@ -1103,26 +1017,24 @@ void dt_real_time::setConstructArgumentsOfElevator(Building* this_buliding, Elev
 				std::cin >> double_value3;
 			}
 
-			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(double_value1, double_value2, double_value3);
+			double door_closing_time = 0;
+
+			std::wcout << "Please Enter a Default Elevator Door Closing Time in Seconds" << std::endl;
+			std::wcin >> door_closing_time;
+
+			while (door_closing_time < 0)
+			{
+				std::wcout << "PLEASE ENTER POSITIVE VALUE" << std::endl;
+				std::wcin >> door_closing_time;
+			}
+
+			new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(double_value1, double_value2, double_value3, door_closing_time);
 		}
 	}
 	if (command == 0)
 	{
-		new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_consumption(command);
+		new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->set_this_elevator_energy_flag(command);
 	}
-
-	double door_closing_time = 0;
-
-	std::wcout << "Please Enter a Default Elevator Door Closing Time in Seconds" << std::endl;
-	std::wcin >> door_closing_time;
-
-	while (door_closing_time < 0)
-	{
-		std::wcout << "PLEASE ENTER POSITIVE VALUE" << std::endl;
-		std::wcin >> door_closing_time;
-	}
-
-	new_elevator->thisElevatorAlgorithmSingle->getElevatorStatus()->door_open_time = door_closing_time;
 }
 
 void dt_real_time::Running_Notification(const string& httpResponse)
@@ -1168,7 +1080,7 @@ void dt_real_time::Running_Notification(const string& httpResponse)
 					wstring Wbuilding_name = converter.from_bytes(building_name);
 					wstring Wdevice_name = converter.from_bytes(device_name);
 
-					Building* thisBuilding = this->get_building_vector(Wbuilding_name);
+					Building* thisBuilding = this->getBuilding(Wbuilding_name);
 					Elevator* thisElevator = this->getElevator(thisBuilding, Wdevice_name);
 
 					string con;

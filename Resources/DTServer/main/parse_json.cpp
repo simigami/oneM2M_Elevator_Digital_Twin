@@ -14,7 +14,7 @@ Wparsed_struct parse_json::parsingWithBulidingAlgorithms(wstring json_data, int 
 		case 0:
 			return parsingOnlyBuildingName(json_data);
 		case 1:
-			return parsingCCButtonBuliding(json_data);
+			return parsingCrowdControlButtonBuliding(json_data);
 		default:
 			return parsingOnlyBuildingName(json_data);
 	}
@@ -27,6 +27,15 @@ Wparsed_struct parse_json::parsingOnlyBuildingName(wstring json_data)
 	{
 		p.building_name = stringToWstring(parsed_json["building_name"]);
 		p.device_name = stringToWstring(parsed_json["device_name"]);
+
+		// Parse each array element to p.each_floor_altimeter
+		if (parsed_json["each_floor_altimeter"] != nullptr)
+		{
+			json altimeterArray = parsed_json["each_floor_altimeter"];
+			for (const nlohmann::basic_json<>& element : altimeterArray) {
+				p.each_floor_altimeter.push_back(element);
+			}
+		}
 	}
 	catch (const std::exception& e)
 	{
@@ -42,38 +51,38 @@ Wparsed_struct parse_json::parsingDedicatedButtonBuilding(wstring json_data)
 	{
 		p.building_name = stringToWstring(parsed_json["building_name"]);
 		p.device_name = stringToWstring(parsed_json["device_name"]);
-
-		p.underground_floor = parsed_json["underground_floor"];
-		p.ground_floor = parsed_json["ground_floor"];
-
+		p.underground_floor = stoi(parsed_json.at("underground_floor").get<string>());
+		p.ground_floor = stoi(parsed_json.at("ground_floor").get<string>());
 		p.timestamp = stringToWstring(parsed_json["timestamp"]);
+		p.velocity = stod(parsed_json.at("velocity").get<string>());
+		p.altimeter = stod(parsed_json.at("altimeter").get<string>());
+		p.temperature = stod(parsed_json.at("temperature").get<string>());
 
-		p.velocity = parsed_json["velocity"];
-		p.altimeter = parsed_json["altimeter"];
-		p.temperature = parsed_json["temperature"];
 
-		if(parsed_json["button_inside"] != nullptr)
+		if (parsed_json["button_outside"] != nullptr)
 		{
-			vector<string> temp = parsed_json["button_inside"];
+			vector<vector<int>> temp = parsed_json.at("button_outside").get<vector<vector<int>>>();
 
-			for(const string& elem : temp)
+			for (const auto& elem : temp)
 			{
-				p.button_inside.push_back(stringToWstring(elem));
+				p.button_outside.push_back(elem);
 			}
 		}
 
-		if(parsed_json["button_outside"] != nullptr)
+		if (parsed_json["button_inside"] != nullptr)
 		{
-			json buttonOutsideArray = parsed_json["button_outside"];
+			vector<int> temp = parsed_json.at("button_inside").get<vector<int>>();
 
-			 // Iterate over the elements of the JSON array and store them
-			for (const nlohmann::basic_json<>& element : buttonOutsideArray) {
-            // Extract individual elements within the nested array
-	            vector<int> temp = {element[0], element[1]};
-				p.button_outside.push_back(temp);
+			for (const auto& elem : temp)
+			{
+				wstring temp = to_wstring(elem);
+				if (elem < 0)
+				{
+					temp[0] = L'B';
+				}
+				p.button_inside.push_back(temp);
 			}
 		}
-		// Print the parsed values	
 	}
 	catch (const std::exception &e)
 	{
@@ -82,7 +91,7 @@ Wparsed_struct parse_json::parsingDedicatedButtonBuilding(wstring json_data)
 	return p;
 }
 
-Wparsed_struct parse_json::parsingCCButtonBuliding(wstring json_data)
+Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(wstring json_data)
 {
 	json parsed_json = json::parse(json_data);
 	Wparsed_struct p;
@@ -109,23 +118,39 @@ Wparsed_struct parse_json::parsingCCButtonBuliding(wstring json_data)
 		}
 		else 
 		{
-			p.underground_floor = parsed_json["underground_floor"];
-			p.ground_floor = parsed_json["ground_floor"];
+			// parsed_json["underground_floor"] str to int
+			p.underground_floor = stoi(parsed_json.at("underground_floor").get<string>());
+			p.ground_floor = stoi(parsed_json.at("ground_floor").get<string>());
 
 			p.timestamp = stringToWstring(parsed_json["timestamp"]);
 
-			p.velocity = parsed_json["velocity"];
-			p.altimeter = parsed_json["altimeter"];
-			p.temperature = parsed_json["temperature"];
+			p.velocity = stod(parsed_json.at("velocity").get<string>());
+			p.altimeter = stod(parsed_json.at("altimeter").get<string>());
+			p.temperature = stod(parsed_json.at("temperature").get<string>());
 
 			if (parsed_json["button_inside"] != nullptr)
 			{
-				vector<string> temp = parsed_json["button_inside"];
+				vector<int> temp = parsed_json.at("button_inside").get<vector<int>>();
 
-				for (const string& elem : temp)
+				for (const auto& elem : temp)
 				{
-					p.button_inside.push_back(stringToWstring(elem));
+					wstring temp = to_wstring(elem);
+					if (elem < 0)
+					{
+						temp[0] = L'B';
+					}
+					p.button_inside.push_back(temp);
 				}
+			}
+		}
+
+		if (parsed_json["each_floor_altimeter"] != nullptr)
+		{
+			vector<double> temp = parsed_json.at("each_floor_altimeter").get<vector<double>>();
+
+			for (const auto& elem : temp)
+			{
+				p.each_floor_altimeter.push_back(elem);
 			}
 		}
 	}
