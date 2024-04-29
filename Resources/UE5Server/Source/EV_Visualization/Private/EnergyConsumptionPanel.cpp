@@ -149,6 +149,30 @@ TArray<UEachElevatorBarWidgetPanel*> UEnergyConsumptionPanel::GetSortedElevatorB
 		}
 	}
 
+	// if sort type is 5, sort by total move distance
+	else if (sortType == 5)
+	{
+		// if updown is true, sort by total move distance in ascending order
+		if (updown)
+		{
+			// sort by total move distance in ascending order
+			this->ElevatorBarWidgetPanels.Sort([](const UEachElevatorBarWidgetPanel& A, const UEachElevatorBarWidgetPanel& B)
+			{
+				return A.totMoveDistance < B.totMoveDistance;
+			});
+		}
+
+		// if updown is false, sort by total move distance in descending order
+		else
+		{
+			// sort by total move distance in descending order
+			this->ElevatorBarWidgetPanels.Sort([](const UEachElevatorBarWidgetPanel& A, const UEachElevatorBarWidgetPanel& B)
+			{
+				return A.totMoveDistance > B.totMoveDistance;
+			});
+		}
+	}
+
 	// else do - nothing
 	else
 	{

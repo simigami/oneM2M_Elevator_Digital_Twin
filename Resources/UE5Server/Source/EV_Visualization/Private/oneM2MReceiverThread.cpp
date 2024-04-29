@@ -227,6 +227,8 @@ FDecisionStruct FoneM2MReceiverThread::deserialJSON(const FString& ReceivedJSON)
 		// Set Map Path using content dir + building name + device name + umap
 		newStruct.map_path = FPaths::Combine(FPaths::ProjectContentDir(), newStruct.building_name, "EV_VIS/Maps/", newStruct.building_name + ".umap");
 
+		newStruct.dilation = JsonObject->GetNumberField(TEXT("dilation"));
+		
 		newStruct.goToFloor = JsonObject->GetIntegerField(TEXT("goToFloor"));
 
 		newStruct.erd = JsonObject->GetNumberField(TEXT("Erd"));

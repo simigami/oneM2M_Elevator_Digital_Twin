@@ -2,7 +2,6 @@
 
 
 #include "DataDecisionActor.h"
-
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values
@@ -144,6 +143,8 @@ TArray<double> ADataDecisionActor::getEachFloorTimeLines(FDecisionStruct this_st
 {
 	FCriticalSection Mutex;
 	FScopeLock ScopeLock(&Mutex);
+
+	int dilation = this_status.dilation;
 	
 	//get velocity, acc, tta, ttm, ttd, each floor alt from stats
 	const double max_velocity = this_status.max_velocity;
@@ -159,7 +160,7 @@ TArray<double> ADataDecisionActor::getEachFloorTimeLines(FDecisionStruct this_st
 	const double altimeter_diff = FMath::Abs(eachfloorAlt[goTo_floor_index] - eachfloorAlt[current_floor_index]);
 
 	const double tta = this_status.tta;
-	const double ttm = altimeter_diff - this_status.tta * max_velocity > 0 ? this_status.ttm : 0.0;
+	const double ttm = this_status.ttm;
 	const  double ttd = this_status.ttd;
 
 	if(current_floor_index == goTo_floor_index)
@@ -200,110 +201,130 @@ TArray<double> ADataDecisionActor::getEachFloorTimeLines(FDecisionStruct this_st
 		}
 	}
 
-	for(const auto& each_alt_diff : eachFloorAltDiff)
+	// log if length of eachFloorAltDiff is 1
+	if(eachFloorAltDiff.Num() == 1)
 	{
-		if(current_floor_index == 13 and goTo_floor_index == 3)
+		UE_LOG(LogTemp, Log, TEXT("Each Floor Alt Diff: %f"), eachFloorAltDiff[0]);
+	}
+
+	// check if length of eachFloorAltDiff is 1 and eachFloorAltDiff[0] 's distance is less than 2 * max_velocity * max_velocity / acc
+	if(eachFloorAltDiff.Num() == 1 and eachFloorAltDiff[0] < acc * FMath::Pow(max_velocity / acc, 2))
+	{
+		eachFloorTime.Add((tta+ttd)/dilation);
+	}
+
+	else if(eachFloorAltDiff.Num() == 1)
+	{
+		eachFloorTime.Add((tta+ttm+ttd)/dilation);
+	}
+
+	else
+	{
+		for(const auto& each_alt_diff : eachFloorAltDiff)
 		{
+			if(current_floor_index == 13 and goTo_floor_index == 3)
+			{
+				//UE_LOG(LogTemp, Log, TEXT("TTA Temp: %f"), tta_temp);
+				//UE_LOG(LogTemp, Log, TEXT("TTM Temp: %f"), ttm_temp);
+				//UE_LOG(LogTemp, Log, TEXT("TTD Temp: %f"), ttd_temp);
+			}
+			// LOG tta_temp, ttm_temp, ttd_temp
 			//UE_LOG(LogTemp, Log, TEXT("TTA Temp: %f"), tta_temp);
 			//UE_LOG(LogTemp, Log, TEXT("TTM Temp: %f"), ttm_temp);
 			//UE_LOG(LogTemp, Log, TEXT("TTD Temp: %f"), ttd_temp);
-		}
-		// LOG tta_temp, ttm_temp, ttd_temp
-		//UE_LOG(LogTemp, Log, TEXT("TTA Temp: %f"), tta_temp);
-		//UE_LOG(LogTemp, Log, TEXT("TTM Temp: %f"), ttm_temp);
-		//UE_LOG(LogTemp, Log, TEXT("TTD Temp: %f"), ttd_temp);
-		
-		if(tta_temp < tta)
-		{
-			// Get V0 at this moment
-			const double v0 = acc * tta_temp;
-			// Get Rest Time to rach maxvel and round to second floating point
-			const double rest_time = FMath::RoundToDouble((max_velocity - v0) / acc * 100.0f) / 100.0f;
-
-			// Get distance using v0, maxvel, and rest_time
-			const double distance_left_tta = (FMath::Pow(max_velocity, 2) -  FMath::Pow(v0, 2)) / (2*acc);
-
-			// Check if distance_left_tta is less than each_alt_diff
-			if(distance_left_tta < each_alt_diff)
+			
+			if(tta_temp < tta)
 			{
-				// Get rest alt
-				const double rest_alt = each_alt_diff - distance_left_tta;
+				// Get V0 at this moment
+				double v0 = acc * tta_temp;
+				// Get Rest Time to rach maxvel and round to second floating point
+				double rest_time = FMath::RoundToDouble((max_velocity - v0) / acc * 100.0f) / 100.0f;
 
-				// divide this to maxvel to get time and round to second floating point
-				const double rest_time_ttm = FMath::RoundToDouble(rest_alt / max_velocity * 100.0f) / 100.0f;
-				eachFloorTime.Add(rest_time + rest_time_ttm);
+				// Get distance using v0, maxvel, and rest_time
+				double distance_left_tta = (FMath::Pow(max_velocity, 2) -  FMath::Pow(v0, 2)) / (2*acc);
 
-				tta_temp += rest_time + rest_time_ttm;
-				ttm_temp += rest_time_ttm;
+				// Check if distance_left_tta is less than each_alt_diff
+				if(distance_left_tta < each_alt_diff)
+				{
+					// Get rest alt
+					double rest_alt = each_alt_diff - distance_left_tta;
 
-				eachfloorAlt.Add(tta+rest_time_ttm);
+					// divide this to maxvel to get time and round to second floating point
+					double rest_time_ttm = FMath::RoundToDouble(rest_alt / max_velocity * 100.0f) / 100.0f;
+					eachFloorTime.Add((rest_time + rest_time_ttm)/dilation);
+
+					tta_temp += rest_time + rest_time_ttm;
+					ttm_temp += rest_time_ttm;
+
+					eachfloorAlt.Add((tta+rest_time_ttm)/dilation);
+				}
+				else
+				{
+					double time = FMath::Sqrt((2*each_alt_diff)/acc);
+					double rounded_time = FMath::RoundToDouble(time * 100.0f) / 100.0f;
+					tta_temp += rounded_time;
+
+					eachfloorAlt.Add(rounded_time/dilation);
+				}
 			}
-			else
-			{
-				const double time = FMath::Sqrt((2*each_alt_diff)/acc);
-				const double rounded_time = FMath::RoundToDouble(time * 100.0f) / 100.0f;
-				tta_temp += rounded_time;
 
-				eachfloorAlt.Add(rounded_time);
+			else if(ttm_temp < ttm)
+			{
+				// Get Distance from ttm-ttm_temp
+				double distance = max_velocity * (ttm - ttm_temp);
+
+				// LOG
+				if(current_floor_index == 13 and goTo_floor_index == 3)
+				{
+					//UE_LOG(LogTemp, Log, TEXT("Distance: %f"), distance);
+				}
+				// Compare distance to each_alt_diff
+				if(each_alt_diff < distance)
+				{
+					// Get Time to reach each_alt_diff
+					double time = each_alt_diff / max_velocity;
+					double rounded_time = FMath::RoundToDouble(time * 100.0f) / 100.0f;
+					ttm_temp += rounded_time;
+
+					eachFloorTime.Add(rounded_time/dilation);
+				}
+				else
+				{
+					double rest_distance = each_alt_diff - distance;
+					double rest_time_ttm = FMath::RoundToDouble(distance / max_velocity * 100.0f) / 100.0f; 
+
+					double t_temp = FMath::Abs( max_velocity * max_velocity + 2 * (-1 * acc) * rest_distance);
+					double rest_time_ttd = FMath::Abs((-1 * max_velocity + FMath::Sqrt((t_temp))) / acc);
+
+					
+					// LOG -1 * max_velocity + FMath::Sqrt((max_velocity * max_velocity + 2 * (-1 * acc) * rest_distance))
+					//UE_LOG(LogTemp, Log, TEXT("Rest Time TTD: %f"), (rest_time_ttd));
+
+					ttd_start_v0 = max_velocity - acc * rest_time_ttd;
+					// Round Rest Time to .2f
+					double rounded_time = FMath::RoundToDouble((rest_time_ttm + rest_time_ttd) * 100.0f) / 100.0f;
+
+					ttm_temp += rounded_time;
+					ttd_temp += rest_time_ttd;
+
+					eachFloorTime.Add(rounded_time/dilation);
+				}
 			}
-		}
 
-		else if(ttm_temp < ttm)
-		{
-			// Get Distance from ttm-ttm_temp
-			const double distance = max_velocity * (ttm - ttm_temp);
-
-			// LOG
-			if(current_floor_index == 13 and goTo_floor_index == 3)
+			else if(ttd_temp < ttd)
 			{
-				//UE_LOG(LogTemp, Log, TEXT("Distance: %f"), distance);
-			}
-			// Compare distance to each_alt_diff
-			if(each_alt_diff < distance)
-			{
-				// Get Time to reach each_alt_diff
-				const double time = each_alt_diff / max_velocity;
-				const double rounded_time = FMath::RoundToDouble(time * 100.0f) / 100.0f;
-				ttm_temp += rounded_time;
-
-				eachFloorTime.Add(rounded_time);
-			}
-			else
-			{
-				const double rest_distance = each_alt_diff - distance;
-				const double rest_time_ttm = FMath::RoundToDouble(distance / max_velocity * 100.0f) / 100.0f; 
-
-				const double t_temp = FMath::Abs( max_velocity * max_velocity + 2 * (-1 * acc) * rest_distance);
-				const double rest_time_ttd = FMath::Abs((-1 * max_velocity + FMath::Sqrt((t_temp))) / acc);
-
+				// Get Distance from ttd-ttd_temp
+				double t_temp = FMath::Abs( ttd_start_v0 * ttd_start_v0 + 2 * (-1 * acc) * each_alt_diff);
+				double rest_time_ttd = FMath::Abs((-1 * ttd_start_v0 + FMath::Sqrt((t_temp))) / acc);
 				
-				// LOG -1 * max_velocity + FMath::Sqrt((max_velocity * max_velocity + 2 * (-1 * acc) * rest_distance))
-				//UE_LOG(LogTemp, Log, TEXT("Rest Time TTD: %f"), (rest_time_ttd));
+				ttd_temp += rest_time_ttd;
+				eachFloorTime.Add(rest_time_ttd/dilation);
 
 				ttd_start_v0 = max_velocity - acc * rest_time_ttd;
-				// Round Rest Time to .2f
-				const double rounded_time = FMath::RoundToDouble((rest_time_ttm + rest_time_ttd) * 100.0f) / 100.0f;
-
-				ttm_temp += rounded_time;
-				ttd_temp += rest_time_ttd;
-
-				eachFloorTime.Add(rounded_time);
 			}
 		}
-
-		else if(ttd_temp < ttd)
-		{
-			// Get Distance from ttd-ttd_temp
-			const double t_temp = FMath::Abs( ttd_start_v0 * ttd_start_v0 + 2 * (-1 * acc) * each_alt_diff);
-			const double rest_time_ttd = FMath::Abs((-1 * ttd_start_v0 + FMath::Sqrt((t_temp))) / acc);
-			
-			ttd_temp += rest_time_ttd;
-			eachFloorTime.Add(rest_time_ttd);
-
-			ttd_start_v0 = max_velocity - acc * rest_time_ttd;
-		}
 	}
-
+	
 	// LOG Elevator name
 	UE_LOG(LogTemp, Log, TEXT("Elevator Name: %s, Start Floor Index %d -> End Floor Index %d / tta : %f ttm : %f, ttd : %f"), *FString(this_status.device_name), current_floor_index, goTo_floor_index, tta, ttm, ttd);
 	

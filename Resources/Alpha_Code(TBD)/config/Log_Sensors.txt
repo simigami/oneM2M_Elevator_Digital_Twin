@@ -1,3 +1,0 @@
-Timestamp is 20230906191125
-Altimeter : -10.442246062558944
-Temperature : 32.13125

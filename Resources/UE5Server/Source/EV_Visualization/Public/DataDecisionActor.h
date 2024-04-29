@@ -20,6 +20,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FString map_path = "";
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	int dilation = 0;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	int default_start_floor_index = 0;
