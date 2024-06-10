@@ -16,6 +16,7 @@ elevatorAlgorithmDefault::elevatorAlgorithmDefault(wstring buildingName, wstring
 	RETRIEVE_interval_millisecond = 10;
 
 	thisLogger.log_file_name = thisLogger.get_file_name_as_timestamp() + L"_" + buildingName + L"_" + deviceName + L".txt";
+	thisLogger.csv_file_name = thisLogger.get_file_name_as_timestamp() + L"_" + buildingName + L".csv";
 }
 
 elevatorAlgorithmDefault::~elevatorAlgorithmDefault()
@@ -72,6 +73,7 @@ void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueS
 				appendLogToLogList(IDLE, 3, building_name, device_name, delta_second);
 				writeEnergyLog();
 				
+				getElevatorStatus()->set_this_elevator_daily_energy_consumption(0);
 				printTimeDeltaWhenIDLE();
 
 				stop(p, thisElevatorFlag);
@@ -107,15 +109,17 @@ void elevatorAlgorithmDefault::run(socket_oneM2M* sock, socket_UnrealEngine* ueS
 					{
 						rearrangeMainTripList(thisElevatorStatus, p);
 
-						//std::wcout << "IN " << building_name << " -> " << device_name << " STOPPED AT FLOOR : " << this->thisElevatorStatus->go_to_floor << std::endl;
-						wstring log_string = L"IN " + building_name + L" -> " + device_name + L" STOPPED AT FLOOR : " + std::to_wstring(this->thisElevatorStatus->go_to_floor);
-						thisLogger.write_log(log_string);
-						
-						elevatorAlgorithmDefault::printTimeDeltaWhenStop();
+						std::wcout << "IN " << building_name << " -> " << device_name << " STOPPED AT FLOOR : " << this->thisElevatorStatus->go_to_floor << std::endl;
+						getElevatorStatus()->CurrentFloor = this->thisElevatorStatus->go_to_floor;
 
 						getElevatorStatus()->number_of_trips += 1;
 						getElevatorStatus()->set_this_elevator_daily_energy_consumption(0);
 						//printThisElevatorEnergyConsumptionInfos();
+
+						wstring log_string = L"IN " + building_name + L" -> " + device_name + L" STOPPED AT FLOOR : " + std::to_wstring(this->thisElevatorStatus->go_to_floor);
+						thisLogger.write_log(log_string);
+
+						elevatorAlgorithmDefault::printTimeDeltaWhenStop();
 
 						const int delta_second = elevatorAlgorithmDefault::printTimeDeltaNow();
 						appendLogToLogList(STOP, 4, building_name, device_name, this->thisElevatorStatus->go_to_floor, delta_second);
@@ -209,6 +213,98 @@ void elevatorAlgorithmDefault::write_logs(std::vector<std::wstring> strings)
 void elevatorAlgorithmDefault::write_log(std::wstring string)
 {
 	thisLogger.write_log(string);
+}
+
+void elevatorAlgorithmDefault::write_csv_header()
+{
+	thisLogger.write_rts_csv_header();
+}
+
+wstring elevatorAlgorithmDefault::make_csv_string(ElevatorStatusEnum en)
+{
+	wstring RetVal = L"";
+	wstring cmd = L"";
+
+	switch (en)
+	{	
+	case RTS_SPAWN:
+		cmd = L"SPAWN";
+		break;
+	case RTS_GO_TO_CHANGE:
+		cmd = L"GO_TO_CHANGE";
+		break;
+	case RTS_STOP:
+		cmd = L"STOP";
+		break;
+	case RTS_REARRANGE:
+		cmd = L"REARRANGE";
+		break;
+	case RTS_IDLE:
+		cmd = L"IDLE";
+		break;
+	default:
+		break;
+	}
+
+	const auto status = this->getElevatorStatus();
+
+	// Get Current DateTime using localtime_s
+	auto ExecuteTime = std::chrono::system_clock::now();
+	const time_t ExecuteTime_t = std::chrono::system_clock::to_time_t(ExecuteTime);
+	auto DiffSeconds = printTimeDeltaNow();
+
+	// Get Date info from ExecuteTime
+	struct tm tstruct;
+	localtime_s(&tstruct, &ExecuteTime_t);
+
+	const int ExecuteYear = tstruct.tm_year + 1900;
+	const int ExecuteMonth = tstruct.tm_mon + 1;
+	const int ExecuteDay = tstruct.tm_mday;
+	const int ExecuteHour = tstruct.tm_hour;
+	const int ExecuteMinute = tstruct.tm_min;
+	const int ExecuteSecond = tstruct.tm_sec;
+
+	const int ExecuteDilation = DiffSeconds;
+
+	const int CurrentFloor = status->CurrentFloor;
+
+	const double Velocity = status->velocity;
+	const double Acceleration = status->get_acceleration();
+	const double Altimeter = status->altimeter;
+	const double TotalMoveDistance = status->total_move_distance;
+
+	const double Erd = status->erd;
+	const double Esd = status->esd;
+	const double Ed = status->ed;
+
+	const wstring label = L"None";
+
+	RetVal.append(getElevatorStatus()->get_building_name() + L",");
+	RetVal.append(getElevatorStatus()->get_device_name() + L",");
+	RetVal.append(std::to_wstring(ExecuteTime_t) + L",");
+	RetVal.append(std::to_wstring(ExecuteYear) + L",");
+	RetVal.append(std::to_wstring(ExecuteMonth) + L",");
+	RetVal.append(std::to_wstring(ExecuteDay) + L",");
+	RetVal.append(std::to_wstring(ExecuteHour) + L",");
+	RetVal.append(std::to_wstring(ExecuteMinute) + L",");
+	RetVal.append(std::to_wstring(ExecuteSecond) + L",");
+	RetVal.append(std::to_wstring(ExecuteDilation) + L",");
+	RetVal.append(cmd + L",");
+	RetVal.append(std::to_wstring(CurrentFloor) + L",");
+	RetVal.append(std::to_wstring(Velocity) + L",");
+	RetVal.append(std::to_wstring(Altimeter) + L",");
+	RetVal.append(std::to_wstring(TotalMoveDistance) + L",");
+	RetVal.append(std::to_wstring(Erd) + L",");
+	RetVal.append(std::to_wstring(Esd) + L",");
+	RetVal.append(std::to_wstring(Ed) + L",");
+	RetVal.append(label + L"\n");
+
+	return RetVal;
+}
+
+void elevatorAlgorithmDefault::write_csv_body(std::wstring str)
+{
+	thisLogger.write_csv(str);
 }
 
 void elevatorAlgorithmDefault::appendLogToLogList(int code, ...)
@@ -665,8 +761,11 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenSpawn()
 	);
 	//std::puts(timeString);
 
-	std::wstring log_string(timeString, timeString + strlen(timeString));
-	write_log(log_string);
+	std::wstring txt_log_string(timeString, timeString + strlen(timeString));
+	std::wstring csv_log_string = make_csv_string(RTS_SPAWN);
+	write_log(txt_log_string);
+	write_csv_header();
+	write_csv_body(csv_log_string);
 }
 
 void elevatorAlgorithmDefault::printTimeDeltaWhenRearrange()
@@ -695,9 +794,10 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenRearrange()
 	//puts(timeString);
 
 	// change timeString to wstring
-	std::wstring log_string(timeString, timeString + strlen(timeString));
-
-	write_log(log_string);
+	std::wstring txt_log_string(timeString, timeString + strlen(timeString));
+	std::wstring csv_log_string = make_csv_string(RTS_REARRANGE);
+	write_log(txt_log_string);
+	write_csv_body(csv_log_string);
 }
 
 int elevatorAlgorithmDefault::printTimeDeltaNow()
@@ -735,8 +835,10 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenStop()
 	);
 	//puts(timeString);
 
-	std::wstring log_string(timeString, timeString + strlen(timeString));
-	write_log(log_string);
+	std::wstring txt_log_string(timeString, timeString + strlen(timeString));
+	std::wstring csv_log_string = make_csv_string(RTS_STOP);
+	write_log(txt_log_string);
+	write_csv_body(csv_log_string);
 }
 
 void elevatorAlgorithmDefault::printTimeDeltaWhenIDLE()
@@ -767,8 +869,10 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenIDLE()
 	);
 	puts(timeString);
 
-	std::wstring log_string(timeString, timeString + strlen(timeString));
-	write_log(log_string);
+	std::wstring txt_log_string(timeString, timeString + strlen(timeString));
+	std::wstring csv_log_string = make_csv_string(RTS_IDLE);
+	write_log(txt_log_string);
+	write_csv_body(csv_log_string);
 }
 
 void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, physics* phy)
@@ -1212,175 +1316,168 @@ bool elevatorStatus::get_this_elevator_energy_consumption()
 }
 void elevatorStatus::set_this_elevator_daily_energy_consumption(int sim_mode_delta)
 {
-	if (!calculate_this_elevator_energy_consumption) 
+	const double night_time_shorten_ratio = 0.66;
+	const double one_day = 86400.0;
+
+	measure_time = chrono::system_clock::now();
+
+	// Get time diff in seconds
+	auto diff = chrono::duration_cast<chrono::seconds>(measure_time - start_time).count();
+
+	if (sim_mode_delta != 0) 
 	{
-		return; 
+		diff = sim_mode_delta;
 	}
-	else 
+
+	// Get ratio of diif seconds to 1 day
+	double ratio = one_day / diff;
+
+	// Round to .0
+	ratio = round(ratio * 100) / 100;
+
+	// Get Estimated Daily Trip Count
+	int estimated_daily_trip_count = floor(ratio * number_of_trips * (0.5 *(1 + night_time_shorten_ratio)));
+
+	if (estimated_daily_trip_count < 50) 
 	{
-		const double night_time_shorten_ratio = 0.66;
-		const double one_day = 86400.0;
+		Category = 1;
+		IDLE_time_ratio = 0.13;
+		StandBy_time_ratio = 0.87;
+	}
+	else if (estimated_daily_trip_count < 125)
+	{
+		Category = 2;
+		IDLE_time_ratio = 0.23;
+		StandBy_time_ratio = 0.77;
+	}
+	else if (estimated_daily_trip_count < 300)
+	{
+		Category = 3;
+		IDLE_time_ratio = 0.36;
+		StandBy_time_ratio = 0.64;
+	}
+	else if (estimated_daily_trip_count < 750)
+	{
+		Category = 4;
+		IDLE_time_ratio = 0.45;
+		StandBy_time_ratio = 0.55;
+	}
+	else
+	{
+		Category = 5;
+		IDLE_time_ratio = 0.42;
+		StandBy_time_ratio = 0.58;
+	}
 
-		measure_time = chrono::system_clock::now();
-
-		// Get time diff in seconds
-		auto diff = chrono::duration_cast<chrono::seconds>(measure_time - start_time).count();
-
-		if (sim_mode_delta != 0) 
+	// Calculate %S constant
+	if (Category < 5)
+	{
+		if (ground_floor + underground_floor == 2)
 		{
-			diff = sim_mode_delta;
+			S_factor = 1.0;
 		}
-
-		// Get ratio of diif seconds to 1 day
-		double ratio = one_day / diff;
-
-		// Round to .0
-		ratio = round(ratio * 100) / 100;
-
-		// Get Estimated Daily Trip Count
-		int estimated_daily_trip_count = floor(ratio * number_of_trips * (0.5 *(1 + night_time_shorten_ratio)));
-
-		if (estimated_daily_trip_count < 50) 
+		else if (ground_floor + underground_floor == 3) 
 		{
-			Category = 1;
-			IDLE_time_ratio = 0.13;
-			StandBy_time_ratio = 0.87;
-		}
-		else if (estimated_daily_trip_count < 125)
-		{
-			Category = 2;
-			IDLE_time_ratio = 0.23;
-			StandBy_time_ratio = 0.77;
-		}
-		else if (estimated_daily_trip_count < 300)
-		{
-			Category = 3;
-			IDLE_time_ratio = 0.36;
-			StandBy_time_ratio = 0.64;
-		}
-		else if (estimated_daily_trip_count < 750)
-		{
-			Category = 4;
-			IDLE_time_ratio = 0.45;
-			StandBy_time_ratio = 0.55;
+			S_factor = 0.67;
 		}
 		else
 		{
-			Category = 5;
-			IDLE_time_ratio = 0.42;
-			StandBy_time_ratio = 0.58;
+			S_factor = 0.44;
 		}
-
-		// Calculate %S constant
-		if (Category < 5)
+	}
+	else
+	{
+		if (ground_floor + underground_floor == 2)
 		{
-			if (ground_floor + underground_floor == 2)
-			{
-				S_factor = 1.0;
-			}
-			else if (ground_floor + underground_floor == 3) 
-			{
-				S_factor = 0.67;
-			}
-			else
-			{
-				S_factor = 0.44;
-			}
+			S_factor = 1.0;
+		}
+		else if (ground_floor + underground_floor == 3)
+		{
+			S_factor = 0.67;
 		}
 		else
 		{
-			if (ground_floor + underground_floor == 2)
-			{
-				S_factor = 1.0;
-			}
-			else if (ground_floor + underground_floor == 3)
-			{
-				S_factor = 0.67;
+			S_factor = 0.33;
+		}
+	}
+
+	// Calulate Load Factor
+	double Q_Factor = 0.0;
+	switch (Category)
+	{
+		case 4:
+			Q_Factor = 9.0;
+			break;
+		case 5 :
+			Q_Factor = 13.0;
+			break;
+		default:
+			Q_Factor = 7.5;
+			break;
+	}
+
+	switch (this_elevator_type_info.this_elevator_type)
+	{
+		case NoCounterBalance:
+			load_factor = 1 + (Q_Factor * 0.0071);
+			break;
+
+		case CounterBalance:
+			if (this_elevator_type_info.type_load_rate <= 0.4) {
+				load_factor = 1 - (Q_Factor * 0.0164);
 			}
 			else
 			{
-				S_factor = 0.33;
+				load_factor = 1 - (Q_Factor * 0.0192);
 			}
-		}
+			break;
 
-		// Calulate Load Factor
-		double Q_Factor = 0.0;
-		switch (Category)
-		{
-			case 4:
-				Q_Factor = 9.0;
-				break;
-			case 5 :
-				Q_Factor = 13.0;
-				break;
-			default:
-				Q_Factor = 7.5;
-				break;
-		}
+		case Hydraulic:
+			load_factor = 1 + (Q_Factor * 0.0071);
+			break;
 
-		switch (this_elevator_type_info.this_elevator_type)
-		{
-			case NoCounterBalance:
-				load_factor = 1 + (Q_Factor * 0.0071);
-				break;
+		case CounterBalanceWithHydraulic:
+			if (this_elevator_type_info.type_load_rate <= 0.35) {
+				load_factor = 1 + (Q_Factor * 0.01);
+			}
+			else
+			{
+				load_factor = 1 - (Q_Factor * 0.0187);
+			}
+			break;
 
-			case CounterBalance:
-				if (this_elevator_type_info.type_load_rate <= 0.4) {
-					load_factor = 1 - (Q_Factor * 0.0164);
-				}
-				else
-				{
-					load_factor = 1 - (Q_Factor * 0.0192);
-				}
-				break;
-
-			case Hydraulic:
-				load_factor = 1 + (Q_Factor * 0.0071);
-				break;
-
-			case CounterBalanceWithHydraulic:
-				if (this_elevator_type_info.type_load_rate <= 0.35) {
-					load_factor = 1 + (Q_Factor * 0.01);
-				}
-				else
-				{
-					load_factor = 1 - (Q_Factor * 0.0187);
-				}
-				break;
-
-			default:
-				break;
-		}
-
-		const double estimated_daily_running_energy_consumption =
-			(estimated_daily_trip_count * S_factor * load_factor * ISO_Reference_Cycle_Energy) / 2.0;
-
-		const double average_travel_distance_per_trip = abs(this->each_floor_altimeter.front() - this->each_floor_altimeter.back()) * S_factor;
-
-		const double average_time_per_trip = 
-			average_travel_distance_per_trip / max_velocity +
-			max_velocity / acceleration +
-			acceleration / jerk +
-			door_open_time;
-
-		const double estimated_daily_standing_energy_consumption = 
-			(24 - ((estimated_daily_trip_count * average_time_per_trip)/3600)) * 
-			(IDLE_Power * IDLE_time_ratio + Standby_Power_5Min * StandBy_time_ratio);
-
-		if (estimated_daily_standing_energy_consumption < 0)
-		{
-			//cout << "Error : Estimated Daily Standing Energy Consumption is Negative" << endl;
-			//cout << "Estimated estimated_daily_trip_count : " << estimated_daily_trip_count << endl;
-			//cout << "Estimated average_travel_distance_per_trip : " << average_travel_distance_per_trip << endl;
-		}
-
-		const double estimated_daily_energy_consumption = 
-			estimated_daily_running_energy_consumption + estimated_daily_standing_energy_consumption;
-
-		erd = estimated_daily_running_energy_consumption;
-		esd = estimated_daily_standing_energy_consumption;
-		ed = estimated_daily_energy_consumption;
+		default:
+			break;
 	}
+
+	const double estimated_daily_running_energy_consumption =
+		(estimated_daily_trip_count * S_factor * load_factor * ISO_Reference_Cycle_Energy) / 2.0;
+
+	const double average_travel_distance_per_trip = abs(this->each_floor_altimeter.front() - this->each_floor_altimeter.back()) * S_factor;
+
+	const double average_time_per_trip = 
+		average_travel_distance_per_trip / max_velocity +
+		max_velocity / acceleration +
+		acceleration / jerk +
+		door_open_time;
+
+	const double estimated_daily_standing_energy_consumption = 
+		(24 - ((estimated_daily_trip_count * average_time_per_trip)/3600)) * 
+		(IDLE_Power * IDLE_time_ratio + Standby_Power_5Min * StandBy_time_ratio);
+
+	if (estimated_daily_standing_energy_consumption < 0)
+	{
+		//cout << "Error : Estimated Daily Standing Energy Consumption is Negative" << endl;
+		//cout << "Estimated estimated_daily_trip_count : " << estimated_daily_trip_count << endl;
+		//cout << "Estimated average_travel_distance_per_trip : " << average_travel_distance_per_trip << endl;
+	}
+
+	const double estimated_daily_energy_consumption = 
+		estimated_daily_running_energy_consumption + estimated_daily_standing_energy_consumption;
+
+	erd = estimated_daily_running_energy_consumption;
+	esd = estimated_daily_standing_energy_consumption;
+	ed = estimated_daily_energy_consumption;
 }
 
 vector<double> elevatorStatus::get_this_elevator_daily_energy_consumption()

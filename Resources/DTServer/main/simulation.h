@@ -13,7 +13,7 @@ struct default_building_info
 	float acceleration = 1.25;
 	float max_velocity = 2.5;
 
-	vector<double> altimeter_of_each_floor;
+	vector<double> altimeter_of_each_floor = {};
 };
 
 class simulation

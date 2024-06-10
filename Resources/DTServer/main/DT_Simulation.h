@@ -1,11 +1,10 @@
 #pragma once
-#include <boost/asio.hpp>
-#include <set>
-#include <ShlObj.h>
-#include <commdlg.h>
+#include "FileSystem.h"
 #include "socket_oneM2M.h"
 #include "elevatorAlgorithmDefault.h"
 #include "parse_json.h"
+#include <boost/asio.hpp>
+#include <set>
 
 using namespace std;
 class logger;
@@ -43,17 +42,21 @@ public:
 
 	bool init = true;
 
+    int undergroundFloor;
+    int abovegroundFloor;
+
     double current_velocity;
     double current_altimeter;
     double move_distance;
 
-    vector<vector<double>> energy_consumption_vector = { {0.0, 0.0, 0.0}, };
+    vector<vector<double>> energy_consumption_vector = {};
 
     int latest_floor = 0;
     int will_reach_floor = 0;
 
     int first_called_floor = 0;
 
+    vector<double> each_floor_altimeter = vector<double>();
     vector<int> current_called_floors;
 
     vector<transaction> current_transaction;
@@ -72,13 +75,8 @@ public:
 
     wstring buildingName;
     string json_string;
-    
-    int undergroundFloor;
-    int abovegroundFloor;
 
     int default_start_floor;
-
-    vector<double> each_floor_altimeter = vector<double>();
 
     double default_elevator_max_velocity;
     double default_elevator_max_acceleration;
@@ -90,7 +88,8 @@ class dt_simulation
 {
 public:
 
-    OPENFILENAME ofn;
+    FileSystem fileSystem;
+
     socket_oneM2M* oneM2MSocket;
     wchar_t* fileLocation;
 
@@ -102,9 +101,6 @@ public:
     vector<simBuilding>* buildings = new vector<simBuilding>{};
 
     dt_simulation();
-
-    bool checkFileCriteria(const std::wstring file_path);
-    string chooseLog();
 
     void setSimulatedFileLocation();
     wchar_t getSimulatedFileLocation() const;
@@ -130,7 +126,7 @@ public:
     void runSimulation();
     void calculateEnergyConsumption(simBuilding* thisBuilding, UE5Transaction each_transaction);
     void send_data(std::string json_string);
-    string set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp);
+    string set_elevator_Status_JSON_STRING(simBuilding this_building, simElevator ThisElevator, UE5Transaction each_timestamp);
     void sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation, int visualtion_mode);
     void giveAllBuildingTransactions();
     void giveElevatorTransaction(simBuilding this_building);
@@ -142,12 +138,12 @@ public:
     void SimulationAlgorithmRandom(simBuilding* this_building, transaction tran);
     void SimulationAlgorithmShortestTransactionFirst(simBuilding* this_building, transaction tran);
 
-
-    double getTimeBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);
-    double getDisatanceBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor);
+    double getTimeBetweenTwoFloors(simBuilding this_building, simElevator ThisElevator, int start_floor, int end_floor);
+    double getDisatanceBetweenTwoFloors(simBuilding this_building, simElevator ThisElevator, int start_floor, int end_floor);
     simElevator* findIDLEElevator(vector<simElevator>* this_building_elevators, transaction this_transaction);
-    simElevator* findNearestElevator(simBuilding this_building, vector<simElevator>* this_building_elevators, transaction this_transaction);
+    simElevator* findNearestElevator(simElevator ThisElevator, vector<simElevator>* this_building_elevators, transaction this_transaction);
 
+    wstring MakeCSVStringByGatherElevatorInfo(simElevator ThisElevator, const int Timestamp);
     void putSimulatedStringTooneM2M(Wparsed_struct parsedStruct);
 
 private:

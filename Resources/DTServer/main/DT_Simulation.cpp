@@ -5,18 +5,66 @@
 #include <random>
 #include <cctype>
 #include <mutex>
-#include <Windows.h>
-#include <shellapi.h>
 
 dt_simulation::dt_simulation()
 {
 }
 
+wstring dt_simulation::MakeCSVStringByGatherElevatorInfo(simElevator ThisElevator, const int Timestamp)
+{
+    const wstring BuildingName = ThisElevator.this_elevator_algorithm->getElevatorStatus()->get_building_name();
+    const  wstring ElevatorName = ThisElevator.this_elevator_algorithm->getElevatorStatus()->get_device_name();
+
+    const auto StartTime = ThisElevator.this_elevator_algorithm->getElevatorStatus()->start_time;
+    const auto ExecuteTime = std::chrono::system_clock::to_time_t(StartTime + std::chrono::seconds(Timestamp));
+
+    // DO NOT USE localtime because it is deprecated use localtime_s
+    struct tm localTime;
+    localtime_s(&localTime, &ExecuteTime);
+    const int ExecuteYear = localTime.tm_year + 1900;
+    const int ExecuteMonth = localTime.tm_mon + 1;
+    const int ExecuteDay = localTime.tm_mday;
+    const int ExecuteHour = localTime.tm_hour;
+    const int ExecuteMinute = localTime.tm_min;
+    const int ExecuteSecond = localTime.tm_sec;
+
+    const int ExecuteDilation = Timestamp;
+
+    const double Velocity = ThisElevator.this_elevator_algorithm->getElevatorStatus()->velocity;
+    const double Acceleration = ThisElevator.this_elevator_algorithm->getElevatorStatus()->get_acceleration();
+    const double Altimeter = ThisElevator.this_elevator_algorithm->getElevatorStatus()->altimeter;
+
+    const double Erd = ThisElevator.energy_consumption_vector.back()[0];
+    const double Esd = ThisElevator.energy_consumption_vector.back()[1];
+    const double Ed = ThisElevator.energy_consumption_vector.back()[2];
+
+    const wstring label = L"None";
+
+    wstring RetVal = L"";
+
+    RetVal.append(BuildingName + L",");
+    RetVal.append(ElevatorName + L",");
+    RetVal.append(std::to_wstring(ExecuteTime) + L",");
+    RetVal.append(std::to_wstring(ExecuteYear) + L",");
+    RetVal.append(std::to_wstring(ExecuteMonth) + L",");
+    RetVal.append(std::to_wstring(ExecuteDay) + L",");
+    RetVal.append(std::to_wstring(ExecuteHour) + L",");
+    RetVal.append(std::to_wstring(ExecuteMinute) + L",");
+    RetVal.append(std::to_wstring(ExecuteSecond) + L",");
+    RetVal.append(std::to_wstring(ExecuteDilation) + L",");
+    RetVal.append(std::to_wstring(Velocity) + L",");
+    RetVal.append(std::to_wstring(Altimeter) + L",");
+    RetVal.append(std::to_wstring(Erd) + L",");
+    RetVal.append(std::to_wstring(Esd) + L",");
+    RetVal.append(std::to_wstring(Ed) + L",");
+    RetVal.append(label + L"\n");
+
+    return RetVal;
+}
+
 simBuilding::simBuilding()
 {
     this->buildingName = L"";
-    this->undergroundFloor = 0;
-    this->abovegroundFloor = 0;
 
     this->default_start_floor = -5;
 
@@ -26,56 +74,12 @@ simBuilding::simBuilding()
     this->default_elevator_stop_time = 4.0;
 }
 
-void dt_simulation::setSimulatedFileLocation()
-{
-	wchar_t szFile[MAXFILEPATHLENGTH] = { 0 };
-    bool isTXTFlag = false;
-
-    ofn.lStructSize = sizeof(ofn);
-    ofn.lpstrFile = szFile;
-    ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(szFile) / sizeof(wchar_t);
-    ofn.lpstrFilter = L"All Files\0*.*\0";
-    ofn.nFilterIndex = 1;
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-
-    std::wcout << "IN SERVER -> Choose a txt file that has Data for Elevator..." << std::endl;
-    Sleep(1000);
-
-    while(!isTXTFlag)
-    {
-	    // 파일 선택 대화 상자 열기
-	    if (GetOpenFileName(&ofn) == TRUE) 
-	    {
-            if(true)
-	        // 사용자가 파일을 선택한 경우 선택된 파일의 경로 출력
-            {
-	            isTXTFlag = true;
-                ofn.lpstrFile = szFile;
-            }
-            else 
-		    {
-		        // 사용자가 취소한 경우 메시지 출력
-		        std::wcout << L"IN SERVER -> Selected File is not txt, Please Choose a txt file..." << std::endl;
-            	Sleep(500);
-		    }
-	    }
-    }
-
-    return;
-}
-
-wchar_t dt_simulation::getSimulatedFileLocation() const
-{
-    return *(this->ofn.lpstrFile);
-}
-
 //TESTING
 void dt_simulation::run()
 {
     std::unordered_map<std::string, std::string> elevatorMap;
 
-    log_file_path = chooseLog();
+    log_file_path = fileSystem.chooseLog();
 
     elevatorMap = findLogStart(log_file_path, elevatorMap);
 
@@ -90,89 +94,6 @@ void dt_simulation::run()
     WriteAllTransactionsToFile();
 
     return;
-}
-
-bool dt_simulation::checkFileCriteria(const std::wstring file_path)
-{
-    // Check file length
-    WIN32_FILE_ATTRIBUTE_DATA fileAttr;
-    if (!GetFileAttributesEx(file_path.c_str(), GetFileExInfoStandard, &fileAttr)) {
-        std::cerr << "Error getting file attributes.\n";
-        return false;
-    }
-    if (file_path.size() > 2048) {
-        std::cerr << "File Name exceeds 1024 bytes.\n";
-        return false;
-    }
-
-    // Check file extension
-    std::wstring::size_type dotIndex = file_path.find_last_of(L".");
-    if (dotIndex == std::wstring::npos || file_path.substr(dotIndex) != L".txt") {
-        std::cerr << "File extension is not '.txt'.\n";
-        return false;
-    }
-
-    return true;
-}
-
-string dt_simulation::chooseLog()
-{
-    OPENFILENAME ofn;       // structure to store information about the file dialog
-    TCHAR szFile[512];      // buffer to store the selected file name
-
-    // Get parent directory of current directory
-    wstring log_dir_path = fs::current_path().parent_path().wstring() + L"\\Log\\StateCode";
-    wstring log_path = L"";
-
-    // Initialize OPENFILENAME structure
-    ZeroMemory(&ofn, sizeof(ofn));
-    ofn.lStructSize = sizeof(ofn);
-    ofn.hwndOwner = NULL;
-    ofn.lpstrFile = szFile;
-    ofn.lpstrFile[0] = '\0';
-    ofn.nMaxFile = sizeof(szFile);
-    ofn.lpstrFilter = TEXT("All Files\0*.*\0");   // Filter for file types
-    ofn.nFilterIndex = 1;
-    ofn.lpstrFileTitle = NULL;
-    ofn.nMaxFileTitle = 0;
-    ofn.lpstrInitialDir = log_dir_path.c_str();
-    ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR;
-
-    do {
-        if (GetOpenFileName(&ofn) == TRUE) {
-            // User selected a file, you can use ofn.lpstrFile to get the selected file path.
-            log_path = ofn.lpstrFile;
-
-            if (checkFileCriteria(log_path))
-            {
-                MessageBox(NULL, ofn.lpstrFile, TEXT("Selected file is valid"), MB_OK);
-                break;
-            }
-            else
-            {
-                MessageBox(NULL, TEXT("Please select a valid text file with a file path <= 1024 bytes."), TEXT("Invalid File"), MB_OK | MB_ICONERROR);
-                log_path = L"";
-            }
-        }
-
-        else
-        {
-            // User cancelled the dialog
-			MessageBox(NULL, TEXT("No file was selected."), TEXT("No File Selected"), MB_OK | MB_ICONERROR);
-            break;
-        }
-    } while (true);
-
-    if (log_path == L"")
-    {
-        std::cerr << "No file was selected.\n";
-        exit(1);
-    }
-
-    // Convert log_path wstring to string
-    std::string log_path_str(log_path.begin(), log_path.end());
-
-	return log_path_str;
 }
 
 std::unordered_map<std::string, std::string> dt_simulation::findLogStart(const std::string& fileAddress, std::unordered_map<std::string, std::string>& elevatorMap)
@@ -200,24 +121,26 @@ std::unordered_map<std::string, std::string> dt_simulation::findLogStart(const s
             // Get this building's value in map
             const auto it = elevatorMap.find(buildingName);
 
-            // find spcific string elevatorName is in this iterator's value
-            if (it != elevatorMap.end() && it->second.find(elevatorName) != std::string::npos) {
-				continue;
-			}
-
-            // CHECK IF BUILDING EXISTS
-            if (elevatorMap.find(buildingName) == elevatorMap.end()) {
-				elevatorMap[buildingName] = underground_floor + " " + ground_floor + " " + each_floor_altimeter + " ";
-			}
-
-            if (enery_flag == "1")
+            if (it == elevatorMap.end())
             {
-                iss >> idle_power >> standby_power >> iso_power;
-                elevatorMap[buildingName] += elevatorName +  " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + enery_flag + " " + idle_power + " " + standby_power + " " + iso_power + " ";
+                elevatorMap[buildingName] = elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + underground_floor + " " + ground_floor + " " + each_floor_altimeter + " " + enery_flag + " ";
+                if (enery_flag == "1")
+                {
+                    iss >> idle_power >> standby_power >> iso_power;
+                    elevatorMap[buildingName] += idle_power + " " + standby_power + " " + iso_power + " ";
+                }
             }
             else
             {
-                elevatorMap[buildingName] = elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + enery_flag + " ";
+                if (enery_flag == "1")
+                {
+                    iss >> idle_power >> standby_power >> iso_power;
+                    elevatorMap[buildingName] += elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + underground_floor + " " + ground_floor + " " + each_floor_altimeter + " " + enery_flag + " " + idle_power + " " + standby_power + " " + iso_power + " ";
+                }
+                else
+                {
+                    elevatorMap[buildingName] += elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + underground_floor + " " + ground_floor + " " + each_floor_altimeter + " " + enery_flag + " ";
+                }
             }
         }
     }
@@ -229,6 +152,7 @@ std::unordered_map<std::string, std::string> dt_simulation::findLogStart(const s
 std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_map<std::string, std::string>& elevatorMap)
 {
     std::vector<simBuilding>* buildings = new std::vector<simBuilding>;
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
 
     // Iterate through elevatorMap
     for (const auto& pair : elevatorMap) {
@@ -241,61 +165,64 @@ std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_ma
         std::string undergroundFloor, abovegroundFloor, each_floor_altimeter;
         std::string max_velocity, acceleration, jerk, door_open_time;
         std::string elevatorName, energy_flag, idle_e, standby_e, iso_e;
-        iss >> undergroundFloor >> abovegroundFloor >> each_floor_altimeter;
 
-        building.undergroundFloor = std::stoi(undergroundFloor);
-        building.abovegroundFloor = std::stoi(abovegroundFloor);
-
-        // Split char '[' and ']' with substr
-        each_floor_altimeter = each_floor_altimeter.substr(1, each_floor_altimeter.size() - 2);
-
-        // Split each_floor_altimeter [alt1,alt2,alt3, ...]
-        std::istringstream iss2(each_floor_altimeter);
-        std::string altimeter;
-
-        while (std::getline(iss2, altimeter, ',')) {
-            building.each_floor_altimeter.push_back(std::stoi(altimeter));
-		}
-
+        const wstring TimestampString = building.thisLogger->get_file_name_as_timestamp() + L"_" + building.buildingName;
         building.thisLogger->set_log_directory_Simulation();
-        building.thisLogger->log_file_name = building.thisLogger->get_file_name_as_timestamp() + L"_" + building.buildingName + L"_TransactionList.txt";
+        building.thisLogger->log_file_name = TimestampString + L"_TransactionList.txt";
+        building.thisLogger->csv_file_name = TimestampString + L"_TransactionList.csv";
 
-        while (iss >> elevatorName >> max_velocity >> acceleration >> jerk >> door_open_time >> energy_flag) {
+        while (iss >> elevatorName >> max_velocity >> acceleration >> jerk >> door_open_time >> undergroundFloor >> abovegroundFloor >> each_floor_altimeter >> energy_flag) 
+        {
+            bool flag = false;
+
+            // Check if this elevator name is already in the building
+            for (auto& elem : *building.elevators)
+            {
+                if (elem.elevatorName == std::wstring().assign(elevatorName.begin(), elevatorName.end()))
+                {
+                    flag = true;
+                    break;
+                }
+            }
+            if (flag)
+            {
+                continue;
+            }
+
             // Convert string to wstring
             const wstring wElevatorName(elevatorName.begin(), elevatorName.end());
 
             simElevator elevator(building.buildingName, wElevatorName);
 
+            elevator.undergroundFloor = std::stoi(undergroundFloor);
+            elevator.abovegroundFloor = std::stoi(abovegroundFloor);
+
+            // Split each_floor_altimeter [alt1,alt2,alt3, ...]
+            each_floor_altimeter = each_floor_altimeter.substr(1, each_floor_altimeter.size() - 2);
+            std::istringstream iss2(each_floor_altimeter);
+            std::string altimeter;
+
+            while (std::getline(iss2, altimeter, ',')) {
+                elevator.each_floor_altimeter.push_back(std::stoi(altimeter));
+            }
+
             elevator.elevatorName = wElevatorName;
+
+            elevator.this_elevator_algorithm->getElevatorStatus()->start_time = now;
+
             elevator.this_elevator_algorithm->getElevatorStatus()->set_building_name(building.buildingName);
             elevator.this_elevator_algorithm->getElevatorStatus()->set_device_name(wElevatorName);
 
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_underground_floor(building.undergroundFloor);
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_ground_floor(building.abovegroundFloor);
+            elevator.this_elevator_algorithm->getElevatorStatus()->set_underground_floor(elevator.undergroundFloor);
+            elevator.this_elevator_algorithm->getElevatorStatus()->set_ground_floor(elevator.abovegroundFloor);
 
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_each_floor_altimeter(building.each_floor_altimeter);
+            elevator.this_elevator_algorithm->getElevatorStatus()->set_each_floor_altimeter(elevator.each_floor_altimeter);
 
             elevator.this_elevator_algorithm->getElevatorStatus()->set_max_velocity(std::stod(max_velocity));
             elevator.this_elevator_algorithm->getElevatorStatus()->set_acceleration(std::stod(acceleration));
             elevator.this_elevator_algorithm->getElevatorStatus()->door_open_time = std::stod(door_open_time);
 
             elevator.this_elevator_algorithm->thisLogger.set_log_directory_Simulation();
-
-            bool flag = false;
-
-            // Check if this elevator name is already in the building
-            for (auto& elem : *building.elevators)
-            {
-                if (elem.elevatorName == elevator.elevatorName)
-                {
-                    flag = true;
-					break;
-				}
-			}
-            if (flag)
-            {
-				continue;
-			}
 
             if (energy_flag == "1")
             {
@@ -450,6 +377,7 @@ void dt_simulation::SimulationLogCALL(simBuilding this_building, std::wstring li
     for (auto& each_elevator : *this_building.elevators) {
         if (each_elevator.elevatorName == device_name) {
 			this_elevator = &each_elevator;
+            break;
         }
     }
 
@@ -491,8 +419,8 @@ void dt_simulation::SimulationLogSTOP(simBuilding this_building, std::wstring li
 			this_elevator = &each_elevator;
 		}
 	}
-
     bool flag = false;
+    assert(this_elevator != nullptr);
 
     // IF THIS ELEVATOR IS NOT FOUND, THEN THIS STOP IS NOT DEFINED BY CALL LOG
     for (const auto elem : this_elevator->current_called_floors)
@@ -725,7 +653,7 @@ void dt_simulation::sortTransactions(simBuilding this_building)
 	}
 }
 
-string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building, UE5Transaction each_timestamp)
+string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building, simElevator ThisElevator, UE5Transaction each_timestamp)
 {
     nlohmann::json jsonObj;
 
@@ -738,10 +666,10 @@ string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building,
     jsonObj["acceleration"] = this_building.default_elevator_max_acceleration;
     jsonObj["max_velocity"] = this_building.default_elevator_max_velocity;
 
-    jsonObj["underground_floor"] = this_building.undergroundFloor;
-	jsonObj["ground_floor"] = this_building.abovegroundFloor;
+    jsonObj["underground_floor"] = ThisElevator.undergroundFloor;
+	jsonObj["ground_floor"] = ThisElevator.abovegroundFloor;
 
-    auto revised_altimeter = this_building.each_floor_altimeter;
+    auto revised_altimeter = ThisElevator.each_floor_altimeter;
     double lowest_altimeter = abs(revised_altimeter[0]);
 
     if (revised_altimeter[0] > 0)
@@ -867,6 +795,7 @@ void dt_simulation::send_data(std::string request_content)
 
 void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std::mutex* this_mutex, int dilation, int visualtion_mode) {
     double count = 0.0;
+    bool FirstFlag = true;
 
     for (const UE5Transaction& each_transaction : *each_building->timestamp_for_each_floor) {
         if (visualtion_mode)
@@ -916,7 +845,7 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
             wstring log_string = L"TRANSACTION AT : " + std::to_wstring(each_transaction.timestamp) + L" Seconds BY BUILDING : " + each_building->buildingName + L" EV : " + each_transaction.owner + L" DEST FLOOR : " + std::to_wstring(each_transaction.goTo_floor) + L"\n";
 
             thisElevator->this_elevator_algorithm->thisLogger.write_log(log_string);
-            wcout << log_string;
+            std::wcout << log_string;
             this_mutex->unlock();
 
             // SET TIMER HERE
@@ -954,8 +883,16 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
 
             this_mutex->lock();
             wstring log_string = L"TRANSACTION AT : " + std::to_wstring(each_transaction.timestamp) + L" Seconds BY BUILDING : " + each_building->buildingName + L" EV : " + each_transaction.owner + L" DEST FLOOR : " + std::to_wstring(each_transaction.goTo_floor) + L"\n";
+            wstring CSVString = MakeCSVStringByGatherElevatorInfo(*thisElevator, each_transaction.timestamp);
+            
+            if (FirstFlag)
+            {
+                thisElevator->this_elevator_algorithm->thisLogger.write_sim_csv_header();
+				FirstFlag = false;
+            }
             thisElevator->this_elevator_algorithm->thisLogger.write_log(log_string);
-            wcout << log_string;
+            thisElevator->this_elevator_algorithm->thisLogger.write_csv(CSVString);
+            std::wcout << log_string;
             this_mutex->unlock();
         }
 	}
@@ -969,6 +906,7 @@ void dt_simulation::calculateEnergyConsumption(simBuilding* thisBuilding, UE5Tra
         {
             // SET ELEVATOR STATUS
             this_elevator = &each_elevator;
+            break;
         }
     }
 
@@ -979,38 +917,33 @@ void dt_simulation::calculateEnergyConsumption(simBuilding* thisBuilding, UE5Tra
             this_elevator->latest_floor = thisBuilding->default_start_floor;
             this_elevator->will_reach_floor = each_transaction.goTo_floor;
         }
-        else 
-        {
-            auto alg = this_elevator->this_elevator_algorithm;
-            elevatorStatus* stats = alg->getElevatorStatus();
 
-            stats->number_of_trips += 1;
+        auto alg = this_elevator->this_elevator_algorithm;
+        elevatorStatus* stats = alg->getElevatorStatus();
 
-            // get latest floor
-            int latest_floor = this_elevator->latest_floor;
+        stats->number_of_trips += 1;
 
-            // get current floor
-            int current_floor = this_elevator->will_reach_floor;
+        // get latest floor
+        int latest_floor = this_elevator->latest_floor;
 
-            // get goTo Floor
-            int goTo_floor = each_transaction.goTo_floor;
+        // get current floor
+        int current_floor = this_elevator->will_reach_floor;
 
-            // Calculate Altimeter diff between latest -> current
-            double altimeter_diff = getDisatanceBetweenTwoFloors(*thisBuilding, latest_floor, current_floor);
+        // Calculate Altimeter diff between latest -> current
+        double altimeter_diff = getDisatanceBetweenTwoFloors(*thisBuilding, *this_elevator, latest_floor, current_floor);
 
-            // Add diff to total move distance
-            this_elevator->move_distance += altimeter_diff;
+        // Add diff to total move distance
+        this_elevator->move_distance += altimeter_diff;
 
-            stats->total_move_distance += this_elevator->move_distance;
+        stats->total_move_distance += this_elevator->move_distance;
 
-            // Calculate Energy Consumption
-            stats->set_this_elevator_daily_energy_consumption(stats->total_move_distance);
+        // Calculate Energy Consumption
+        stats->set_this_elevator_daily_energy_consumption(stats->total_move_distance);
 
-            vector<double> energy_consumption = stats->get_this_elevator_daily_energy_consumption();
+        vector<double> energy_consumption = stats->get_this_elevator_daily_energy_consumption();
 
-            // Add to this vector to elevator vector
-            this_elevator->energy_consumption_vector.push_back(energy_consumption);
-        }
+        // Add to this vector to elevator vector
+        this_elevator->energy_consumption_vector.push_back(energy_consumption);
     }
 }
 
@@ -1023,10 +956,10 @@ void dt_simulation::giveAllBuildingTransactions() {
 const int dt_simulation::setSimulationAlgorithm(simBuilding this_building)
 {
     int algorithm = 0;
-    wcout << L"Please Choose A Simulation Algorithm For Building : " << this_building.buildingName << endl;
-    wcout << L"1. Default Simulation Algorithm" << endl;
-    wcout << L"2. Random Simulation Algorithm" << endl;
-    wcout << L"3. Give Lowest Trip Count Elevator First" << endl;
+    std::wcout << L"Please Choose A Simulation Algorithm For Building : " << this_building.buildingName << endl;
+    std::wcout << L"1. Default Simulation Algorithm" << endl;
+    std::wcout << L"2. Random Simulation Algorithm" << endl;
+    std::wcout << L"3. Give Lowest Trip Count Elevator First" << endl;
 
     wcin >> algorithm;
 
@@ -1084,7 +1017,7 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
             double time_between_two_floors;
 
             // ADD current floor to this transaction start floor
-            time_between_two_floors = getTimeBetweenTwoFloors(this_building, elevator_current_floor, goTo_floor);
+            time_between_two_floors = getTimeBetweenTwoFloors(this_building, each_elevator, elevator_current_floor, goTo_floor);
             elevator_current_floor = goTo_floor;
 
             if (time_between_two_floors > 2 * (this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration)) {
@@ -1108,7 +1041,7 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
 			{
                 goTo_floor = each_destination_floor;
 
-                time_between_two_floors = getTimeBetweenTwoFloors(this_building, elevator_current_floor, goTo_floor);
+                time_between_two_floors = getTimeBetweenTwoFloors(this_building, each_elevator, elevator_current_floor, goTo_floor);
                 if (time_between_two_floors > 2 * (this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration)) {
                     tta = this_building.default_elevator_max_velocity / this_building.default_elevator_max_acceleration;
                     tta = round(tta * 10) / 10;
@@ -1233,13 +1166,14 @@ void dt_simulation::SimulationAlgorithmDefault(simBuilding* this_building, trans
 
     else
     {
-        const int underGroundFloor = this_building->undergroundFloor;
+        
         double closest_delta_altimeter = 0.0;
         int index = -1;
         // // STEP 1. GET LAST DESTINATION FLOOR of EACH ELEVATOR TRANSACTION
         for (int i = 0; i < this_building->elevators->size(); i++)
         {
             simElevator elevator = this_building->elevators->at(i);
+            const int underGroundFloor = elevator.undergroundFloor;
 
             int last_destination_floors = elevator.current_transaction.back().destination_floors->back();
             double last_destination_altimeter = 0.0;
@@ -1248,22 +1182,22 @@ void dt_simulation::SimulationAlgorithmDefault(simBuilding* this_building, trans
 
             if (last_destination_floors < 0) {
                 // UNDERGROUND FLOOR
-                last_destination_altimeter = this_building->each_floor_altimeter.at(last_destination_floors + underGroundFloor);
+                last_destination_altimeter = elevator.each_floor_altimeter.at(last_destination_floors + underGroundFloor);
             }
             else if (last_destination_floors >= 1) {
                 // ABOVEGROUND FLOOR
-                last_destination_altimeter = this_building->each_floor_altimeter.at(last_destination_floors + underGroundFloor - 1);
+                last_destination_altimeter = elevator.each_floor_altimeter.at(last_destination_floors + underGroundFloor - 1);
             }
 
             if (tran.start_floor < 0)
             {
                 // UNDERGROUND FLOOR
-                transaction_start_altimeter = this_building->each_floor_altimeter.at(tran.start_floor + underGroundFloor);
+                transaction_start_altimeter = elevator.each_floor_altimeter.at(tran.start_floor + underGroundFloor);
             }
             else if (tran.start_floor >= 1)
             {
                 // ABOVEGROUND FLOOR
-                transaction_start_altimeter = this_building->each_floor_altimeter.at(tran.start_floor + underGroundFloor - 1);
+                transaction_start_altimeter = elevator.each_floor_altimeter.at(tran.start_floor + underGroundFloor - 1);
             }
 
             // STEP 2. GET DELTA ALTIMETER OF LAST DESTINATION FLOOR and THIS TRANSACTION FLOOR
@@ -1303,14 +1237,14 @@ void dt_simulation::SimulationAlgorithmDefault(simBuilding* this_building, trans
         current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
         tran.end_timestamp = tran.timestamp;
     }
-    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, current_elevator_floor, tran.start_floor);
+    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, *chosen_elevator, current_elevator_floor, tran.start_floor);
     tran.end_timestamp += this_building->default_elevator_stop_time;
 
     // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
     int start_floor = tran.start_floor;
     for (const auto& each_destination_floor : *tran.destination_floors)
     {
-        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, start_floor, each_destination_floor);
+        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, *chosen_elevator, start_floor, each_destination_floor);
         tran.end_timestamp += time_to_reach_destination;
 
         // ADD STOP TIME
@@ -1382,14 +1316,14 @@ void dt_simulation::SimulationAlgorithmRandom(simBuilding* this_building, transa
         current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
         tran.end_timestamp = tran.timestamp;
     }
-    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, current_elevator_floor, tran.start_floor);
+    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, *chosen_elevator, current_elevator_floor, tran.start_floor);
     tran.end_timestamp += this_building->default_elevator_stop_time;
 
     // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
     int start_floor = tran.start_floor;
     for (const auto& each_destination_floor : *tran.destination_floors)
     {
-        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, start_floor, each_destination_floor);
+        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, *chosen_elevator, start_floor, each_destination_floor);
         tran.end_timestamp += time_to_reach_destination;
 
         // ADD STOP TIME
@@ -1464,14 +1398,14 @@ void dt_simulation::SimulationAlgorithmShortestTransactionFirst(simBuilding* thi
         current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
         tran.end_timestamp = tran.timestamp;
     }
-    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, current_elevator_floor, tran.start_floor);
+    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, *chosen_elevator, current_elevator_floor, tran.start_floor);
     tran.end_timestamp += this_building->default_elevator_stop_time;
 
     // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
     int start_floor = tran.start_floor;
     for (const auto& each_destination_floor : *tran.destination_floors)
     {
-        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, start_floor, each_destination_floor);
+        const double time_to_reach_destination = getTimeBetweenTwoFloors(*this_building, *chosen_elevator, start_floor, each_destination_floor);
         tran.end_timestamp += time_to_reach_destination;
 
         // ADD STOP TIME
@@ -1487,49 +1421,49 @@ void dt_simulation::SimulationAlgorithmShortestTransactionFirst(simBuilding* thi
 }
 
 
-double dt_simulation::getDisatanceBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor)
+double dt_simulation::getDisatanceBetweenTwoFloors(simBuilding this_building, simElevator ThisElevator, int start_floor, int end_floor)
 {
     double start_altitude = 0.0;
     double end_altitude = 0.0;
 
     if (start_floor < 0) 
     {
-        start_altitude = this_building.each_floor_altimeter[start_floor + this_building.undergroundFloor];
+        start_altitude = ThisElevator.each_floor_altimeter[start_floor + ThisElevator.undergroundFloor];
     }
     else 
     {
-        start_altitude = this_building.each_floor_altimeter[start_floor + this_building.undergroundFloor - 1];
+        start_altitude = ThisElevator.each_floor_altimeter[start_floor + ThisElevator.undergroundFloor - 1];
     }
 
     if (end_floor < 0) 
     {
-        end_altitude = this_building.each_floor_altimeter[end_floor + this_building.undergroundFloor];
+        end_altitude = ThisElevator.each_floor_altimeter[end_floor + ThisElevator.undergroundFloor];
     }
     else 
     {
-        end_altitude = this_building.each_floor_altimeter[end_floor + this_building.undergroundFloor - 1];
+        end_altitude = ThisElevator.each_floor_altimeter[end_floor + ThisElevator.undergroundFloor - 1];
     }
 
     return abs(start_altitude - end_altitude);
 }
 
-double dt_simulation::getTimeBetweenTwoFloors(simBuilding this_building, int start_floor, int end_floor) {
+double dt_simulation::getTimeBetweenTwoFloors(simBuilding this_building, simElevator ThisElevator, int start_floor, int end_floor) {
     // GET ALTITUDE OF START FLOOR if start_floor < 0, it means underground floor, and if start_floor > 0, it means aboveground floor
     double start_altitude = 0.0;
     if (start_floor < 0) {
-		start_altitude = this_building.each_floor_altimeter[start_floor + this_building.undergroundFloor];
+		start_altitude = ThisElevator.each_floor_altimeter[start_floor + ThisElevator.undergroundFloor];
 	}
     else {
-		start_altitude = this_building.each_floor_altimeter[start_floor + this_building.undergroundFloor - 1];
+		start_altitude = ThisElevator.each_floor_altimeter[start_floor + ThisElevator.undergroundFloor - 1];
     }
 
     // GET ALTITUDE OF END FLOOR if end_floor < 0, it means underground floor, and if end_floor > 0, it means aboveground floor
     double end_altitude = 0.0;
     if (end_floor < 0) {
-        end_altitude = this_building.each_floor_altimeter[end_floor + this_building.undergroundFloor];
+        end_altitude = ThisElevator.each_floor_altimeter[end_floor + ThisElevator.undergroundFloor];
     }
     else {
-		end_altitude = this_building.each_floor_altimeter[end_floor + this_building.undergroundFloor - 1];
+		end_altitude = ThisElevator.each_floor_altimeter[end_floor + ThisElevator.undergroundFloor - 1];
 	}
 
     // GET MAX VELOCITY OF ELEVATOR
@@ -1595,9 +1529,8 @@ simElevator* dt_simulation::findIDLEElevator(vector<simElevator>* this_building_
 	return nullptr;
 }
 
-simElevator* dt_simulation::findNearestElevator(simBuilding this_building, vector<simElevator>* this_building_elevators, transaction this_transaction) {
+simElevator* dt_simulation::findNearestElevator(simElevator ThisElevator, vector<simElevator>* this_building_elevators, transaction this_transaction) {
     // NEAREST Elevator
-    const int underGroundFloor = this_building.undergroundFloor;
     double closest_delta_altimeter = 0.0;
     // // STEP 1. GET LAST DESTINATION FLOOR of EACH ELEVATOR TRANSACTION
     simElevator* return_class = nullptr;
@@ -1606,15 +1539,16 @@ simElevator* dt_simulation::findNearestElevator(simBuilding this_building, vecto
     {
         const int last_destination_floors = elevator.current_transaction.begin()->destination_floors->back();
         double last_destination_altimeter = 0.0;
+        const int underGroundFloor = ThisElevator.undergroundFloor;
         // CHANGE FLOOR TO ALTIMETER By Using each_floor_altimeter
         
         if (last_destination_floors < 0) {
             // UNDERGROUND FLOOR
-			double last_destination_altimeter = this_building.each_floor_altimeter[last_destination_floors + underGroundFloor];
+			double last_destination_altimeter = elevator.each_floor_altimeter[last_destination_floors + underGroundFloor];
 		}
         else {
 			// ABOVEGROUND FLOOR
-			double last_destination_altimeter = this_building.each_floor_altimeter[last_destination_floors + underGroundFloor -1];
+			double last_destination_altimeter = elevator.each_floor_altimeter[last_destination_floors + underGroundFloor -1];
         }
 
         // STEP 2. GET DELTA ALTIMETER OF LAST DESTINATION FLOOR and THIS TRANSACTION FLOOR
@@ -1636,6 +1570,7 @@ simElevator::simElevator(wstring building_name, wstring device_name)
     std::chrono::system_clock::time_point start = std::chrono::system_clock::now();
 
     this->this_elevator_algorithm = new elevatorAlgorithmDefault(building_name, device_name, start);
+    this->elevatorName = device_name;
     this->elevatorName = L"";
     this->current_velocity = 0.0;
     this->current_altimeter = 0.0;

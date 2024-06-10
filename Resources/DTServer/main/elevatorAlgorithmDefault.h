@@ -5,6 +5,15 @@
 #include "socket_oneM2M.h"
 #include "simulation.h"
 
+enum ElevatorStatusEnum
+{
+    RTS_SPAWN = 0,
+    RTS_GO_TO_CHANGE,
+    RTS_STOP,
+    RTS_REARRANGE,
+    RTS_IDLE,
+};
+
 struct elevatorTypeInfo
 {
     elevator_type this_elevator_type = CounterBalance;
@@ -28,6 +37,7 @@ public:
     double altimeter = 0.0;
 
     int go_to_floor = 0;
+    int CurrentFloor = 0;
     bool direction = NULL;
 
     double total_move_distance = 0.0;
@@ -171,6 +181,9 @@ public:
 
     virtual void write_logs(std::vector<std::wstring> strings);
     virtual void write_log(std::wstring string);
+    virtual void write_csv_header();
+    virtual wstring make_csv_string(ElevatorStatusEnum en);
+    virtual void write_csv_body(std::wstring str);
 
     virtual void writeEnergyLog();
     void appendLogToLogList(int code, ...);

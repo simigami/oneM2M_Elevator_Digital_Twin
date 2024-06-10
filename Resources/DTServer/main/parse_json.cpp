@@ -3,6 +3,7 @@
 #include <codecvt>
 #include <locale>
 #include <sstream>
+#include <regex>
 
 using namespace std;
 using json = nlohmann::json;
@@ -118,15 +119,44 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(wstring json_data)
 		}
 		else 
 		{
-			// parsed_json["underground_floor"] str to int
-			p.underground_floor = stoi(parsed_json.at("underground_floor").get<string>());
-			p.ground_floor = stoi(parsed_json.at("ground_floor").get<string>());
+			const auto p_underground_floor = parsed_json.at("underground_floor");
+			const auto p_ground_floor = parsed_json.at("ground_floor");
+			const auto p_timestamp = parsed_json.at("timestamp");
+			const auto p_max_velocity = parsed_json.at("max_velocity");
+			const auto p_acceleration = parsed_json.at("acceleration");
+			const auto p_velocity = parsed_json.at("velocity");
+			const auto p_altimeter = parsed_json.at("altimeter");
+			const auto p_temperature = parsed_json.at("temperature");
+			const auto p_button_inside = parsed_json.at("button_inside");
+			const auto p_each_floor_altimeter = parsed_json.at("each_floor_altimeter");
+			const auto p_E_IDLE = parsed_json.at("E_Idle");
+			const auto p_E_Standby = parsed_json.at("E_Standby");
+			const auto p_E_Ref = parsed_json.at("E_Ref");
 
-			p.timestamp = stringToWstring(parsed_json["timestamp"]);
-
-			p.velocity = stod(parsed_json.at("velocity").get<string>());
-			p.altimeter = stod(parsed_json.at("altimeter").get<string>());
-			p.temperature = stod(parsed_json.at("temperature").get<string>());
+			if (p_underground_floor != nullptr)
+			{
+				p.underground_floor = stoi(p_underground_floor.get<string>());
+			}
+			if (p_ground_floor != nullptr)
+			{
+				p.ground_floor = stoi(p_ground_floor.get<string>());
+			}
+			if (p_timestamp != nullptr)
+			{
+				p.timestamp = stringToWstring(p_timestamp.get<string>());
+			}
+			if (p_velocity != nullptr)
+			{
+				p.velocity = stod(p_velocity.get<string>());
+			}
+			if (p_altimeter != nullptr)
+			{
+				p.altimeter = stod(p_altimeter.get<string>());
+			}
+			if (p_temperature != nullptr)
+			{
+				p.temperature = stod(p_temperature.get<string>());
+			}
 
 			if (parsed_json["button_inside"] != nullptr)
 			{
@@ -141,6 +171,27 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(wstring json_data)
 					}
 					p.button_inside.push_back(temp);
 				}
+			}
+
+			if (p_max_velocity != nullptr)
+			{
+				p.max_velocity = stod(p_max_velocity.get<string>());
+			}
+			if (p_acceleration != nullptr)
+			{
+				p.acceleration = stod(p_acceleration.get<string>());
+			}
+			if (p_E_IDLE != nullptr)
+			{
+				p.idle_power = stod(p_E_IDLE.get<string>());
+			}
+			if (p_E_Standby != nullptr)
+			{
+				p.standby_power = stod(p_E_Standby.get<string>());
+			}
+			if (p_E_Ref != nullptr)
+			{
+				p.iso_power = stod(p_E_Ref.get<string>());
 			}
 		}
 
@@ -253,6 +304,50 @@ void parse_json::modify_outside_data_to_oneM2M(Wparsed_struct p)
 
 		std::wcout << L"Button Outside: ";
         std::wcout << std::endl;
+}
+
+vector<int> parse_json::parse_content_type(const std::string& content_type)
+{
+	std::regex tyRegex(R"(ty=(\d+))");
+	std::regex enRegex(R"(en=(\d+))");
+
+	std::smatch match;
+
+	vector<int> result;
+
+	if (std::regex_search(content_type, match, tyRegex)) {
+		if (match.size() == 2) { // match[0] is the whole match, match[1] is ty, match[2] is en
+			result.push_back(std::stoi(match.str(1)));
+		}
+	}
+
+	if (std::regex_search(content_type, match, enRegex)) {
+		if (match.size() == 2) { // match[0] is the whole match, match[1] is ty, match[2] is en
+			result.push_back(std::stoi(match.str(1)));
+		}
+	}
+
+	return result;
+}
+
+int parse_json::parse_M2M_RI(const std::string& content_type)
+{
+	std::regex RIRegex(R"(^X-M2M-RI:\s*(\w+))");
+
+	std::smatch match;
+
+	vector<int> result;
+
+	if (std::regex_search(content_type, match, RIRegex)) {
+		if (match.size() == 2) { // match[0] is the whole match, match[1] is ty, match[2] is en
+			return 1;
+		}
+		else
+		{
+			return 0;
+		}
+	}
+	return 0;
 }
 
 void parse_json::modify_inside_data_to_oneM2M(Wparsed_struct p)

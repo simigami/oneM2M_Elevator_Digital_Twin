@@ -11,6 +11,12 @@ using namespace web;
 using namespace web::http;
 using namespace web::http::client;
 
+struct http_request_header_data
+{
+	int ty = 0;
+	int en = 0;
+};
+
 struct class_of_one_Building
 {
 	int outsideButtonMod = 0;
@@ -66,9 +72,14 @@ public:
 	void startAsyncAccept_Notification(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
 
-	void Running_Embedded(const wstring& httpResponse);
-	void CreateNewBuildingAndElevator(const wstring& httpResponse, const wstring& ACOR_NAME, elevator_resource_status status);
-	void setConstructArgumentsOfElevator(Building* this_buliding, Elevator* new_elevator);
+	void Running_Embedded(const string& httpRequestHeader, const wstring& httpRequestBody);
+	void Running_Init(const string& httpRequestHeader, const wstring& httpRequestBody);
+	vector<elevator_resource_status> checkoneM2M(http_request_header_data* httpRequestHeaderData, Wparsed_struct parsed_struct, send_oneM2M ACP_Validation_Socket);
+	elevator_resource_status checkDTServer(vector<Building*> bulidings, Wparsed_struct parsed_struct);
+
+	void CreateNewBuildingAndElevator(const wstring& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status);
+	void CreateNewBuilding(const wstring& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status);
+	void CreateNewElevator(const wstring& httpRequestBody, Building* thisBuilding, elevator_resource_status status);
 
 	void Running_Notification(const string& httpResponse);
 
@@ -79,6 +90,7 @@ public:
 
 	//MAIN 함수에서 알고리즘에 전달할 notificationContent 구조체
     notificationContent* noti_content;
+	http_request_header_data* httpRequestHeaderData = new http_request_header_data();
 
 	vector<Building*> allBuildingInfo; //THIS WILL BE USED
 	vector<thread> one_building_threads;

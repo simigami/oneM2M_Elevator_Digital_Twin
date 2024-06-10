@@ -136,6 +136,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -146,11 +147,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="DT_Labeling.cpp" />
+    <ClCompile Include="DT_Plot.cpp" />
     <ClCompile Include="elevator.cpp" />
     <ClCompile Include="elevatorAlgorithmDefault.cpp" />
     <ClCompile Include="elevatorAlgorithmMultiple.cpp" />
     <ClCompile Include="elevatorAlgorithmSingle.cpp" />
     <ClCompile Include="DT_RealTime.cpp" />
+    <ClCompile Include="FileSystem.cpp" />
     <ClCompile Include="logger.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parse_json.cpp" />
@@ -162,13 +166,18 @@
     <ClCompile Include="socket_UnrealEngine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DT_Labeling.h" />
+    <ClInclude Include="FileSystem.h" />
+    <ClInclude Include="gnuplot-iostream.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="DT_Plot.h" />
     <ClInclude Include="elevator.h" />
     <ClInclude Include="elevatorAlgorithmDefault.h" />
     <ClInclude Include="elevatorAlgorithmMultiple.h" />
     <ClInclude Include="elevatorAlgorithmSingle.h" />
     <ClInclude Include="DT_RealTime.h" />
     <ClInclude Include="logger.h" />
+    <ClInclude Include="main.h" />
     <ClInclude Include="parse_json.h" />
     <ClInclude Include="send_oneM2M.h" />
     <ClInclude Include="send_UnrealEngine.h" />

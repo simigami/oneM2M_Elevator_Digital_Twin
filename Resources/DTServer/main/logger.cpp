@@ -99,6 +99,106 @@ void logger::write_log(std::wstring string)
 	log_mutex.unlock();
 }
 
+void logger::write_csv(std::wstring string)
+{
+	std::wstring path;
+	// CHECK OS
+#ifdef _WIN32
+	path = log_directory + L"\\" + csv_file_name;
+#else
+	path = log_directory + L"/" + csv_file_name;
+#endif
+
+	std::wofstream file(path, std::ios::app);
+
+	if (!file.is_open()) {
+		std::wcerr << L"Failed to open log file: " << path << std::endl;
+		return;
+	}
+
+	// MUTEX LOCK
+	log_mutex.lock();
+
+	file << string;
+	file.close();
+
+	// MUTEX UNLOCK
+	log_mutex.unlock();
+}
+
+void logger::write_sim_csv_header()
+{
+	std::wstring path;
+	// CHECK OS
+#ifdef _WIN32
+	path = log_directory + L"\\" + csv_file_name;
+#else
+	path = log_directory + L"/" + csv_file_name;
+#endif
+
+	std::wofstream file(path, std::ios::app);
+
+	if (!file.is_open()) {
+		std::wcerr << L"Failed to open log file: " << path << std::endl;
+		return;
+	}
+
+	const auto temp = new CSVHeader();
+
+	for (const auto& str : temp->SimHeader)
+	{
+		file << str;
+
+		if (str == temp->SimHeader.back())
+		{
+			file << std::endl;
+		}
+		else
+		{
+			file << L",";
+		}
+	}
+}
+
+void logger::write_rts_csv_header()
+{
+	std::wstring path;
+	// CHECK OS
+#ifdef _WIN32
+	path = log_directory + L"\\" + csv_file_name;
+#else
+	path = log_directory + L"/" + csv_file_name;
+#endif
+
+	std::wofstream file(path, std::ios::app);
+
+	if (!file.is_open()) {
+		std::wcerr << L"Failed to open log file: " << path << std::endl;
+		return;
+	}
+
+	const auto temp = new CSVHeader();
+
+	for (const auto& str : temp->RTSHeader)
+	{
+		file << str;
+
+		if (str == temp->RTSHeader.back())
+		{
+			file << std::endl;
+		}
+		else
+		{
+			file << L",";
+		}
+	}
+}
+
+void logger::write_rts_csv_body()
+{
+
+}
+
 std::wstring logger::IDLELog(va_list args)
 {
 	// arg[0] = arg count

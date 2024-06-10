@@ -321,7 +321,7 @@ int send_oneM2M::acp_validate(wstring ACP_NAME, int num, ...)
 #ifdef oneM2M_tinyIoT
     if(response.status_code() == 404)
     {
-        return ACP_NOT_FOUND;
+        return DT_ACP_NOT_FOUND;
     }
     else if(response_body_string.find(U("m2m:acp")) != utility::string_t::npos)
     {
@@ -331,7 +331,7 @@ int send_oneM2M::acp_validate(wstring ACP_NAME, int num, ...)
         }
         else
         {
-	        return THIS_ACP_NOT_FOUND;
+	        return THIS_DT_ACP_NOT_FOUND;
         }
     }
     else
@@ -453,19 +453,16 @@ bool send_oneM2M::ae_validate(const Wparsed_struct& data, int num, ...)
     va_list args;
     va_start(args, num);
 
-	if(num>=1)
+    for(int i=1; i<=num; i++)
     {
-        for(int i=1; i<=num; i++)
-        {
-	        auto ret = va_arg(args, const wstring);
-	        URL += L"/";
-	        URL += ret;
-        }
-		va_end(args);
-
-        URL += L"/'";
-        URL += AE_ID;
+	    auto ret = va_arg(args, const wstring);
+	    URL += L"/";
+	    URL += ret;
     }
+	va_end(args);
+
+    URL += L'/';
+    URL += AE_ID;
 
     //std::cout << "AE Name : " << AE_ID << " vaildate on URL : " << URL << std::endl;
     http_client client(utility::conversions::to_string_t(URL));
@@ -484,15 +481,15 @@ bool send_oneM2M::ae_validate(const Wparsed_struct& data, int num, ...)
 
     if(response_body_string.find(U("m2m:cb")) != utility::string_t::npos)
     {
-	    return false;
+	    return BUILDING_NOT_FOUND;
     }
     else if(response_body_string.find(U("m2m:ae")) != utility::string_t::npos)
     {
-        return true;
+        return BUILDING_FOUND;
     }
     else
     {
-	    return false;
+	    return BUILDING_NOT_FOUND;
     }
 }
 
@@ -786,13 +783,13 @@ http_response send_oneM2M::cin_retrieve_la(wstring originator, int num, ...)
     return response;
 }
 
-void send_oneM2M::discovery_retrieve(int num, ...)
+web::json::array send_oneM2M::discovery_retrieve(wstring originator, int discovery_type_num, int level, int num, ...)
 {
     //FILTER USAGE MUST SET TO 1 FOR USE DISCOVERY
     int fu = 1;
 
     //RETURN ITS RESOURCE THAT HAS TYPE NUMBER
-    int ty = 4;
+    int ty = discovery_type_num;
 
      //RETURN PARENT RESOURCE THAT HAS CHILD TYPE NUMBER
     //IF IN NESTED CNT, IT RETURNS ALL OF PARENT CNT, AE, and CSEs
@@ -816,28 +813,26 @@ void send_oneM2M::discovery_retrieve(int num, ...)
     va_list args;
     va_start(args, num);
 
-    wstring DIS_URL = this->uri_to_building;
+    wstring URL = this->uri_to_cse;
 
     for(int i=1; i<=num; i++)
     {
         auto ret = va_arg(args, const wstring);
-        DIS_URL += L"/";
-        DIS_URL += ret;
+        URL += L"/";
+        URL += ret;
     }
 	va_end(args);
     
-    DIS_URL +=
+    URL +=
         L"?fu=" + to_wstring(fu) +
-        L"&ty=" + to_wstring(ty);
-        //"&cra=" + cra +
-        //"&crb=" + crb;
-        //"&lim=" + to_wstring(lim);
+        L"&ty=" + to_wstring(ty) +
+        L"&lvl=" + to_wstring(level);
 
 #ifndef oneM2M_tinyIoT 
-	DIS_URL += L"&drt=" + to_wstring(drt);
+    URL += L"&drt=" + to_wstring(drt);
 #endif
 
-    http_client client(utility::conversions::to_string_t(DIS_URL));
+    http_client client(utility::conversions::to_string_t(URL));
 	http_request request(methods::GET) ;
 
     //std::cout << "DISCOVERY Under : " << DIS_URL << std::endl;
@@ -845,7 +840,7 @@ void send_oneM2M::discovery_retrieve(int num, ...)
     // Create an HTTP request
     request.headers().set_content_type(U("application/json"));
     request.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(building_originator));
+    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(originator));
     request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
 
     // Send the HTTP request and wait for the response
@@ -860,10 +855,7 @@ void send_oneM2M::discovery_retrieve(int num, ...)
     	json::array arr = response_json[U("m2m:uril")].as_array();
 
         //std::wcout << L"DISCOVERED RESOURCE :" <<  std::endl;
-        for(const json::value& elem : arr)
-        {
-	        std::wcout << elem.as_string() << std::endl;
-        }  
+        return arr;
     }
     // Print the HTTP response
     else

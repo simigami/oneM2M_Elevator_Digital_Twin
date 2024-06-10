@@ -1,0 +1,25 @@
+IN SejongAI -> EV1 Spawned At TIME : 2024/06/02 - 22:57:04.920
+
+IN SejongAI -> EV1 goTo Floor is Changed None to : 2
+IN SejongAI -> EV1 Rearranged At TIME : 2024/06/02 - 22:57:09.920, Time Delta is 4 Seconds
+
+IN SejongAI -> EV1 STOPPED AT FLOOR : 2
+IN SejongAI -> EV1 STOPPED AT TIME : 2024/06/02 - 22:57:21.920, Time Delta is 16 Seconds
+
+IN SejongAI -> EV1 Rearranged At TIME : 2024/06/02 - 22:57:25.920, Time Delta is 20 Seconds
+
+IN SejongAI -> EV1 STOPPED AT FLOOR : 4
+IN SejongAI -> EV1 STOPPED AT TIME : 2024/06/02 - 22:57:30.920, Time Delta is 25 Seconds
+
+IN SejongAI -> EV1 Rearranged At TIME : 2024/06/02 - 22:57:34.920, Time Delta is 29 Seconds
+
+IN SejongAI -> EV1 STOPPED AT FLOOR : 7
+IN SejongAI -> EV1 STOPPED AT TIME : 2024/06/02 - 22:57:40.920, Time Delta is 35 Seconds
+
+IN SejongAI -> EV1 Rearranged At TIME : 2024/06/02 - 22:57:44.920, Time Delta is 39 Seconds
+
+IN SejongAI -> EV1 STOPPED AT FLOOR : 9
+IN SejongAI -> EV1 STOPPED AT TIME : 2024/06/02 - 22:57:48.920, Time Delta is 43 Seconds
+
+IN SejongAI -> EV1 IDLE AT TIME : 2024/06/02 - 22:57:52.920, TOTAL MOVE DISTANCE : 44.450000 Time Delta is 47 Seconds
+

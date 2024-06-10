@@ -1,6 +1,5 @@
 import time
 import smbus2
-
 class Lps25hsensor:
     address = 0x5d
 

@@ -18,6 +18,9 @@ struct Wparsed_struct
 	int timestampOffset = 0;
 
 	double velocity = 0.0;
+	double max_velocity = 0.0;
+	double acceleration = 0.0;
+
 	double altimeter = 0.0;
 	double temperature = 0.0;
 
@@ -52,6 +55,8 @@ public:
 
 	vector<wstring> splitText(const wstring& s, wchar_t delimiter);
 
+	vector<int> parse_content_type(const std::string& content_type);
+	int parse_M2M_RI(const std::string& content_type);
 	void modify_inside_data_to_oneM2M(Wparsed_struct p);
 	void modify_outside_data_to_oneM2M(Wparsed_struct p);
 };

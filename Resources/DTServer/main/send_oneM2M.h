@@ -41,7 +41,7 @@ public:
 
     vector<double> retrieve_oneM2M_Energy_CIN(Wparsed_struct parseStruct);
 
-    void discovery_retrieve(int num, ...);
+    web::json::array discovery_retrieve(wstring originator, int discovery_type_num, int level, int num, ...);
     void result_content_retrieve(int num, ...);
 
 private:

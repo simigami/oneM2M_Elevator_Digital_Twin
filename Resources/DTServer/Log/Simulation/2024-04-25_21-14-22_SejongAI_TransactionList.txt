@@ -9,4 +9,3 @@ start Floor : 2/ destination Floors : 12,3,2/ Timestamp : 76.000000
 start Floor : 4/ destination Floors : 5,6,9/ Timestamp : 81.000000
 start Floor : 11/ destination Floors : 1/ Timestamp : 115.000000
 LOG SejongAI END
-

@@ -1,7 +1,11 @@
 #include "DT_RealTime.h"
 #include "DT_Simulation.h"
+#include "DT_Plot.h"
+#include "DT_Labeling.h"
+#include "config.h"
 #include <csignal>
 #include <boost/asio.hpp>
+#include "main.h"
 
 #define WIN32_LEAN_AND_MEAN
 
@@ -17,18 +21,26 @@ int main()
 	{
 		signal(SIGINT, signalHandler);
 
-		std::string input;
-		std::cout << "PRESS 1 FOR DT Server RealTime, 2 FOR SIMULATION : ";
+		int input;
+		std::cout << "Enter the number below for your specific task" << std::endl;
+		std::cout << "1 : Run Digital Twin Server in RealTime" << std::endl;
+		std::cout << "2 : Run Simulation Based on Log File" << std::endl;
+		std::cout << "3 : Run Plotting Based on Log File" << std::endl;
+		std::cout << "4 : Run Labeling Based on Csv File" << std::endl;
 		std::cin >> input;
 
-		while (input != "1" && input != "2")
+		while (input <= 0 && 5<= input)
 		{
 			std::cout << "Invalid Input" << std::endl;
-			std::cout << "PRESS 1 FOR DT Server RealTime, 2 FOR SIMULATION : ";
+			std::cout << "Enter the number below for your specific task" << std::endl;
+			std::cout << "1 : Run Digital Twin Server in RealTime" << std::endl;
+			std::cout << "2 : Run Simulation Based on Log File" << std::endl;
+			std::cout << "3 : Run Plotting Based on Log File" << std::endl;
+			std::cout << "4 : Run Labeling Based on Csv File" << std::endl;
 			std::cin >> input;
 		}
 
-		if (input == "1")
+		if (input == 1)
 		{
 			std::remove(LOGFILEPATH);
 			std::wofstream logFile(LOGFILEPATH, ios::app);
@@ -97,11 +109,23 @@ int main()
 			dt_realtime_instance.VisualizeMod = visualizer;
 			dt_realtime_instance.Run();
 		}
-		else if (input == "2")
+		else if (input == 2)
 		{
 			dt_simulation dt_simulation_instance;
 			dt_simulation_instance.run();
 		}
+		else if (input == 3)
+		{
+			dt_plot dt_plot_instance;
+			dt_plot_instance.run();
+		}
+		else if (input == 4)
+		{
+			DTLabeling Instance;
+			Instance.run();
+		}
+
+		main();
 	}
 	catch (std::exception& e)
 	{

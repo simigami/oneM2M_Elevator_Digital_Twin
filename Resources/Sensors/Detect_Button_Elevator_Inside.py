@@ -99,9 +99,6 @@ def get_data(image_path, debug=0):
 
     start = time.time()
 
-    # if(debug):
-    #         image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
-
     if os_version != "Windows":
         image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
     else:

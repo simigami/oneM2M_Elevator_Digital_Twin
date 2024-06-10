@@ -72,15 +72,20 @@ namespace fs = boost::filesystem;
 enum elevator_resource_status
 {
 	//if there is no ACP in oneM2M CSE SERVER
-	ACP_NOT_FOUND, 
+	DT_ACP_NOT_FOUND,
 
 	//if there is ACP in oneM2M CSE SERVER but not this BUILDING ACP
-	THIS_ACP_NOT_FOUND,
+	THIS_DT_ACP_NOT_FOUND,
 
 	ACP_FOUND,
 
 	//if there is ACP in oneM2M CSE SERVER but not AE(building)
+
+	NO_ELEVATOR_EXISTS,
+
 	BUILDING_NOT_FOUND,
+
+	BUILDING_FOUND,
 
 	//if there is AE(building) but not CNT(elevator) in oneM2M CSE SERVER
 	ELEVATOR_NOT_FOUND, 
@@ -90,6 +95,12 @@ enum elevator_resource_status
 
 	//if there is AE(building) and CNT(elevator) in oneM2M CSE SERVER but CNT(Elevator) not in DT Server
 	ELEVATOR_DATA_NOT_FOUND,
+
+	ENERGY_CNT_NOT_FOUND,
+
+	PHYSICAL_CNT_NOT_FOUND,
+
+	MAKE_DT_ONLY,
 
 	//if there is AE, and CNT in oneM2M CSE SERVER and AE, CNT in DT Server
 	ELEVATOR_FOUND
