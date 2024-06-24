@@ -1,6 +1,0 @@
-IN SejongAI -> EV2 Spawned At TIME : 2024/04/27 - 18:25:28.335
-
-SejongAI -> EV2 is SELECTED FOR CALL 9
-IN SejongAI -> EV2 goTo Floor is Changed None to : 9
-IN SejongAI -> EV2 Rearranged At TIME : 2024/04/27 - 18:25:31.335, Time Delta is 3 Seconds
-

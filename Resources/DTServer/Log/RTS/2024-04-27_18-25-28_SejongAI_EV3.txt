@@ -1,9 +1,0 @@
-IN SejongAI -> EV3 Spawned At TIME : 2024/04/27 - 18:25:28.335
-
-SejongAI -> EV3 is SELECTED FOR CALL -1
-IN SejongAI -> EV3 goTo Floor is Changed None to : -1
-IN SejongAI -> EV3 Rearranged At TIME : 2024/04/27 - 18:25:34.335, Time Delta is 6 Seconds
-
-IN SejongAI -> EV3 STOPPED AT FLOOR : -1
-IN SejongAI -> EV3 STOPPED AT TIME : 2024/04/27 - 18:25:43.335, Time Delta is 14 Seconds
-

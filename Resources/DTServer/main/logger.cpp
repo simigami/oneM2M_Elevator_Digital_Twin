@@ -38,7 +38,7 @@ std::wstring logger::get_file_name_as_timestamp()
 
 	// Format time
 	std::wstringstream ss;
-	ss << std::put_time(&now_tm, L"%Y-%m-%d_%H-%M-%S");
+	ss << std::put_time(&now_tm, L"%Y-%m-%d");
 	return ss.str();
 }
 
@@ -192,11 +192,6 @@ void logger::write_rts_csv_header()
 			file << L",";
 		}
 	}
-}
-
-void logger::write_rts_csv_body()
-{
-
 }
 
 std::wstring logger::IDLELog(va_list args)

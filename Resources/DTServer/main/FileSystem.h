@@ -8,6 +8,4 @@ public:
 	bool checkFileCriteria(const std::wstring file_path);
 	std::string chooseLog();
 	FileSystem();
-
-
 };

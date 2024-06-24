@@ -72,7 +72,7 @@ public:
 	void startAsyncAccept_Notification(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
 
-	void Running_Embedded(const string& httpRequestHeader, const wstring& httpRequestBody);
+	int Running_Embedded(const string& httpRequestHeader, const wstring& httpRequestBody);
 	void Running_Init(const string& httpRequestHeader, const wstring& httpRequestBody);
 	vector<elevator_resource_status> checkoneM2M(http_request_header_data* httpRequestHeaderData, Wparsed_struct parsed_struct, send_oneM2M ACP_Validation_Socket);
 	elevator_resource_status checkDTServer(vector<Building*> bulidings, Wparsed_struct parsed_struct);

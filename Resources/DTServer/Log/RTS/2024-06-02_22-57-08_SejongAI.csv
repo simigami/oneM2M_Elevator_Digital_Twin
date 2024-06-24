@@ -1,2 +1,0 @@
-Building Name,Elevator Name,Datetime,Year,Month,Day,Hour,Minute,Second,OpTime,Command,Current Floor,Velocity,Altimeter,Distance,ERD,ESD,ED,Labels
-SejongAI,EV3,1717336628,2024,6,2,22,57,8,3,SPAWN,0,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,None

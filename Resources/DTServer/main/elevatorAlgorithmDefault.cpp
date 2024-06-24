@@ -17,6 +17,18 @@ elevatorAlgorithmDefault::elevatorAlgorithmDefault(wstring buildingName, wstring
 
 	thisLogger.log_file_name = thisLogger.get_file_name_as_timestamp() + L"_" + buildingName + L"_" + deviceName + L".txt";
 	thisLogger.csv_file_name = thisLogger.get_file_name_as_timestamp() + L"_" + buildingName + L".csv";
+
+	// Check if csv_file_name is already exist
+	const wstring csv_file_path = thisLogger.log_directory + L"\\" + thisLogger.csv_file_name;
+	std::wifstream csv_file(csv_file_path);
+	if (!csv_file.is_open())
+	{
+		thisLogger.write_rts_csv_header();
+	}
+	else
+	{
+		csv_file.close();
+	}
 }
 
 elevatorAlgorithmDefault::~elevatorAlgorithmDefault()
@@ -764,7 +776,6 @@ void elevatorAlgorithmDefault::printTimeDeltaWhenSpawn()
 	std::wstring txt_log_string(timeString, timeString + strlen(timeString));
 	std::wstring csv_log_string = make_csv_string(RTS_SPAWN);
 	write_log(txt_log_string);
-	write_csv_header();
 	write_csv_body(csv_log_string);
 }
 
@@ -986,7 +997,6 @@ void elevatorAlgorithmDefault::updateElevatorTick(socket_UnrealEngine* ueSock, p
 				}
 				if (flag)
 				{
-
 					int currentDestFloor;
 					// ERROR OCCURRS HERE
 					if (p->s->main_trip_list.empty())

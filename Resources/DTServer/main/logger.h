@@ -57,12 +57,12 @@ public:
 
 	std::mutex log_mutex;
 
-	void write_logs(std::vector<std::wstring> strings);
-	void write_log(std::wstring string);
-	void write_csv(std::wstring string);
 	void write_sim_csv_header();
 	void write_rts_csv_header();
-	void write_rts_csv_body();
+	void write_csv(std::wstring string);
+
+	void write_logs(std::vector<std::wstring> strings);
+	void write_log(std::wstring string);
 
 	std::wstring IDLELog(va_list args);
 	std::wstring CALLLog(va_list args);

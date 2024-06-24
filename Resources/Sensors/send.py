@@ -89,14 +89,26 @@ def insert_default_payloads(init_data, thisEV, sensor_data):
 
     return sensor_data
 
+
+def read_file_datas(rts_path):
+    ret = []
+    file = open(rts_path, 'r')
+    for line in file:
+        ret.append(line)
+
+    file.close()
+    return ret
+
 def run_rts(rts_path):
-    while True:
-        header, sensor_data = rts_logic(rts_path)
+    file_datas = read_file_datas(rts_path)
+
+    for line in file_datas:
+        header, sensor_data = rts_logic(line)
 
         if sensor_data is not None:
             send(header, sensor_data)
 
-def rts_logic(rts_path):
+def rts_logic(line):
     logs = []
 
     sensor_data = {
@@ -118,25 +130,19 @@ def rts_logic(rts_path):
         "E_Ref": None
     }
 
-    with open(rts_path, 'r+') as file:
-        # Read the file line by line
-        line = file.readline()
+    logs.append(line.strip().split(' '))
 
-        logs.append(line.strip().split(' '))
+    if logs[0][0] == "OUT":
+        outside_logs = logs[-1][-1]
+        to_list = ast.literal_eval(outside_logs)
 
-        if logs[0][0] == "OUT":
-            outside_logs = logs[-1][-1]
-            to_list = ast.literal_eval(outside_logs)
+        logs[-1][-1] = to_list
 
-            logs[-1][-1] = to_list
+    else:
+        inside_logs = logs[-1][-1]
+        to_list = ast.literal_eval(inside_logs)
 
-        else:
-            inside_logs = logs[-1][-1]
-            to_list = ast.literal_eval(inside_logs)
-
-            logs[-1][-1] = to_list
-
-        file.close()
+        logs[-1][-1] = to_list
 
     elem = logs[0]
     thisEV = None

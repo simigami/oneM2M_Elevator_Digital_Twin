@@ -10,6 +10,7 @@
 #include <numeric>
 #include <map>
 #include <unordered_map>
+#include "FileSystem.h"
 
 enum column_name {
 	COL_BLDG,
@@ -32,11 +33,12 @@ enum column_name {
 
 class dt_plot {
 public:
-	std::vector<std::vector<std::string>> readCSV(const std::string& filename);
 	std::map<std::string, std::unordered_map<std::string, std::vector<double>>> extractED(const std::vector<std::vector<std::string>>& data);
 	void run();
+	void ReadFile(std::string CSVFilePath);
 
 private:
+	FileSystem fs;
 	std::vector<std::string> colors = { "red", "green", "blue", "cyan", "magenta", "yellow" };
 	int color_idx = 0;
 };
