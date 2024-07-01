@@ -4,11 +4,8 @@ __pycache__/
 *$py.class
 
 #My Custom
-/Images_Real
-/Images_Sample
-/Roboflow
-/Videos
-/yolov8
+ETC/
+Resources/DT Server (Server)/Log/
 *.mp4
 *.h264
 *.pt

@@ -1,0 +1,13 @@
+train: ../sample/train/images
+val: ../sample/valid/images
+test: ../sample/test/images
+
+nc: 21
+names: ['Close', 'Floor 1', 'Floor 10', 'Floor 11', 'Floor 12', 'Floor 2', 'Floor 3', 'Floor 4', 'Floor 5', 'Floor 6', 'Floor 7', 'Floor 8', 'Floor 9', 'Floor B1', 'Floor B2', 'Floor B3', 'Floor B4', 'Floor B5', 'Floor1', 'Human', 'Open']
+
+roboflow:
+  workspace: elevator-rigpk
+  project: trainbutton
+  version: 4
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/elevator-rigpk/trainbutton/dataset/4
