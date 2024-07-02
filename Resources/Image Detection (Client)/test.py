@@ -16,6 +16,7 @@ def test():
 
         # Change Images Size
         plots = cv2.resize(plots, (620, 620))
+
         # Save Image
         cv2.imwrite(f'{test_image_dir}_result.jpg', plots)
 
