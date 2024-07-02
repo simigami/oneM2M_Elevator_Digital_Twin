@@ -23,7 +23,7 @@ def test():
 if __name__ == '__main__':
     # model = YOLO('yolov8x.pt')
     # model.train(
-    #     data='./train2.yaml',
+    #     data='./train.yaml',
     #     batch=16,
     #     epochs=100
     # )
