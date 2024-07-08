@@ -7,6 +7,17 @@ import ast
 import copy
 import configparser
 
+class DTServer:
+    def __init__(self):
+        self.ipaddr = None
+        self.port = None
+
+    def set_ip(self, ip):
+        self.ipaddr = ip
+
+    def set_port(self, port):
+        self.port = port
+
 class Buliding:
     def __init__(self, building_name):
         self.building_name = building_name
@@ -62,6 +73,7 @@ class Elevator:
 
 def set_init_data():
     this_building = None
+    this_server = DTServer()
     config = configparser.ConfigParser()
     config.read('config.ini')
     sections = config.sections()
@@ -73,6 +85,12 @@ def set_init_data():
             for each_option in options:
                 if each_option == "building name":
                     this_building = Buliding(config[each_section][each_option])
+
+                elif each_option == "server ip":
+                    this_server.set_ip(config[each_section][each_option])
+
+                elif each_option == "server port":
+                    this_server.set_port(config[each_section][each_option])
 
                 elif each_option == "outside call detection":
                     if config[each_section][each_option].upper() == "TRUE":
@@ -137,4 +155,4 @@ def set_init_data():
         print(f"Unexpected {err=}, {type(err)=}")
         raise
 
-    return this_building
+    return this_server, this_building

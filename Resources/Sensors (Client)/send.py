@@ -11,13 +11,11 @@ import requests
 #import Gather_Sensor_Data
 import ast
 import os
+import socket
 
 # Name of the directory inside the current directory
 directory_name = "Simulated Data Directory"
 directory_path = os.path.join(os.getcwd(), directory_name)
-
-server_ip = "192.168.0.134"
-server_port = 10050
 
 headers = {
     "Content-Type": "application/json"
@@ -30,6 +28,9 @@ headers = {
     # ?en=1 // Use Energy Consumption
     # ?en=0 // Do Not Use Energy Consumption
 }
+
+global server_ip
+global server_port
 
 def get_custom_physical_datas(data, sensor_data):
     sensor_data['velocity'] = float(data[-4])
@@ -89,7 +90,6 @@ def insert_default_payloads(init_data, thisEV, sensor_data):
 
     return sensor_data
 
-
 def read_file_datas(rts_path):
     ret = []
     file = open(rts_path, 'r')
@@ -99,16 +99,19 @@ def read_file_datas(rts_path):
     file.close()
     return ret
 
-def run_rts(rts_path):
-    file_datas = read_file_datas(rts_path)
+def run_rts(this_building):
+    file = read_file_datas(this_building.rts_path)
 
-    for line in file_datas:
-        header, sensor_data = rts_logic(line)
+    for line in file:
+        header, sensor_data = rts_logic(this_building, line)
 
         if sensor_data is not None:
             send(header, sensor_data)
 
-def rts_logic(line):
+def rts_logic(this_building, line):
+    global server_ip
+    global server_port
+
     logs = []
 
     sensor_data = {
@@ -150,26 +153,26 @@ def rts_logic(line):
     if len(elem) == 0:
         return None
 
-    elif elem[0] == init_data.outname:
-        sensor_data['building_name'] = init_data.building_name
+    elif elem[0] == this_building.outname:
+        sensor_data['building_name'] = this_building.building_name
         sensor_data['timestamp'] = datetime.datetime.now().isoformat()
-        sensor_data['device_name'] = init_data.outname
+        sensor_data['device_name'] = this_building.outname
         sensor_data['button_outside'] = elem[-1]
 
     else:
-        for each_ev in init_data.evlist:
+        for each_ev in this_building.evlist:
             if each_ev.ev_name == elem[1]:
                 thisEV = each_ev
                 break
 
-        sensor_data = insert_default_payloads(init_data, thisEV, sensor_data)
+        sensor_data = insert_default_payloads(this_building, thisEV, sensor_data)
 
         if thisEV.physical_flag is True:
             sensor_data = get_custom_physical_datas(elem, sensor_data)
 
         sensor_data['button_inside'] = elem[-1]
 
-    headers = set_http_header(elem, thisEV, init_data)
+    headers = set_http_header(elem, thisEV, this_building)
 
     return headers, sensor_data
 
@@ -184,7 +187,7 @@ def send(http_header, sensor_data):
     except (socket.error, json.JSONDecodeError, socket.timeout) as e:
         print(f"Error sending JSON data: {e}")
 
-def run_test():
+def run_test(this_building):
     logs = []
     address = (server_ip, server_port)
 
@@ -229,27 +232,27 @@ def run_test():
 
         thisEV = None
 
-        if elem[0] == init_data.outname:
+        if elem[0] == this_building.outname:
             sleep_time = int(elem[1]) - count
-            sensor_data['building_name'] = init_data.building_name
+            sensor_data['building_name'] = this_building.building_name
             sensor_data['timestamp'] = datetime.datetime.now().isoformat()
-            sensor_data['device_name'] = init_data.outname
+            sensor_data['device_name'] = this_building.outname
             sensor_data['button_outside'] = elem[-1]
 
         else:
             sleep_time = int(elem[1]) - count
 
-            for each_ev in init_data.evlist:
+            for each_ev in this_building.evlist:
                 if each_ev.ev_name == elem[0]:
                     thisEV = each_ev
                     break
 
-            sensor_data = insert_default_payloads(init_data, thisEV, sensor_data)
+            sensor_data = insert_default_payloads(this_building, thisEV, sensor_data)
 
             if thisEV.physical_flag is True:
                 sensor_data = get_custom_physical_datas(elem, sensor_data)
 
-        headers = set_http_header(elem, thisEV, init_data)
+        headers = set_http_header(elem, thisEV, this_building)
 
         end = datetime.datetime.now()
         diff = (end - start).total_seconds()
@@ -326,11 +329,15 @@ def init_dt_server_by_ev_list(init_data):
     return
 
 if __name__ == '__main__':
-    init_data = init.set_init_data()
-    init_dt_server_by_ev_list(init_data)
+    this_server, this_building = init.set_init_data()
 
-    if init_data.rts_path is not None:
-        run_rts(init_data.rts_path)
+    server_ip = this_server.ipaddr
+    server_port = this_server.port
+
+    init_dt_server_by_ev_list(this_building)
+
+    if this_building.rts_path is not None:
+        run_rts(this_building)
 
     else:
-        run_test()
+        run_test(this_building)
