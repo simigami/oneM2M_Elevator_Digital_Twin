@@ -249,36 +249,17 @@ physics::physics(Wparsed_struct parsed_struct)
 	this->s->each_floor_altimeter = parsed_struct.each_floor_altimeter;
 
 	this->current_velocity = 0.0;
-	this->current_altimeter = -55;
 
-	this->current_direction = NULL;
-}
-
-bool physics::set_initial_elevator_direction(vector<string> button_inside)
-{
-	if(button_inside.empty())
+	if (parsed_struct.init_floor != 0)
 	{
-		//std::cout << "ERROR ON CLASS PHYSICS : " << " button_inside IS EMPTY..." << std::endl;
-		exit(0);
+		this->current_altimeter = floorToAltimeter(parsed_struct.init_floor, parsed_struct.each_floor_altimeter);
 	}
 	else
 	{
-		const int called_floor = this->s->string_floor_to_int(button_inside[0]);
-		const int called_floor_index = called_floor > 0 ? called_floor+(this->info.underground_floor-1) : called_floor+(this->info.underground_floor);
-		const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
-		if(this->current_altimeter < called_floor_altimeter)
-		{
-			//std::cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << std::endl;
-			this->current_direction = true;
-			return true;
-		}
-		else
-		{
-			//std::cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << std::endl;
-			this->current_direction = false;
-			return false;
-		}
+		this->current_altimeter = parsed_struct.each_floor_altimeter[0];
 	}
+
+	this->current_direction = NULL;
 }
 
 bool physics::set_initial_elevator_direction(int floor)
@@ -295,33 +276,6 @@ bool physics::set_initial_elevator_direction(int floor)
 	{
 		this->current_direction = false;
 		return false;
-	}
-}
-
-bool physics::set_initial_elevator_direction(vector<vector<int>> button_outside)
-{
-	if(button_outside.empty())
-	{
-		std::cout << "ERROR ON CLASS PHYSICS : " << " button_outside IS EMPTY..." << std::endl;
-		exit(0);
-	}
-	else
-	{
-		const int called_floor = button_outside[0][0];
-		const int called_floor_index = called_floor > 0 ? called_floor+(this->info.underground_floor-1) : called_floor+(this->info.underground_floor);
-		const double called_floor_altimeter = this->info.altimeter_of_each_floor[called_floor_index];
-		if(this->current_altimeter < called_floor_altimeter)
-		{
-			//std::cout << "INITIAL FLOOR : " << called_floor << " is ABOVE FROM ELEVATOR, SETTING DIRECTION TO True..." << std::endl;
-			this->current_direction = true;
-			return true;
-		}
-		else
-		{
-			//std::cout << "INITIAL FLOOR : " << called_floor << " is BELOW FROM ELEVATOR, SETTING DIRECTION TO False..." << std::endl;
-			this->current_direction = false;
-			return false;
-		}
 	}
 }
 

@@ -1,4 +1,5 @@
-﻿#include "DT_RealTime.h"
+﻿#include <nlohmann/json.hpp>
+#include "DT_RealTime.h"
 #include "DT_Simulation.h"
 #include "config.h"
 #include "parse_json.h"
@@ -7,10 +8,12 @@
 #include "simulation.h"
 #include "elevator.h"
 
-#include <codecvt>
 #include <locale>
+#include <codecvt>
 #include <sstream>
 #include <unordered_set>
+
+#define _SILE
 
 using namespace boost::asio;
 using ip::tcp;
@@ -200,6 +203,7 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 				std::wstring log_string = selectedElevatorIDLE->getBuildingName() + L" -> " + selectedElevatorIDLE->getDeviceName() + L" is SELECTED FOR CALL " + std::to_wstring(calledFloor);
 				selectedElevatorIDLE->getElevatorAlgorithm()->write_log(log_string);
 
+				std::wcout << log_string << std::endl;
 				temp.push_back(eachCall);
 
 				const int delta_second = selectedElevatorIDLE->thisElevatorAlgorithmSingle->printTimeDeltaNow();
@@ -214,6 +218,7 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 				std::wstring log_string = selectedElevator->getBuildingName() + L" -> " + selectedElevator->getDeviceName() + L" is SELECTED FOR CALL " + std::to_wstring(calledFloor);
 				selectedElevator->getElevatorAlgorithm()->write_log(log_string);
 
+				std::wcout << log_string << std::endl;
 				temp.push_back(eachCall);
 
 				const int delta_second = selectedElevator->thisElevatorAlgorithmSingle->printTimeDeltaNow();
@@ -258,6 +263,7 @@ void Building::getWhichElevatorToGetButtonOutside(vector<vector<int>> button_out
 					std::wstring log_string = selectedElevatorDifferentDirection->getBuildingName() + L" -> " + selectedElevatorDifferentDirection->getDeviceName() + L" is SELECTED FOR CALL " + std::to_wstring(calledFloor);
 					selectedElevatorDifferentDirection->getElevatorAlgorithm()->write_log(log_string);
 
+					std::wcout << log_string << std::endl;
 					temp.push_back(eachCall);
 
 					const int delta_second = selectedElevatorDifferentDirection->thisElevatorAlgorithmSingle->printTimeDeltaNow();
@@ -432,7 +438,7 @@ elevator_resource_status dt_real_time::checkDTServer(vector<Building*> bulidings
 	return BUILDING_NOT_FOUND;
 }
 
-void dt_real_time::CreateNewBuildingAndElevator(const wstring& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status)
+void dt_real_time::CreateNewBuildingAndElevator(const string& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status)
 {
 	this->ACP_NAMES.push_back(ACOR_NAME);
 
@@ -476,7 +482,7 @@ void dt_real_time::CreateNewBuildingAndElevator(const wstring& httpRequestBody, 
 	thisBuildingElevator->runElevator();
 }
 
-void dt_real_time::CreateNewBuilding(const wstring& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status)
+void dt_real_time::CreateNewBuilding(const string& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status)
 {
 	this->ACP_NAMES.push_back(ACOR_NAME);
 
@@ -497,7 +503,7 @@ void dt_real_time::CreateNewBuilding(const wstring& httpRequestBody, const wstri
 	allBuildingInfo.push_back(newBuilding);
 }
 
-void dt_real_time::CreateNewElevator(const wstring& httpRequestBody, Building* thisBuilding, elevator_resource_status status)
+void dt_real_time::CreateNewElevator(const string& httpRequestBody, Building* thisBuilding, elevator_resource_status status)
 {
 	// Create THIS AE(Building) Class
 	int algNumber = 1;
@@ -595,11 +601,6 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 	receiveBuffer.prepare(BUFFER_SIZE);
 
     boost::system::error_code error;
-	ostringstream httpBodyStream;
-
-    string httpRequestHeader_ContentType;
-    string httpRequestHeader_X_M2M_RI;
-    string httpRequestBody;
 	string line;
 
 	try
@@ -616,39 +617,58 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 			throw boost::system::system_error(error);
 		}
 #endif
-		istream inputStream(&receiveBuffer);
+		// Seperate the HTTP header and body
+		std::string message(boost::asio::buffers_begin(receiveBuffer.data()), boost::asio::buffers_end(receiveBuffer.data()));
+		std::string delimeter = "\r\n\r\n";
 
-		// Read the HTTP headers
-		while (std::getline(inputStream, line) && line != "\r") {
-			if (line.find("Content-Type:") == 0) {
-				httpRequestHeader_ContentType = line.substr(0, std::string::npos);
-			}
-			else if (line.find("X-M2M-RI:") == 0) {
-				httpRequestHeader_X_M2M_RI = line.substr(0, std::string::npos);
-			}
+		auto pos = message.find(delimeter);
+
+		if (pos == std::string::npos)
+		{
+			std::cerr << "Error in dt_real_time::handleConnection : " << "http header <-> body delimeter not found" << std::endl;
+			throw std::exception();
 		}
 
-		vector<int> tyen = data_parser.parse_content_type(httpRequestHeader_ContentType);
-		int isNotification = data_parser.parse_M2M_RI(httpRequestHeader_X_M2M_RI);
-		
-		if (isNotification == 0)
+		std::string http_header = message.substr(0, pos);
+		std::string http_body = message.substr(pos + delimeter.length());
+
+		// \\\" -> \" in http body
+		//http_body.erase(std::remove(http_body.begin(), http_body.end(), '\\'), http_body.end());
+		//http_body = http_body.substr(1, http_body.length() - 2);
+
+		// Remove \r in each line of http header
+		http_header.erase(std::remove(http_header.begin(), http_header.end(), '\r'), http_header.end());
+
+		std::map<std::string, std::string> http_header_map;
+		std::istringstream http_header_stream(http_header);
+		while(std::getline(http_header_stream, line))
 		{
-			if (tyen.size() == 0)
-			{
-				std::wcout << "Error in dt_real_time::Running_Embedded -> tyen.size() == 0" << std::endl;
-				throw std::exception();
-			}
-			else if (tyen.size() == 2)
-			{
-				httpRequestHeaderData->en = tyen[1];
-			}
+			std::string key = line.substr(0, line.find(':'));
+			std::string value = line.substr(line.find(':') + 1);
+			http_header_map[key] = value;
+		}
+
+		// Check ty an en value in http header, Content-Type ty=?&en=?
+		string content_type;
+		if (http_header_map.find("Content-Type") != http_header_map.end())
+		{
+			content_type = http_header_map["Content-Type"];
+		}
+		else
+		{
+			std::cerr << "Error in dt_real_time::handleConnection : " << "Content-Type not found in http header" << std::endl;
+			throw std::exception();
+		}
+		vector<int> tyen = data_parser.parse_content_type(content_type);
+
+		if (tyen.size() == 1)
+		{
 			httpRequestHeaderData->ty = tyen[0];
 		}
-
-		// Read the HTTP body (JSON string)
-		if (inputStream.peek() != EOF) 
+		else if (tyen.size() == 2)
 		{
-			std::getline(inputStream, httpRequestBody); // Read the empty line after the headers
+			httpRequestHeaderData->ty = tyen[0];
+			httpRequestHeaderData->en = tyen[1];
 		}
 
 		if (!error)
@@ -657,18 +677,23 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 
 			if (port == EMBEDDED_LISTEN_PORT)
 			{
-				wstring WhttpRequestBody;
-				WhttpRequestBody.assign(httpRequestBody.begin(), httpRequestBody.end());
-
-				if (httpRequestHeaderData->ty == 0)
+				if (tyen[0] == 0)
 				{
-					this->Running_Init(httpRequestHeader_ContentType, WhttpRequestBody);
+					this->Running_Init(http_body);
+					boost::asio::write(socket, boost::asio::buffer(httpResponse), error);
+				}
+				else if (tyen[0] == 1)
+				{
+					// Case when Outside Button is pressed
+					parsed_struct = data_parser.parsingWithBulidingAlgorithms(http_body, 1);
+					Building* thisBuilding = getBuilding(parsed_struct.building_name);
+					thisBuilding->getWhichElevatorToGetButtonOutside(parsed_struct.button_outside);
 					boost::asio::write(socket, boost::asio::buffer(httpResponse), error);
 				}
 				else
 				{
 					boost::asio::write(socket, boost::asio::buffer(httpResponse), error);
-					const int res = this->Running_Embedded(httpRequestHeader_ContentType, WhttpRequestBody);
+					const int res = this->Running_Embedded(http_body);
 					if (res)
 					{
 						throw std::exception();
@@ -677,7 +702,7 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 			}
 			else if (port == oneM2M_NOTIFICATION_LISTEN_PORT)
 			{
-				this->Running_Notification(httpRequestBody);
+				this->Running_Notification(http_body);
 			}
 		}
 	}
@@ -692,7 +717,7 @@ void dt_real_time::handleConnection(boost::asio::ip::tcp::socket& socket, int po
 	}
 }
 
-int dt_real_time::Running_Embedded(const string& httpRequestHeader, const wstring& httpRequestBody)
+int dt_real_time::Running_Embedded(string& httpRequestBody)
 {
 	Elevator* thisBuildingElevator;
 	send_oneM2M ACP_Validation_Socket(parsed_struct);
@@ -728,7 +753,7 @@ int dt_real_time::Running_Embedded(const string& httpRequestHeader, const wstrin
 	return 0;
 }
 
-void dt_real_time::Running_Init(const string& httpRequestHeader, const wstring& httpRequestBody)
+void dt_real_time::Running_Init(string& httpRequestBody)
 {
 	Elevator* thisBuildingElevator;
 	send_oneM2M ACP_Validation_Socket(parsed_struct);
@@ -898,12 +923,12 @@ void dt_real_time::Running_Init(const string& httpRequestHeader, const wstring& 
 	}
 }
 
-void dt_real_time::Running_Notification(const string& httpRequestBody)
+void dt_real_time::Running_Notification(string& http_body)
 {
     try
 	{
-		auto json_body = nlohmann::json::parse(httpRequestBody);
-
+		auto json_body = nlohmann::json::parse(http_body);
+		
 		if (json_body.contains("m2m:sgn")) 
 		{
             auto nev = json_body["m2m:sgn"]["nev"];
@@ -936,6 +961,8 @@ void dt_real_time::Running_Notification(const string& httpRequestBody)
 					string building_name = sur_values[1];
 					string device_name = sur_values[2];
 					string majorCNTName = sur_values[3];
+
+					static std::locale loc("");
 
 					wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
 					wstring Wbuilding_name = converter.from_bytes(building_name);

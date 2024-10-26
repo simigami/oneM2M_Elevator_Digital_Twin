@@ -2,7 +2,6 @@
 #include <codecvt>
 #include <string>
 #include <unordered_set>
-#include <cpprest/http_client.h>
 
 #include "socket_oneM2M.h"
 

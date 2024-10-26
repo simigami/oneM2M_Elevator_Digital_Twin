@@ -1,7 +1,7 @@
 import os
 import datetime
 
-default_picture_folder_windows = ''
+default_picture_folder_windows = os.getcwd() + r'\Camera_Sensor'
 default_picture_folder_linux = '/home/user/Desktop/Camera_Sensor'
 
 second = 1
@@ -20,7 +20,6 @@ def take_one_picture(picture_output):
 	vid_output = fr" -o {picture_output}"
 
 	command = vid_command + vid_width + vid_height + vid_time + vid_output
-	#print(command)
 	os.system(command)
 
 def take_picture_for_N(location, time):
@@ -43,7 +42,6 @@ def get_data():
 	timestamp_str = timestamp.strftime("%Y_%m%d_%H%M%S")
 
 	picture_output = rf"{default_picture_folder_linux}/{timestamp_str}.jpg"
-	video_output = rf"{default_picture_folder_linux}/{timestamp_str}.mp4"
 
 	take_one_picture(picture_output)
 

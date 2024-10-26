@@ -71,22 +71,19 @@ def set_http_header(elem, thisEV, init_data, init_dt=0):
         return headers
 
 def insert_default_payloads(init_data, thisEV, sensor_data):
-    sensor_data['building_name'] = init_data.building_name
-    sensor_data['device_name'] = thisEV.ev_name
-
+    sensor_data['building name'] = init_data.building_name
+    sensor_data['elevator name'] = thisEV.ev_name
     sensor_data['timestamp'] = datetime.datetime.now().isoformat()
-
-    sensor_data['underground_floor'] = thisEV.underground_floor
-    sensor_data['ground_floor'] = thisEV.ground_floor
-    sensor_data['each_floor_altimeter'] = thisEV.altimeter_list
-
+    sensor_data['underground floor'] = thisEV.underground_floor
+    sensor_data['ground floor'] = thisEV.ground_floor
+    sensor_data['each floor altimeter'] = thisEV.altimeter_list
     sensor_data['acceleration'] = thisEV.acceleration
-    sensor_data['max_velocity'] = thisEV.max_velocity
+    sensor_data['max velocity'] = thisEV.max_velocity
 
     if thisEV.energy_flag is True:
-        sensor_data['E_Idle'] = thisEV.E_idle
-        sensor_data['E_Standby'] = thisEV.E_standby
-        sensor_data['E_Ref'] = thisEV.E_ref
+        sensor_data['idle energy'] = thisEV.E_idle
+        sensor_data['standby energy'] = thisEV.E_standby
+        sensor_data['ref energy'] = thisEV.E_ref
 
     return sensor_data
 
@@ -115,22 +112,22 @@ def rts_logic(this_building, line):
     logs = []
 
     sensor_data = {
-        "building_name": "",
-        "device_name": "",
-        "underground_floor": None,
-        "ground_floor": None,
-        "each_floor_altimeter": None,
+        "building name": "",
+        "elevator name": "",
+        "underground floor": None,
+        "ground floor": None,
+        "each floor altimeter": None,
         "timestamp": None,
         "acceleration": None,
         "velocity": None,
-        "max_velocity": None,
+        "max velocity": None,
         "altimeter": None,
         "temperature": None,
-        "button_inside": None,
-        "button_outside": None,
-        "E_Idle": None,
-        "E_Standby": None,
-        "E_Ref": None
+        "button inside": None,
+        "button outside": None,
+        "idle energy": None,
+        "standby energy": None,
+        "ref energy": None
     }
 
     logs.append(line.strip().split(' '))
@@ -154,10 +151,10 @@ def rts_logic(this_building, line):
         return None
 
     elif elem[0] == this_building.outname:
-        sensor_data['building_name'] = this_building.building_name
+        sensor_data['building name'] = this_building.building_name
         sensor_data['timestamp'] = datetime.datetime.now().isoformat()
-        sensor_data['device_name'] = this_building.outname
-        sensor_data['button_outside'] = elem[-1]
+        sensor_data['elevator name'] = this_building.outname
+        sensor_data['button outside'] = elem[-1]
 
     else:
         for each_ev in this_building.evlist:
@@ -170,7 +167,7 @@ def rts_logic(this_building, line):
         if thisEV.physical_flag is True:
             sensor_data = get_custom_physical_datas(elem, sensor_data)
 
-        sensor_data['button_inside'] = elem[-1]
+        sensor_data['button inside'] = elem[-1]
 
     headers = set_http_header(elem, thisEV, this_building)
 
@@ -188,69 +185,75 @@ def send(http_header, sensor_data):
         print(f"Error sending JSON data: {e}")
 
 def run_test(this_building):
-    logs = []
     address = (server_ip, server_port)
+    logs = []
 
     with open('testlog.txt', 'r') as file:
         # Read the file line by line
         for line in file:
-            logs.append(line.strip().split(' '))
+            if line == '\n':
+                break
 
-            if logs[0][0] == "OUT":
-                outside_logs = logs[-1][-1]
+            log = line.strip().split(' ')
+
+            if log[0] == "OUT":
+                outside_logs = log[-1]
                 to_list = ast.literal_eval(outside_logs)
 
-                logs[-1][-1] = to_list
+                log[-1] = to_list
 
             else:
-                inside_logs = logs[-1][-1]
+                inside_logs = log[-1]
                 to_list = ast.literal_eval(inside_logs)
 
-                logs[-1][-1] = to_list
+                log[-1] = to_list
+
+            logs.append(log)
 
     count = 0
-
     for elem in logs:
         start = datetime.datetime.now()
 
         sensor_data = {
-            "building_name": "",
-            "device_name": "",
-            "underground_floor": None,
-            "ground_floor": None,
-            "each_floor_altimeter": None,
+            "building name": "",
+            "elevator name": "",
+            "underground floor": None,
+            "ground floor": None,
+            "each floor altimeter": None,
             "timestamp": None,
+            "acceleration": None,
             "velocity": None,
+            "max velocity": None,
             "altimeter": None,
             "temperature": None,
-            "button_inside": None,
-            "button_outside": None,
-            "E_Idle": None,
-            "E_Standby": None,
-            "E_Ref": None
+            "button inside": None,
+            "button outside": None,
+            "idle energy": None,
+            "standby energy": None,
+            "ref energy": None
         }
 
         thisEV = None
 
         if elem[0] == this_building.outname:
             sleep_time = int(elem[1]) - count
-            sensor_data['building_name'] = this_building.building_name
+            sensor_data['building name'] = this_building.building_name
+            sensor_data['elevator name'] = this_building.outname
             sensor_data['timestamp'] = datetime.datetime.now().isoformat()
-            sensor_data['device_name'] = this_building.outname
-            sensor_data['button_outside'] = elem[-1]
+            sensor_data['button outside'] = elem[-1]
 
         else:
-            sleep_time = int(elem[1]) - count
+            sleep_time = int(elem[2]) - count
 
-            for each_ev in this_building.evlist:
-                if each_ev.ev_name == elem[0]:
-                    thisEV = each_ev
+            for each_ev, _ in this_building.evlist.items():
+                if each_ev == elem[1]:
+                    thisEV = this_building.evlist[each_ev]
                     break
 
             sensor_data = insert_default_payloads(this_building, thisEV, sensor_data)
+            sensor_data = get_custom_physical_datas(elem, sensor_data) if thisEV.physical_flag is True else sensor_data
 
-            if thisEV.physical_flag is True:
-                sensor_data = get_custom_physical_datas(elem, sensor_data)
+            sensor_data['button inside'] = elem[-1]
 
         headers = set_http_header(elem, thisEV, this_building)
 
@@ -260,14 +263,12 @@ def run_test(this_building):
         if sleep_time - diff > 0:
             time.sleep(sleep_time - diff)
 
-        count = int(elem[1])
+        count = int(elem[2]) if elem[0] != this_building.outname else int(elem[1])
 
         try:
             url = "http://" + server_ip + ":" + str(server_port)
             response = requests.post(url, headers=headers, json=sensor_data)
-
             print(response.status_code)
-            print(response.json())
 
         except (socket.error, json.JSONDecodeError, socket.timeout) as e:
             print(f"Error sending JSON data: {e}")
@@ -288,41 +289,41 @@ def run_inside(data):
 def init_dt_server_by_ev_list(init_data):
     ev_list = init_data.evlist
 
-    for thisEV in ev_list:
+    for _, thisEV in ev_list.items():
         sensor_data = {
-            "building_name": "",
-            "device_name": "",
-            "underground_floor": None,
-            "ground_floor": None,
-            "each_floor_altimeter": None,
+            "building name": "",
+            "elevator name": "",
+            "underground floor": None,
+            "ground floor": None,
+            "each floor altimeter": None,
             "timestamp": None,
             "acceleration": None,
             "velocity": None,
-            "max_velocity": None,
+            "max velocity": None,
             "altimeter": None,
             "temperature": None,
-            "button_inside": None,
-            "button_outside": None,
-            "E_Idle": None,
-            "E_Standby": None,
-            "E_Ref": None
+            "button inside": None,
+            "button outside": None,
+            "idle energy": None,
+            "standby energy": None,
+            "ref energy": None
         }
 
         http_header = set_http_header([""], thisEV, init_data, init_dt=1)
 
-        sensor_data['building_name'] = init_data.building_name
-        sensor_data['device_name'] = thisEV.ev_name
+        sensor_data['building name'] = init_data.building_name
+        sensor_data['elevator name'] = thisEV.ev_name
         sensor_data['timestamp'] = datetime.datetime.now().isoformat()
-        sensor_data['underground_floor'] = thisEV.underground_floor
-        sensor_data['ground_floor'] = thisEV.ground_floor
-        sensor_data['each_floor_altimeter'] = thisEV.altimeter_list
+        sensor_data['underground floor'] = thisEV.underground_floor
+        sensor_data['ground floor'] = thisEV.ground_floor
+        sensor_data['each floor altimeter'] = thisEV.altimeter_list
         sensor_data['acceleration'] = thisEV.acceleration
-        sensor_data['max_velocity'] = thisEV.max_velocity
+        sensor_data['max velocity'] = thisEV.max_velocity
 
         if thisEV.energy_flag is True:
-            sensor_data['E_Idle'] = thisEV.E_idle
-            sensor_data['E_Standby'] = thisEV.E_standby
-            sensor_data['E_Ref'] = thisEV.E_ref
+            sensor_data['idle energy'] = thisEV.E_idle
+            sensor_data['standby energy'] = thisEV.E_standby
+            sensor_data['ref energy'] = thisEV.E_ref
 
         send(http_header, sensor_data)
 

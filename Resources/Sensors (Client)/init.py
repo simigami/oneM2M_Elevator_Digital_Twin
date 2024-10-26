@@ -21,9 +21,9 @@ class DTServer:
 class Buliding:
     def __init__(self, building_name):
         self.building_name = building_name
-        self.evlist = []
+        self.evlist = {}
         self.outflag = False
-        self.outname = None
+        self.outname = "OUT"
         self.rts_path = None
 
     def set_out(self, flag):
@@ -34,7 +34,7 @@ class Buliding:
 
     def appendEV(self, ev_name):
         newEV = Elevator(ev_name)
-        self.evlist.append(newEV)
+        self.evlist[ev_name] = newEV
 
 class Elevator:
     def __init__(self, ev_name):
@@ -81,6 +81,7 @@ def set_init_data():
     try:
         for each_section in sections:
             options = config.options(each_section)
+            ev_name = None
 
             for each_option in options:
                 if each_option == "building name":
@@ -108,44 +109,45 @@ def set_init_data():
 
                 elif each_option == "elevator name":
                     this_building.appendEV(config[each_section][each_option])
+                    ev_name = config[each_section][each_option]
 
                 elif each_option == "underground floor":
-                    this_building.evlist[-1].underground_floor = config[each_section][each_option]
+                    this_building.evlist[ev_name].underground_floor = int(config[each_section][each_option])
 
                 elif each_option == "ground floor":
-                    this_building.evlist[-1].ground_floor = config[each_section][each_option]
+                    this_building.evlist[ev_name].ground_floor = int(config[each_section][each_option])
 
                 elif each_option == "each floor altimeter":
-                    this_building.evlist[-1].altimeter_list = ast.literal_eval(config[each_section][each_option])
+                    this_building.evlist[ev_name].altimeter_list = ast.literal_eval(config[each_section][each_option])
 
                 elif each_option == "use physical system information check":
                     if config[each_section][each_option].upper() == "TRUE":
-                        this_building.evlist[-1].physical_flag = True
+                        this_building.evlist[ev_name].physical_flag = True
 
-                elif each_option == "physical data path" and this_building.evlist[-1].physical_flag is True and config[each_section][each_option] != "None":
-                    this_building.evlist[-1].physical_path = config[each_section][each_option]
+                elif each_option == "physical data path" and this_building.evlist[ev_name].physical_flag is True and config[each_section][each_option] != "None":
+                    this_building.evlist[ev_name].physical_path = config[each_section][each_option]
 
                 elif each_option == "acceleration":
-                    this_building.evlist[-1].acceleration = config[each_section][each_option]
+                    this_building.evlist[ev_name].acceleration = float(config[each_section][each_option])
 
                 elif each_option == "max velocity":
-                    this_building.evlist[-1].max_velocity = config[each_section][each_option]
+                    this_building.evlist[ev_name].max_velocity = float(config[each_section][each_option])
 
                 elif each_option == "energy consumption check":
                     if config[each_section][each_option].upper() == "TRUE":
-                        this_building.evlist[-1].energy_flag = True
+                        this_building.evlist[ev_name].energy_flag = True
 
                     else:
-                        this_building.evlist[-1].energy_flag = False
+                        this_building.evlist[ev_name].energy_flag = False
 
-                elif each_option == "idle energy" and this_building.evlist[-1].energy_flag is True:
-                    this_building.evlist[-1].E_idle = config[each_section][each_option]
+                elif each_option == "idle energy" and this_building.evlist[ev_name].energy_flag is True:
+                    this_building.evlist[ev_name].E_idle = float(config[each_section][each_option])
 
-                elif each_option == "standby energy" and this_building.evlist[-1].energy_flag is True:
-                    this_building.evlist[-1].E_standby = config[each_section][each_option]
+                elif each_option == "standby energy" and this_building.evlist[ev_name].energy_flag is True:
+                    this_building.evlist[ev_name].E_standby = float(config[each_section][each_option])
 
-                elif each_option == "ref energy" and this_building.evlist[-1].energy_flag is True:
-                    this_building.evlist[-1].E_ref = config[each_section][each_option]
+                elif each_option == "ref energy" and this_building.evlist[ev_name].energy_flag is True:
+                    this_building.evlist[ev_name].E_ref = float(config[each_section][each_option])
 
     except OSError as err:
         print("OS error:", err)

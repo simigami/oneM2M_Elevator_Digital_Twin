@@ -81,9 +81,11 @@ void dt_simulation::run()
 
     log_file_path = fileSystem.chooseLog();
 
-    elevatorMap = findLogStart(log_file_path, elevatorMap);
-
-    this->buildings = createBuildings(elevatorMap);
+    this->buildings = makeInstance(log_file_path);
+    if (this->buildings == nullptr) {
+		std::cerr << "Error: buildings is nullptr" << std::endl;
+		return;
+	}
 
     ReadAndAddAllTransactions();
 
@@ -96,156 +98,150 @@ void dt_simulation::run()
     return;
 }
 
-std::unordered_map<std::string, std::string> dt_simulation::findLogStart(const std::string& fileAddress, std::unordered_map<std::string, std::string>& elevatorMap)
-{
-    std::ifstream file(fileAddress);
-    if (!file.is_open()) {
-        std::cerr << "Unable to open the file.\n";
-        return elevatorMap;
-    }
-
-    std::string line;
-    const std::string pattern = "LOG START";
-
-    while (std::getline(file, line)) {
-        if (line.find(pattern) != std::string::npos) {
-            size_t startPos = line.find(pattern) + pattern.length();
-
-            std::string buildingName, elevatorName, underground_floor, ground_floor, each_floor_altimeter;
-            std::string max_velocity, acceleration, jerk, door_open_time;
-            std::string enery_flag, idle_power, standby_power, iso_power;
-
-            std::istringstream iss(line.substr(startPos));
-            iss >> buildingName >> elevatorName >> max_velocity >> acceleration >> jerk >> door_open_time >> underground_floor >> ground_floor >> each_floor_altimeter >> enery_flag;
-
-            // Get this building's value in map
-            const auto it = elevatorMap.find(buildingName);
-
-            if (it == elevatorMap.end())
-            {
-                elevatorMap[buildingName] = elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + underground_floor + " " + ground_floor + " " + each_floor_altimeter + " " + enery_flag + " ";
-                if (enery_flag == "1")
-                {
-                    iss >> idle_power >> standby_power >> iso_power;
-                    elevatorMap[buildingName] += idle_power + " " + standby_power + " " + iso_power + " ";
-                }
-            }
-            else
-            {
-                if (enery_flag == "1")
-                {
-                    iss >> idle_power >> standby_power >> iso_power;
-                    elevatorMap[buildingName] += elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + underground_floor + " " + ground_floor + " " + each_floor_altimeter + " " + enery_flag + " " + idle_power + " " + standby_power + " " + iso_power + " ";
-                }
-                else
-                {
-                    elevatorMap[buildingName] += elevatorName + " " + max_velocity + " " + acceleration + " " + jerk + " " + door_open_time + " " + underground_floor + " " + ground_floor + " " + each_floor_altimeter + " " + enery_flag + " ";
-                }
-            }
-        }
-    }
-
-    file.close();
-    return elevatorMap;
-}
-
-std::vector<simBuilding>* dt_simulation::createBuildings(const std::unordered_map<std::string, std::string>& elevatorMap)
+std::vector<simBuilding>* dt_simulation::makeInstance(const std::string& fileAddress)
 {
     std::vector<simBuilding>* buildings = new std::vector<simBuilding>;
-    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    simBuilding building;
+    simElevator* latest_ev = nullptr;
+    wstring building_name;
+    wstring ev_name;
+    std::ifstream file(fileAddress);
+    std::string line;
 
-    // Iterate through elevatorMap
-    for (const auto& pair : elevatorMap) {
-        simBuilding building;
+    bool start_flag = false;
+    bool ev_flag = false;
 
-        building.buildingName = std::wstring(pair.first.begin(), pair.first.end()); // Convert string to wstring
-
-        // Split elevator names
-        std::istringstream iss(pair.second);
-        std::string undergroundFloor, abovegroundFloor, each_floor_altimeter;
-        std::string max_velocity, acceleration, jerk, door_open_time;
-        std::string elevatorName, energy_flag, idle_e, standby_e, iso_e;
-
-        const wstring TimestampString = building.thisLogger->get_file_name_as_timestamp() + L"_" + building.buildingName;
-        building.thisLogger->set_log_directory_Simulation();
-        building.thisLogger->log_file_name = TimestampString + L"_TransactionList.txt";
-        building.thisLogger->csv_file_name = TimestampString + L"_TransactionList.csv";
-
-        while (iss >> elevatorName >> max_velocity >> acceleration >> jerk >> door_open_time >> undergroundFloor >> abovegroundFloor >> each_floor_altimeter >> energy_flag) 
-        {
-            bool flag = false;
-
-            // Check if this elevator name is already in the building
-            for (auto& elem : *building.elevators)
-            {
-                if (elem.elevatorName == std::wstring().assign(elevatorName.begin(), elevatorName.end()))
-                {
-                    flag = true;
-                    break;
-                }
-            }
-            if (flag)
-            {
-                continue;
-            }
-
-            // Convert string to wstring
-            const wstring wElevatorName(elevatorName.begin(), elevatorName.end());
-
-            simElevator elevator(building.buildingName, wElevatorName);
-
-            elevator.undergroundFloor = std::stoi(undergroundFloor);
-            elevator.abovegroundFloor = std::stoi(abovegroundFloor);
-
-            // Split each_floor_altimeter [alt1,alt2,alt3, ...]
-            each_floor_altimeter = each_floor_altimeter.substr(1, each_floor_altimeter.size() - 2);
-            std::istringstream iss2(each_floor_altimeter);
-            std::string altimeter;
-
-            while (std::getline(iss2, altimeter, ',')) {
-                elevator.each_floor_altimeter.push_back(std::stoi(altimeter));
-            }
-
-            elevator.elevatorName = wElevatorName;
-
-            elevator.this_elevator_algorithm->getElevatorStatus()->start_time = now;
-
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_building_name(building.buildingName);
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_device_name(wElevatorName);
-
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_underground_floor(elevator.undergroundFloor);
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_ground_floor(elevator.abovegroundFloor);
-
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_each_floor_altimeter(elevator.each_floor_altimeter);
-
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_max_velocity(std::stod(max_velocity));
-            elevator.this_elevator_algorithm->getElevatorStatus()->set_acceleration(std::stod(acceleration));
-            elevator.this_elevator_algorithm->getElevatorStatus()->door_open_time = std::stod(door_open_time);
-
-            elevator.this_elevator_algorithm->thisLogger.set_log_directory_Simulation();
-
-            if (energy_flag == "1")
-            {
-				iss >> idle_e >> standby_e >> iso_e;
-                elevator.this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_flag(true);
-				elevator.this_elevator_algorithm->getElevatorStatus()->setIDLEPower(std::stod(idle_e));
-                elevator.this_elevator_algorithm->getElevatorStatus()->setStandbyPower(std::stod(standby_e));
-                elevator.this_elevator_algorithm->getElevatorStatus()->setISOReferenceCycleEnergy(std::stod(iso_e));
-			}
-            else
-            {
-                elevator.this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_flag(false);
-            }
-
-            // Add elevator to building
-            building.elevators->push_back(elevator);
-        }
-
-        // Add building to buildings vector
-        buildings->push_back(building);
+    if (!file.is_open()) {
+        std::cerr << "Unable to open the file.\n";
+        return nullptr;
     }
 
-    return buildings;
+    while (std::getline(file, line))
+    {
+        // Read each line
+        if (line == "END INFO")
+        {
+            file.close();
+            return buildings;
+        }
+        if (line == "INFO START")
+        {
+            start_flag = true;
+        }
+        else if (line == "INFO END")
+		{
+			start_flag = false;
+            ev_flag = false;
+		}
+        else if (start_flag == true && ev_flag == false)
+        {
+            // Seperate the line by space
+            std::istringstream iss(line);
+            string key, value;
+
+            iss >> key >> value;
+            if (key == "BUILDING_NAME")
+            {
+                simBuilding building;
+                building_name = std::wstring(value.begin(), value.end());
+                building.buildingName = building_name;
+
+                const wstring TimestampString = building.thisLogger->get_file_name_as_timestamp() + L"_" + building.buildingName;
+                building.thisLogger->set_log_directory_Simulation();
+                building.thisLogger->log_file_name = TimestampString + L"_TransactionList.txt";
+                building.thisLogger->csv_file_name = TimestampString + L"_TransactionList.csv";
+
+				buildings->push_back(building);
+			}
+			else if (key == "EV_NAME")
+			{
+                ev_name = std::wstring(value.begin(), value.end());
+                simElevator elevator(building_name, ev_name);
+				buildings->back().elevators->push_back(elevator);
+                elevator.this_elevator_algorithm->thisLogger.set_log_directory_Simulation();
+                latest_ev = &buildings->back().elevators->back();
+				ev_flag = true;
+            }
+        }
+        else
+        {
+            std::istringstream iss(line);
+            string key, value;
+
+            iss >> key >> value;
+
+            assert(latest_ev != nullptr);
+
+            if (key == "MAX_VELOCITY")
+            {
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->set_max_velocity(std::stod(value));
+            }
+            else if (key == "ACCELERATION")
+            {
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->set_acceleration(std::stod(value));
+            }
+            else if (key == "JERK")
+            {
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->set_jerk(std::stod(value));
+            }
+            else if (key == "DOOR_OPEN_TIME")
+            {
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->door_open_time = std::stod(value);
+            }
+            else if (key == "UNDERGROUND_FLOOR")
+            {
+                latest_ev->undergroundFloor = std::stoi(value);
+            }
+            else if (key == "GROUND_FLOOR")
+            {
+                latest_ev->abovegroundFloor = std::stoi(value);
+            }
+            else if (key == "EACH_FLOOR_ALTIMETER")
+            {
+                value = value.substr(1, value.size() - 2);
+                std::istringstream iss2(value);
+                std::string altimeter;
+
+                while (std::getline(iss2, altimeter, ','))
+                {
+                    latest_ev->each_floor_altimeter.push_back(std::stoi(altimeter));
+                }
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->set_each_floor_altimeter(latest_ev->each_floor_altimeter);
+            }
+            else if (key == "E_IDLE")
+            {
+                // Check if value is numeric
+                if (std::all_of(value.begin(), value.end(), ::isdigit))
+                {
+                    latest_ev->this_elevator_algorithm->getElevatorStatus()->setIDLEPower(std::stod(value));
+                }
+            }
+            else if (key == "E_STANDBY")
+            {
+                // Check if value is numeric
+                if (std::all_of(value.begin(), value.end(), ::isdigit))
+                {
+                    latest_ev->this_elevator_algorithm->getElevatorStatus()->setStandbyPower(std::stod(value));
+                }
+            }
+            else if (key == "E_REF")
+            {
+                // Check if value is numeric
+                if (std::all_of(value.begin(), value.end(), ::isdigit))
+                {
+                    latest_ev->this_elevator_algorithm->getElevatorStatus()->setISOReferenceCycleEnergy(std::stod(value));
+                }
+
+                // if three values are all filled set energy flag to true
+                if (latest_ev->this_elevator_algorithm->getElevatorStatus()->getIDLEPower() != 0 && latest_ev->this_elevator_algorithm->getElevatorStatus()->getStandbyPower() != 0 && latest_ev->this_elevator_algorithm->getElevatorStatus()->getISOReferenceCycleEnergy() != 0)
+                {
+                    latest_ev->this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_flag(true);
+                }
+            }
+        }
+    }
+
+    throw std::runtime_error("Invalid log file format, must end with 'END INFO'");
 }
 
 void dt_simulation::ReadAndAddAllTransactions()
@@ -422,6 +418,8 @@ void dt_simulation::SimulationLogSTOP(simBuilding this_building, std::wstring li
     bool flag = false;
     assert(this_elevator != nullptr);
 
+    this_elevator->latest_floor = std::stoi(new_transaction_start);
+
     // IF THIS ELEVATOR IS NOT FOUND, THEN THIS STOP IS NOT DEFINED BY CALL LOG
     for (const auto elem : this_elevator->current_called_floors)
     {
@@ -552,23 +550,42 @@ void dt_simulation::SimulationLogPRESS(simBuilding this_building, std::wstring l
     }
     
     // THERE IS A UNIQUE CASE THAT PRESS LOG APEARES AFTER IDLE LOG
+    // or PRESS Appears without CALL State
     if (this_elevator->init == true)
     {
-        for (int i = this_building.transactions->size() - 1; i >= 0; i--)
-        {
-            if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && *(this_building.transactions->at(i).idle_with_zero_trip) == true)
-            {
-                *(this_building.transactions->at(i).idle_with_zero_trip) = false;
-                // APPEND new_transaction_start TO THIS transaction
-                for (auto& elem : pressed_floors)
-                {
-                    this_building.transactions->at(i).inside_floors->insert(elem);
-                }
+        this_elevator->init = false;
+        transaction new_transaction;
 
-                break;
+        new_transaction.start_floor = this_elevator->init_floor;
+        new_transaction.timestamp = timestamp;
+        new_transaction.transaction_owner = device_name;
+        new_transaction.inside_floors = new set<int>();
+
+        for(const auto& elem : pressed_floors)
+		{
+			new_transaction.inside_floors->insert(elem);
+		}
+
+        this_building.transactions->push_back(new_transaction);
+        /*
+        else
+        {
+            for (int i = this_building.transactions->size() - 1; i >= 0; i--)
+            {
+                if (this_building.transactions->at(i).transaction_owner == this_elevator->elevatorName && *(this_building.transactions->at(i).idle_with_zero_trip) == true)
+                {
+                    *(this_building.transactions->at(i).idle_with_zero_trip) = false;
+                    // APPEND new_transaction_start TO THIS transaction
+                    for (auto& elem : pressed_floors)
+                    {
+                        this_building.transactions->at(i).inside_floors->insert(elem);
+                    }
+
+                    break;
+                }
             }
         }
-
+        */
         this_elevator->init = false;
         return;
     }
@@ -616,7 +633,9 @@ void dt_simulation::SimulationLogIDLE(simBuilding this_building, std::wstring li
     }
 
     this_elevator->current_called_floors.clear();
+
     this_elevator->init = true;
+    this_elevator->init_floor = this_elevator->latest_floor;
 
     transaction latest_transaction = this_building.transactions->back();
 
@@ -842,7 +861,11 @@ void dt_simulation::sendAllBuildingTransactions(simBuilding* each_building, std:
             this_mutex->lock();
             thisElevator->this_elevator_algorithm->set_elevator_Status_JSON_STRING();
             send_data(thisElevator->this_elevator_algorithm->getJSONString());
-            wstring log_string = L"TRANSACTION AT : " + std::to_wstring(each_transaction.timestamp) + L" Seconds BY BUILDING : " + each_building->buildingName + L" EV : " + each_transaction.owner + L" DEST FLOOR : " + std::to_wstring(each_transaction.goTo_floor) + L"\n";
+            wstring log_string = L"TRANSACTION AT : " + std::to_wstring(each_transaction.timestamp) + L" Seconds BY BUILDING : " + each_building->buildingName + L" EV : " + each_transaction.owner + L" DEST FLOOR : " + std::to_wstring(each_transaction.goTo_floor) + 
+                L"E_IDLE : " + std::to_wstring(thisElevator->energy_consumption_vector.back()[0]) +
+                L"E_STANDBY : " + std::to_wstring(thisElevator->energy_consumption_vector.back()[1]) + 
+                L"E_ISO : " + std::to_wstring(thisElevator->energy_consumption_vector.back()[2]) + 
+                L"\n";
 
             thisElevator->this_elevator_algorithm->thisLogger.write_log(log_string);
             std::wcout << log_string;
@@ -1316,8 +1339,12 @@ void dt_simulation::SimulationAlgorithmRandom(simBuilding* this_building, transa
         current_elevator_floor = chosen_elevator->current_transaction.back().destination_floors->back();
         tran.end_timestamp = tran.timestamp;
     }
-    tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, *chosen_elevator, current_elevator_floor, tran.start_floor);
-    tran.end_timestamp += this_building->default_elevator_stop_time;
+
+	if(current_elevator_floor != tran.start_floor)
+	{
+		tran.end_timestamp += getTimeBetweenTwoFloors(*this_building, *chosen_elevator, current_elevator_floor, tran.start_floor);
+		tran.end_timestamp += this_building->default_elevator_stop_time;
+	}
 
     // STEP 4-2. SECOND, WE HAVE TO CALCULATE TIME BETWEEN EACH TRANSACTION's START FLOOR TO END DEST FLOOR
     int start_floor = tran.start_floor;
@@ -1450,10 +1477,12 @@ double dt_simulation::getDisatanceBetweenTwoFloors(simBuilding this_building, si
 double dt_simulation::getTimeBetweenTwoFloors(simBuilding this_building, simElevator ThisElevator, int start_floor, int end_floor) {
     // GET ALTITUDE OF START FLOOR if start_floor < 0, it means underground floor, and if start_floor > 0, it means aboveground floor
     double start_altitude = 0.0;
-    if (start_floor < 0) {
+    if (start_floor < 0) 
+    {
 		start_altitude = ThisElevator.each_floor_altimeter[start_floor + ThisElevator.undergroundFloor];
 	}
-    else {
+    else 
+    {
 		start_altitude = ThisElevator.each_floor_altimeter[start_floor + ThisElevator.undergroundFloor - 1];
     }
 
@@ -1571,7 +1600,6 @@ simElevator::simElevator(wstring building_name, wstring device_name)
 
     this->this_elevator_algorithm = new elevatorAlgorithmDefault(building_name, device_name, start);
     this->elevatorName = device_name;
-    this->elevatorName = L"";
     this->current_velocity = 0.0;
     this->current_altimeter = 0.0;
     this->move_distance = 0.0;

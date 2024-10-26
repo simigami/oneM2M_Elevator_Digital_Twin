@@ -2,6 +2,7 @@ import datetime
 import init
 import Altimeter_Sensor
 import Camera_Sensor
+import Detection
 import Detect_Button_Elevator_Inside
 def get_sensor_datas(init_data):
     building_name = init_data.building_name

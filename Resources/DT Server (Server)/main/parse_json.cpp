@@ -8,20 +8,20 @@
 using namespace std;
 using json = nlohmann::json;
 
-Wparsed_struct parse_json::parsingWithBulidingAlgorithms(wstring json_data, int algorithm_number)
+Wparsed_struct parse_json::parsingWithBulidingAlgorithms(string httpRequestBody, int algorithm_number)
 {
 	switch (algorithm_number)
 	{
 		case 0:
-			return parsingOnlyBuildingName(json_data);
+			return parsingOnlyBuildingName(httpRequestBody);
 		case 1:
-			return parsingCrowdControlButtonBuliding(json_data);
+			return parsingCrowdControlButtonBuliding(httpRequestBody);
 		default:
-			return parsingOnlyBuildingName(json_data);
+			return parsingOnlyBuildingName(httpRequestBody);
 	}
 }
 
-Wparsed_struct parse_json::parsingOnlyBuildingName(wstring json_data)
+Wparsed_struct parse_json::parsingOnlyBuildingName(string json_data)
 {
 	nlohmann::json parsed_json = nlohmann::json::parse(json_data);
 	try
@@ -45,7 +45,7 @@ Wparsed_struct parse_json::parsingOnlyBuildingName(wstring json_data)
 	return p;
 }
 
-Wparsed_struct parse_json::parsingDedicatedButtonBuilding(wstring json_data)
+Wparsed_struct parse_json::parsingDedicatedButtonBuilding(string json_data)
 {
 	nlohmann::json parsed_json = nlohmann::json::parse(json_data);
 	try
@@ -92,22 +92,47 @@ Wparsed_struct parse_json::parsingDedicatedButtonBuilding(wstring json_data)
 	return p;
 }
 
-Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(wstring json_data)
+Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(string json_data)
 {
 	json parsed_json = json::parse(json_data);
 	Wparsed_struct p;
 	try
 	{
-		p.building_name = stringToWstring(parsed_json["building_name"]);
-		p.device_name = stringToWstring(parsed_json["device_name"]);
+		const auto p_building_name = parsed_json["building name"];
+		const auto p_ev_name = parsed_json["elevator name"];
+		const auto p_underground_floor = parsed_json["underground floor"];
+		const auto p_init_floor = parsed_json["init floor"];
+		const auto p_ground_floor = parsed_json["ground floor"];
+		const auto p_timestamp = parsed_json["timestamp"];
+		const auto p_max_velocity = parsed_json["max velocity"];
+		const auto p_acceleration = parsed_json["acceleration"];
+		const auto p_velocity = parsed_json["velocity"];
+		const auto p_altimeter = parsed_json["altimeter"];
+		const auto p_temperature = parsed_json["temperature"];
+		const auto p_button_inside = parsed_json["button inside"];
+		const auto p_button_outside = parsed_json["button outside"];
+		const auto p_button_outside_direction = parsed_json["button outside direction"];
+		const auto p_each_floor_altimeter = parsed_json["each floor altimeter"];
+		const auto p_E_IDLE = parsed_json["idle energy"];
+		const auto p_E_Standby = parsed_json["standby energy"];
+		const auto p_E_Ref = parsed_json["ref energy"];
+
+		if(p_building_name != nullptr)
+		{
+			p.building_name = stringToWstring(p_building_name.get<string>());
+		}
+		if (p_ev_name != nullptr)
+		{
+			p.device_name = stringToWstring(p_ev_name.get<string>());
+		}
 
 		if (p.device_name == L"OUT")
 		{
 			p.timestamp = stringToWstring(parsed_json["timestamp"]);
 
-			if (parsed_json["button_outside"] != nullptr)
+			if (parsed_json["button outside"] != nullptr)
 			{
-				json buttonOutsideArray = parsed_json["button_outside"];
+				json buttonOutsideArray = parsed_json["button outside"];
 
 				// Iterate over the elements of the JSON array and store them
 				for (const nlohmann::basic_json<>& element : buttonOutsideArray) {
@@ -119,27 +144,17 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(wstring json_data)
 		}
 		else 
 		{
-			const auto p_underground_floor = parsed_json.at("underground_floor");
-			const auto p_ground_floor = parsed_json.at("ground_floor");
-			const auto p_timestamp = parsed_json.at("timestamp");
-			const auto p_max_velocity = parsed_json.at("max_velocity");
-			const auto p_acceleration = parsed_json.at("acceleration");
-			const auto p_velocity = parsed_json.at("velocity");
-			const auto p_altimeter = parsed_json.at("altimeter");
-			const auto p_temperature = parsed_json.at("temperature");
-			const auto p_button_inside = parsed_json.at("button_inside");
-			const auto p_each_floor_altimeter = parsed_json.at("each_floor_altimeter");
-			const auto p_E_IDLE = parsed_json.at("E_Idle");
-			const auto p_E_Standby = parsed_json.at("E_Standby");
-			const auto p_E_Ref = parsed_json.at("E_Ref");
-
 			if (p_underground_floor != nullptr)
 			{
-				p.underground_floor = stoi(p_underground_floor.get<string>());
+				p.underground_floor = p_underground_floor.get<int>();
 			}
 			if (p_ground_floor != nullptr)
 			{
-				p.ground_floor = stoi(p_ground_floor.get<string>());
+				p.ground_floor = p_ground_floor.get<int>();
+			}
+			if (p_init_floor != nullptr)
+			{
+				p.init_floor = p_init_floor.get<int>();
 			}
 			if (p_timestamp != nullptr)
 			{
@@ -147,58 +162,54 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(wstring json_data)
 			}
 			if (p_velocity != nullptr)
 			{
-				p.velocity = stod(p_velocity.get<string>());
+				p.velocity = p_velocity.get<double>();
 			}
 			if (p_altimeter != nullptr)
 			{
-				p.altimeter = stod(p_altimeter.get<string>());
+				p.altimeter = p_altimeter.get<double>();
 			}
 			if (p_temperature != nullptr)
 			{
-				p.temperature = stod(p_temperature.get<string>());
+				p.temperature = p_temperature.get<double>();
 			}
-
-			if (parsed_json["button_inside"] != nullptr)
-			{
-				vector<int> temp = parsed_json.at("button_inside").get<vector<int>>();
-
-				for (const auto& elem : temp)
-				{
-					wstring temp = to_wstring(elem);
-					if (elem < 0)
-					{
-						temp[0] = L'B';
-					}
-					p.button_inside.push_back(temp);
-				}
-			}
-
 			if (p_max_velocity != nullptr)
 			{
-				p.max_velocity = stod(p_max_velocity.get<string>());
+				p.max_velocity = p_max_velocity.get<double>();
 			}
 			if (p_acceleration != nullptr)
 			{
-				p.acceleration = stod(p_acceleration.get<string>());
+				p.acceleration = p_acceleration.get<double>();
 			}
 			if (p_E_IDLE != nullptr)
 			{
-				p.idle_power = stod(p_E_IDLE.get<string>());
+				p.idle_power = p_E_IDLE.get<double>();
 			}
 			if (p_E_Standby != nullptr)
 			{
-				p.standby_power = stod(p_E_Standby.get<string>());
+				p.standby_power = p_E_Standby.get<double>();
 			}
 			if (p_E_Ref != nullptr)
 			{
-				p.iso_power = stod(p_E_Ref.get<string>());
+				p.iso_power = p_E_Ref.get<double>();
 			}
 		}
 
-		if (parsed_json["each_floor_altimeter"] != nullptr)
+		if (p_button_inside != nullptr)
 		{
-			vector<double> temp = parsed_json.at("each_floor_altimeter").get<vector<double>>();
-
+			vector<int> temp = p_button_inside.get<vector<int>>();
+			for (const auto& elem : temp)
+			{
+				wstring temp = to_wstring(elem);
+				if (elem < 0)
+				{
+					temp[0] = L'B';
+				}
+				p.button_inside.push_back(temp);
+			}
+		}
+		if (p_each_floor_altimeter != nullptr)
+		{
+			vector<double> temp = p_each_floor_altimeter.get<vector<double>>();
 			for (const auto& elem : temp)
 			{
 				p.each_floor_altimeter.push_back(elem);

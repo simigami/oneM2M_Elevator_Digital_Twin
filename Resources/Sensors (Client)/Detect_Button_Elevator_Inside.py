@@ -93,37 +93,40 @@ def return_pressed_buttons(id_in_dots):
 
     return result
 
+# def get_data(image_path, debug=0):
+#     coordinates_of_label = []
+#     detected = []
+#
+#     start = time.time()
+#
+#     if os_version != "Windows":
+#         image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
+#     else:
+#         image_path = "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Sample\Sample_Image_2.jpg"
+#
+#     img = cv2.imread(image_path)
+#     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#     height, width, _ = img.shape
+#
+#     read_label_and_draw_rectangle(img, coordinates_of_label, debug)
+#
+#     lowest_color_to_detect = np.array(lowest_RGB, dtype="uint8")
+#     highest_color_to_detect = np.array(highest_RGB, dtype="uint8")
+#
+#     flattened_contour, hierarchy = detect_contours(img, lowest_color_to_detect, highest_color_to_detect, debug)
+#
+#     id_in_dots = check_contour_dots_with_id(flattened_contour, coordinates_of_label)
+#
+#     final_id_list = return_pressed_buttons(id_in_dots)
+#
+#     for id in final_id_list:
+#         detected.append(detection_list[id])
+#
+#     print(detected)
+#     return detected
+
 def get_data(image_path, debug=0):
-    coordinates_of_label = []
-    detected = []
-
-    start = time.time()
-
-    if os_version != "Windows":
-        image_path = "/home/user/Desktop/Effective-Elevator-Energy-Calculation-for-SejongAI-Center/Resources/Sample/Sample_Image_2.jpg"
-    else:
-        image_path = "E:\ML\Elevator Git\Effective-Elevator-Energy-Calculation-for-SejongAI-Center\Resources\Sample\Sample_Image_2.jpg"
-    
-    img = cv2.imread(image_path)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    height, width, _ = img.shape
-
-    read_label_and_draw_rectangle(img, coordinates_of_label, debug)
-
-    lowest_color_to_detect = np.array(lowest_RGB, dtype="uint8")
-    highest_color_to_detect = np.array(highest_RGB, dtype="uint8")
-
-    flattened_contour, hierarchy = detect_contours(img, lowest_color_to_detect, highest_color_to_detect, debug)
-
-    id_in_dots = check_contour_dots_with_id(flattened_contour, coordinates_of_label)
-
-    final_id_list = return_pressed_buttons(id_in_dots)
-
-    for id in final_id_list:
-        detected.append(detection_list[id])
-
-    print(detected)
-    return detected
+    pass
 
 if __name__ == '__main__':
     test = 1

@@ -14,6 +14,7 @@ struct Wparsed_struct
 
 	int underground_floor = 0;
 	int ground_floor = 0;
+	int init_floor = 0;
 
 	int timestampOffset = 0;
 
@@ -43,11 +44,11 @@ class parse_json
 public:
 	Wparsed_struct p;
 
-	Wparsed_struct parsingWithBulidingAlgorithms(wstring json_data, int algorithm_number);
+	Wparsed_struct parsingWithBulidingAlgorithms(string json_data, int algorithm_number);
 
-	Wparsed_struct parsingOnlyBuildingName(wstring json_data);
-	Wparsed_struct parsingDedicatedButtonBuilding(wstring json_data);
-	Wparsed_struct parsingCrowdControlButtonBuliding(wstring json_data);
+	Wparsed_struct parsingOnlyBuildingName(string json_data);
+	Wparsed_struct parsingDedicatedButtonBuilding(string json_data);
+	Wparsed_struct parsingCrowdControlButtonBuliding(string json_data);
 
 	Wparsed_struct parsingText(wstring text);
 

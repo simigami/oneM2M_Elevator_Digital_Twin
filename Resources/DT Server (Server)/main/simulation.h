@@ -62,9 +62,6 @@ public:
 	double t_constant_speed;
 	double t_max_to_zero_deceleration;
 
-	bool set_initial_elevator_direction(vector<string> button_inside);
-	bool set_initial_elevator_direction(vector<vector<int>> button_outside);
-
 	bool set_initial_elevator_direction(int floor);
 	bool set_direction(int floor);
 

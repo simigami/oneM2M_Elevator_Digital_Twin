@@ -1,15 +1,11 @@
 #pragma once
 #include <boost/asio.hpp>
-#include <cpprest/http_client.h>
 
 #include "elevator.h"
 #include "parse_json.h"
 #include "socket_oneM2M.h"
 
 using namespace std;
-using namespace web;
-using namespace web::http;
-using namespace web::http::client;
 
 struct http_request_header_data
 {
@@ -72,16 +68,16 @@ public:
 	void startAsyncAccept_Notification(boost::asio::ip::tcp::acceptor& acceptor, boost::asio::io_context& ioContext);
 	void handleConnection(boost::asio::ip::tcp::socket& socket, int port);
 
-	int Running_Embedded(const string& httpRequestHeader, const wstring& httpRequestBody);
-	void Running_Init(const string& httpRequestHeader, const wstring& httpRequestBody);
+	int Running_Embedded(string&);
+	void Running_Init(string&);
 	vector<elevator_resource_status> checkoneM2M(http_request_header_data* httpRequestHeaderData, Wparsed_struct parsed_struct, send_oneM2M ACP_Validation_Socket);
 	elevator_resource_status checkDTServer(vector<Building*> bulidings, Wparsed_struct parsed_struct);
 
-	void CreateNewBuildingAndElevator(const wstring& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status);
-	void CreateNewBuilding(const wstring& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status);
-	void CreateNewElevator(const wstring& httpRequestBody, Building* thisBuilding, elevator_resource_status status);
+	void CreateNewBuildingAndElevator(const string& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status);
+	void CreateNewBuilding(const string& httpRequestBody, const wstring& ACOR_NAME, elevator_resource_status status);
+	void CreateNewElevator(const string& httpRequestBody, Building* thisBuilding, elevator_resource_status status);
 
-	void Running_Notification(const string& httpResponse);
+	void Running_Notification(string&);
 
 	bool bExistsElevator(Building* one_building, const wstring& device_name);
 

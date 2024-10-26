@@ -33,7 +33,6 @@ enum column_name {
 
 class dt_plot {
 public:
-	std::map<std::string, std::unordered_map<std::string, std::vector<double>>> extractED(const std::vector<std::vector<std::string>>& data);
 	void run();
 	void ReadFile(std::string CSVFilePath);
 

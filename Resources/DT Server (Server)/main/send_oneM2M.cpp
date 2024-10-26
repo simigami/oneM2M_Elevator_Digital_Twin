@@ -1,8 +1,7 @@
+#include "send_oneM2M.h"
+#include "nlohmann/json.hpp"
 #include <cstdarg>
 #include <chrono>
-#include "nlohmann/json.hpp"
-
-#include "send_oneM2M.h"
 
 using namespace web;
 using namespace web::http::client;

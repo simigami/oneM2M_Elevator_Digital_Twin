@@ -54,7 +54,7 @@ public:
     int latest_floor = 0;
     int will_reach_floor = 0;
 
-    int first_called_floor = 0;
+    int init_floor = -5;
 
     vector<double> each_floor_altimeter = vector<double>();
     vector<int> current_called_floors;
@@ -102,19 +102,14 @@ public:
 
     dt_simulation();
 
-    void setSimulatedFileLocation();
-    wchar_t getSimulatedFileLocation() const;
-
     void run();
-    std::unordered_map<std::string, std::string> findLogStart(const std::string& fileAddress, std::unordered_map<std::string, std::string>& elevatorMap);
-    std::vector<simBuilding>* createBuildings(const std::unordered_map<std::string, std::string>& elevatorMap);
     
     simBuilding getBuilding(const std::wstring& buildingName);
-    transaction getPreviousTransaction(simBuilding this_building);
 
     void ReadAndAddAllTransactions();
     void PrintAllTransactions();
     void WriteAllTransactionsToFile();
+    std::vector<simBuilding>* makeInstance(const std::string& fileAddress);
     void AddTransactionOfThisElevator(simBuilding this_building, wifstream* file);
     void SimulationLogCALL(simBuilding this_building, std::wstring line);
     void SimulationLogMOV(simBuilding this_building, std::wstring line);
@@ -144,7 +139,6 @@ public:
     simElevator* findNearestElevator(simElevator ThisElevator, vector<simElevator>* this_building_elevators, transaction this_transaction);
 
     wstring MakeCSVStringByGatherElevatorInfo(simElevator ThisElevator, const int Timestamp);
-    void putSimulatedStringTooneM2M(Wparsed_struct parsedStruct);
 
 private:
     string log_file_path;

@@ -1,6 +1,8 @@
-EV1 1 -99 -99 -99 []
-EV2 1 -99 -99 -99 []
-EV3 1 -99 -99 -99 []
+IN EV1 3 [2,4,7,9]
+IN EV2 4 [-2,5]
+IN EV3 5 [6,12]
+OUT 10 [[9,False]]
+
 OUT 3 [[1,True]]
 OUT 5 [[1,True],[9,False]]
 OUT 8 [[-1,True],[1,True],[9,False]]
