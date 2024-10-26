@@ -49,10 +49,7 @@ public:
 	Wparsed_struct parsingOnlyBuildingName(string json_data);
 	Wparsed_struct parsingDedicatedButtonBuilding(string json_data);
 	Wparsed_struct parsingCrowdControlButtonBuliding(string json_data);
-
 	Wparsed_struct parsingText(wstring text);
-
-	wstring stringToWstring(const std::string& str)const;
 
 	vector<wstring> splitText(const wstring& s, wchar_t delimiter);
 

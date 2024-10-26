@@ -17,6 +17,19 @@ void signalHandler(int signum)
 
 int main()
 {
+	// check log dir exists and make one if not
+	fs::path logDir(LOG_DIR_NAME);
+	if (!fs::exists(logDir))
+	{
+		fs::create_directory(logDir);
+
+		// make 4 directories for log files
+		fs::create_directory(logDir / RTS_LOG_DIR_NAME);
+		fs::create_directory(logDir / SIMULATION_LOG_DIR_NAME);
+		fs::create_directory(logDir / STATECODE_LOG_DIR_NAME);
+		fs::create_directory(logDir / PLOT_LOG_DIR_NAME);
+	}
+
 	try
 	{
 		signal(SIGINT, signalHandler);

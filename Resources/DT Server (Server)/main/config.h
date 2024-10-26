@@ -66,7 +66,12 @@ namespace fs = boost::filesystem;
 #define MAXFILEPATHLENGTH 1024
 
 // THIS IS FOR DT SERVER LOG FILE FOR RTS MODE TO SIMULATION MODE
-#define LOGFILEPATH_FOR_SIMULATION fs::current_path().parent_path().wstring() + L"\\Log\\" + get_file_name_as_timestamp() + L"_result.txt"
+#define LOG_DIR_NAME L"Log"
+#define PLOT_LOG_DIR_NAME L"Plot"
+#define RTS_LOG_DIR_NAME L"RTS"
+#define SIMULATION_LOG_DIR_NAME L"Simulation"
+#define STATECODE_LOG_DIR_NAME L"StateCode"
+#define LOGFILEPATH_FOR_SIMULATION fs::current_path().wstring() + L"\\" + LOG_DIR_NAME + "\\" + get_file_name_as_timestamp() + L"_result.txt"
 #define LOGFILEPATH "log.txt"
 
 enum elevator_resource_status

@@ -8,6 +8,8 @@
 #include "simulation.h"
 #include "elevator.h"
 
+#include"logger.h"
+
 #include <locale>
 #include <codecvt>
 #include <sstream>
@@ -962,11 +964,8 @@ void dt_real_time::Running_Notification(string& http_body)
 					string device_name = sur_values[2];
 					string majorCNTName = sur_values[3];
 
-					static std::locale loc("");
-
-					wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
-					wstring Wbuilding_name = converter.from_bytes(building_name);
-					wstring Wdevice_name = converter.from_bytes(device_name);
+					wstring Wbuilding_name = string_to_wstring(building_name);
+					wstring Wdevice_name = string_to_wstring(device_name);
 
 					Building* thisBuilding = this->getBuilding(Wbuilding_name);
 					Elevator* thisElevator = this->getElevator(thisBuilding, Wdevice_name);

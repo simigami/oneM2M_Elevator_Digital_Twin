@@ -81,20 +81,23 @@ public:
 	std::wstring get_file_name_as_timestamp();
 	
 	std::wstring current_path = fs::current_path().wstring();
-	std::wstring parent_path = fs::current_path().parent_path().wstring();
 
 #ifdef _WIN32
 	std::wstring log_directory = L"";
-	std::wstring log_directory_RTS = parent_path + L"\\Log\\RTS";
-	std::wstring log_directory_StateCode = parent_path + L"\\Log\\StateCode";
-	std::wstring log_directory_Simulation = parent_path + L"\\Log\\Simulation";
+	std::wstring log_directory_RTS = current_path + L"\\Log\\RTS";
+	std::wstring log_directory_StateCode = current_path + L"\\Log\\StateCode";
+	std::wstring log_directory_Simulation = current_path + L"\\Log\\Simulation";
 #else
 	std::wstring log_directory = L"";
-	std::wstring log_directory_RTS = parent_path + L"/Log/RTS";
-	std::wstring log_directory_Simulation = parent_path + L"/Log/Simulation";
+	std::wstring log_directory_RTS = current_path + L"/Log/RTS";
+	std::wstring log_directory_Simulation = current_path + L"/Log/Simulation";
+	std::wstring log_directory_StateCode = current_path + L"/Log/StateCode";
 #endif // WIN32
 	std::wstring log_file_name = L"";
 	std::wstring csv_file_name = L"";
 	std::wstring log_file_name_for_building_logs = L"";
 
 };
+
+std::string wstring_to_string(const std::wstring& wstr);
+std::wstring string_to_wstring(const std::string& str);

@@ -425,7 +425,7 @@ FakesAssemblies/
 *.opendb
 
 .idea/
-Resources/DT Server (Server)/main/.vs/main/v16/
+Resources/DT Server (Server)/main
 Resources/DT Server (Server)/main/main.vcxproj
 Resources/DT Server (Server)/main/main.vcxproj.filters
 Resources/DT Server (Server)/main/main.vcxproj.user

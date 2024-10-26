@@ -1,4 +1,5 @@
 #include "parse_json.h"
+#include "logger.h"
 
 #include <codecvt>
 #include <locale>
@@ -26,8 +27,8 @@ Wparsed_struct parse_json::parsingOnlyBuildingName(string json_data)
 	nlohmann::json parsed_json = nlohmann::json::parse(json_data);
 	try
 	{
-		p.building_name = stringToWstring(parsed_json["building_name"]);
-		p.device_name = stringToWstring(parsed_json["device_name"]);
+		p.building_name = string_to_wstring(parsed_json["building_name"]);
+		p.device_name = string_to_wstring(parsed_json["device_name"]);
 
 		// Parse each array element to p.each_floor_altimeter
 		if (parsed_json["each_floor_altimeter"] != nullptr)
@@ -50,11 +51,11 @@ Wparsed_struct parse_json::parsingDedicatedButtonBuilding(string json_data)
 	nlohmann::json parsed_json = nlohmann::json::parse(json_data);
 	try
 	{
-		p.building_name = stringToWstring(parsed_json["building_name"]);
-		p.device_name = stringToWstring(parsed_json["device_name"]);
+		p.building_name = string_to_wstring(parsed_json["building_name"]);
+		p.device_name = string_to_wstring(parsed_json["device_name"]);
 		p.underground_floor = stoi(parsed_json.at("underground_floor").get<string>());
 		p.ground_floor = stoi(parsed_json.at("ground_floor").get<string>());
-		p.timestamp = stringToWstring(parsed_json["timestamp"]);
+		p.timestamp = string_to_wstring(parsed_json["timestamp"]);
 		p.velocity = stod(parsed_json.at("velocity").get<string>());
 		p.altimeter = stod(parsed_json.at("altimeter").get<string>());
 		p.temperature = stod(parsed_json.at("temperature").get<string>());
@@ -119,16 +120,16 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(string json_data)
 
 		if(p_building_name != nullptr)
 		{
-			p.building_name = stringToWstring(p_building_name.get<string>());
+			p.building_name = string_to_wstring(p_building_name.get<string>());
 		}
 		if (p_ev_name != nullptr)
 		{
-			p.device_name = stringToWstring(p_ev_name.get<string>());
+			p.device_name = string_to_wstring(p_ev_name.get<string>());
 		}
 
 		if (p.device_name == L"OUT")
 		{
-			p.timestamp = stringToWstring(parsed_json["timestamp"]);
+			p.timestamp = string_to_wstring(parsed_json["timestamp"]);
 
 			if (parsed_json["button outside"] != nullptr)
 			{
@@ -158,7 +159,7 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(string json_data)
 			}
 			if (p_timestamp != nullptr)
 			{
-				p.timestamp = stringToWstring(p_timestamp.get<string>());
+				p.timestamp = string_to_wstring(p_timestamp.get<string>());
 			}
 			if (p_velocity != nullptr)
 			{
@@ -284,13 +285,6 @@ Wparsed_struct parse_json::parsingText(wstring text)
 	}
 
 	return retStruct;
-}
-
-wstring parse_json::stringToWstring(const string& str) const
-{
-	wstring_convert<codecvt_utf8_utf16<wchar_t>> converter;
-
-	return converter.from_bytes(str);
 }
 
 vector<wstring> parse_json::splitText(const wstring& s, wchar_t delimiter)
