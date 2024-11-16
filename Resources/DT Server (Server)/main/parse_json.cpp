@@ -114,6 +114,7 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(string json_data)
 		const auto p_button_outside = parsed_json["button outside"];
 		const auto p_button_outside_direction = parsed_json["button outside direction"];
 		const auto p_each_floor_altimeter = parsed_json["each floor altimeter"];
+		const auto p_use_energy_calculation_flag = parsed_json["use energy calculation flag"];
 		const auto p_E_IDLE = parsed_json["idle energy"];
 		const auto p_E_Standby = parsed_json["standby energy"];
 		const auto p_E_Ref = parsed_json["ref energy"];
@@ -180,6 +181,10 @@ Wparsed_struct parse_json::parsingCrowdControlButtonBuliding(string json_data)
 			if (p_acceleration != nullptr)
 			{
 				p.acceleration = p_acceleration.get<double>();
+			}
+			if(p_use_energy_calculation_flag != nullptr)
+			{
+				p.useEnergyCalulationFlag = p_use_energy_calculation_flag.get<bool>();
 			}
 			if (p_E_IDLE != nullptr)
 			{

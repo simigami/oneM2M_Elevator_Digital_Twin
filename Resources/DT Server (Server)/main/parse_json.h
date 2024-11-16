@@ -32,6 +32,7 @@ struct Wparsed_struct
 	bool button_outside_direction;
 	bool inFlag = true;
 	bool outFlag = true;
+	bool useEnergyCalulationFlag = false;
 
 	vector<double> each_floor_altimeter = vector<double>{};
 

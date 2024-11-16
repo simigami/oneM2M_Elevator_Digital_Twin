@@ -81,6 +81,7 @@ def insert_default_payloads(init_data, thisEV, sensor_data):
     sensor_data['max velocity'] = thisEV.max_velocity
 
     if thisEV.energy_flag is True:
+        sensor_data['use energy calculation flag'] = True
         sensor_data['idle energy'] = thisEV.E_idle
         sensor_data['standby energy'] = thisEV.E_standby
         sensor_data['ref energy'] = thisEV.E_ref
@@ -230,7 +231,8 @@ def run_test(this_building):
             "button outside": None,
             "idle energy": None,
             "standby energy": None,
-            "ref energy": None
+            "ref energy": None,
+            "use energy calculation flag": False
         }
 
         thisEV = None
@@ -306,7 +308,8 @@ def init_dt_server_by_ev_list(init_data):
             "button outside": None,
             "idle energy": None,
             "standby energy": None,
-            "ref energy": None
+            "ref energy": None,
+            "use energy calculation flag": False
         }
 
         http_header = set_http_header([""], thisEV, init_data, init_dt=1)
@@ -321,6 +324,7 @@ def init_dt_server_by_ev_list(init_data):
         sensor_data['max velocity'] = thisEV.max_velocity
 
         if thisEV.energy_flag is True:
+            sensor_data['use energy calculation flag'] = True
             sensor_data['idle energy'] = thisEV.E_idle
             sensor_data['standby energy'] = thisEV.E_standby
             sensor_data['ref energy'] = thisEV.E_ref

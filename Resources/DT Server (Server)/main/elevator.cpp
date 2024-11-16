@@ -6,15 +6,16 @@ Elevator::Elevator(elevator_resource_status sc, Wparsed_struct parsed_struct, ve
 	this->p = new physics(parsed_struct);
 	this->UEsock = new socket_UnrealEngine();
 
-	if (sc == ELEVATOR_DATA_NOT_FOUND || sc == MAKE_DT_ONLY)
-	{
-		this->p->s->each_floor_altimeter = this->p->info.altimeter_of_each_floor;
-	}
-
 	this->thisElevatorAlgorithmSingle = new elevatorAlgorithmSingle(parsed_struct.building_name, parsed_struct.device_name, this_building_creation_time);
 	this->thisElevatorAlgorithmMultiple = new elevatorAlgorithmMultiple(parsed_struct.building_name, parsed_struct.device_name, this_building_creation_time);
 
 	this->algorithmNumber = algorithmNumber;
+
+	if (sc == ELEVATOR_DATA_NOT_FOUND || sc == MAKE_DT_ONLY)
+	{
+		this->p->s->each_floor_altimeter = this->p->info.altimeter_of_each_floor;
+		this->getElevatorStatus()->set_this_elevator_energy_flag(parsed_struct.useEnergyCalulationFlag);
+	}
 }
 
 void Elevator::runElevator()

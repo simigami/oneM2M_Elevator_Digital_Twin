@@ -4,6 +4,10 @@
 #include "config.h"
 #include "socket_UnrealEngine.h"
 
+socket_UnrealEngine::socket_UnrealEngine() : context(), UE5AcceptSocket(context)
+{
+}
+
 void handle_write(const boost::system::error_code& error, std::size_t bytes_transferred) {
 	if (!error) 
 	{
@@ -13,10 +17,6 @@ void handle_write(const boost::system::error_code& error, std::size_t bytes_tran
 	{
         std::cerr << "Error: " << error.message() << std::endl;
     }
-}
-
-socket_UnrealEngine::socket_UnrealEngine() : context(), UE5AcceptSocket(context)
-{
 }
 
 void socket_UnrealEngine::send_data_to_UE5(std::string request_content)
