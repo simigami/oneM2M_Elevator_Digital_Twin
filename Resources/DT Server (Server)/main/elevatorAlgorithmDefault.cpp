@@ -1313,13 +1313,6 @@ void elevatorStatus::set_this_elevator_energy_flag(bool flag)
 	calculate_this_elevator_energy_consumption = flag;
 }
 
-void elevatorStatus::set_this_elevator_energy_consumption(double energy1, double energy2, double energy3, double door_closing_time)
-{
-	IDLE_Power = energy1;
-	Standby_Power_5Min = energy2;
-	ISO_Reference_Cycle_Energy = energy3;
-	door_open_time = door_closing_time;
-}
 bool elevatorStatus::get_this_elevator_energy_consumption()
 {
 	return calculate_this_elevator_energy_consumption;
@@ -1516,15 +1509,18 @@ double elevatorStatus::getISOReferenceCycleEnergy()
 
 void elevatorStatus::setIDLEPower(double power)
 {
+	calculate_this_elevator_energy_consumption = power != 0;
 	IDLE_Power = power;
 }
 
 void elevatorStatus::setStandbyPower(double power)
 {
+	calculate_this_elevator_energy_consumption = power != 0;
 	Standby_Power_5Min = power;
 }
 
 void elevatorStatus::setISOReferenceCycleEnergy(double power)
 {
+	calculate_this_elevator_energy_consumption = power != 0;
 	ISO_Reference_Cycle_Energy = power;
 }

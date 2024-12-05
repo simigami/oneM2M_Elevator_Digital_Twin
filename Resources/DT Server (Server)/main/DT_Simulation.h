@@ -43,7 +43,7 @@ public:
 	bool init = true;
 
     int undergroundFloor;
-    int abovegroundFloor;
+    int groundFloor;
 
     double current_velocity;
     double current_altimeter;
@@ -105,11 +105,13 @@ public:
     void run();
     
     simBuilding getBuilding(const std::wstring& buildingName);
+    simElevator getElevator(const simBuilding ThisBuilding, const std::wstring& buildingName);
 
     void ReadAndAddAllTransactions();
     void PrintAllTransactions();
     void WriteAllTransactionsToFile();
     std::vector<simBuilding>* makeInstance(const std::string& fileAddress);
+    std::vector<simBuilding>* makeInstance2(const std::string& fileAddress);
     void AddTransactionOfThisElevator(simBuilding this_building, wifstream* file);
     void SimulationLogCALL(simBuilding this_building, std::wstring line);
     void SimulationLogMOV(simBuilding this_building, std::wstring line);
@@ -138,7 +140,10 @@ public:
     simElevator* findIDLEElevator(vector<simElevator>* this_building_elevators, transaction this_transaction);
     simElevator* findNearestElevator(simElevator ThisElevator, vector<simElevator>* this_building_elevators, transaction this_transaction);
 
+    bool bBuildingExist(const std::wstring& buildingName);
+
     wstring MakeCSVStringByGatherElevatorInfo(simElevator ThisElevator, const int Timestamp);
+    vector<string> split(string input, const char delimiter);
 
 private:
     string log_file_path;

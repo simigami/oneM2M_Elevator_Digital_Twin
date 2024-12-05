@@ -81,7 +81,6 @@ public:
     double get_jerk();
 
     void set_this_elevator_energy_flag(bool flag);
-    void set_this_elevator_energy_consumption(double energy1, double energy2, double energy3, double door_closing_time);
     bool get_this_elevator_energy_consumption();
 
     void set_this_elevator_daily_energy_consumption(int sim_mode_delta);

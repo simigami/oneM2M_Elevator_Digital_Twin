@@ -6,6 +6,24 @@
 #include <cctype>
 #include <mutex>
 
+std::vector<double> parseStringToFloatVector(const std::string& input) {
+    // Step 1: Remove brackets from the string
+    std::string cleanedInput = input;
+    cleanedInput.erase(std::remove(cleanedInput.begin(), cleanedInput.end(), '['), cleanedInput.end());
+    cleanedInput.erase(std::remove(cleanedInput.begin(), cleanedInput.end(), ']'), cleanedInput.end());
+
+    // Step 2: Use stringstream to parse the values
+    std::vector<double> doubleVector;
+    std::stringstream ss(cleanedInput);
+    std::string token;
+
+    while (std::getline(ss, token, ',')) { // Split by comma
+        doubleVector.push_back(std::stod(token)); // Convert to float and add to vector
+    }
+
+    return doubleVector;
+}
+
 dt_simulation::dt_simulation()
 {
 }
@@ -62,6 +80,21 @@ wstring dt_simulation::MakeCSVStringByGatherElevatorInfo(simElevator ThisElevato
     return RetVal;
 }
 
+vector<string> dt_simulation::split(string input, const char delimiter) 
+{
+    vector<string> ret;
+    long long pos = 0;
+    string token = "";
+    while((pos = input.find(delimiter)) != string::npos) 
+    {
+        token = input.substr(0, pos);
+        ret.push_back(token);
+        input.erase(0, pos + 1);
+    }    
+    ret.push_back(input);
+    return ret;
+}
+
 simBuilding::simBuilding()
 {
     this->buildingName = L"";
@@ -81,7 +114,7 @@ void dt_simulation::run()
 
     log_file_path = fileSystem.chooseLog();
 
-    this->buildings = makeInstance(log_file_path);
+    this->buildings = makeInstance2(log_file_path);
     if (this->buildings == nullptr) {
 		std::cerr << "Error: buildings is nullptr" << std::endl;
 		return;
@@ -194,7 +227,7 @@ std::vector<simBuilding>* dt_simulation::makeInstance(const std::string& fileAdd
             }
             else if (key == "GROUND_FLOOR")
             {
-                latest_ev->abovegroundFloor = std::stoi(value);
+                latest_ev->groundFloor = std::stoi(value);
             }
             else if (key == "EACH_FLOOR_ALTIMETER")
             {
@@ -242,6 +275,99 @@ std::vector<simBuilding>* dt_simulation::makeInstance(const std::string& fileAdd
     }
 
     throw std::runtime_error("Invalid log file format, must end with 'END INFO'");
+}
+
+std::vector<simBuilding>* dt_simulation::makeInstance2(const std::string& fileAddress)
+{
+    simElevator* latest_ev = nullptr;
+    std::ifstream file(fileAddress);
+    std::string line;
+
+    const auto Prefix = "LOG START";
+
+    if (!file.is_open()) {
+        std::cerr << "Unable to open the file.\n";
+        return nullptr;
+    }
+
+	while (std::getline(file, line))
+	{
+		// Read each line
+		if (line.find(Prefix)  != string::npos)
+		{
+			line = line.substr(9, line.size() - 9);
+
+            const char delimeter = ' ';
+			vector<string> params =  split(line, delimeter);
+
+			assert(params.size() == 11 || params.size() == 14);
+
+			const wstring BuildingName = string_to_wstring(params[1]);
+			const wstring ElevatorName = string_to_wstring(params[2]);
+			const double MaxVelocity = std::stod(params[3]);
+			const double Acceleration = std::stod(params[4]);
+			const double Jerk = std::stod(params[5]);
+			const double DoorOpenTime = std::stod(params[6]);
+			const int UndergroundFloor = std::stoi(params[7]);
+			const int GroundFloor = std::stoi(params[8]);
+			const vector<double> EachFloorAltimeter = parseStringToFloatVector(params[9]);
+
+            assert(UndergroundFloor + GroundFloor == EachFloorAltimeter.size());
+
+            float IdlePower = 0.0;
+			float StandbyPower = 0.0;
+			float ISOReferenceCycleEnergy = 0.0;
+
+            if (params.size() == 14)
+            {
+				IdlePower = std::stof(params[11]);
+				StandbyPower = std::stof(params[12]);
+				ISOReferenceCycleEnergy = std::stof(params[13]);
+            }
+
+            // Check Building Exsists
+			simBuilding thisBuilding = getBuilding(BuildingName);
+
+			if (thisBuilding.buildingName == L"")
+			{
+                simBuilding building;
+                building.buildingName = BuildingName;
+
+                const wstring TimestampString = building.thisLogger->get_file_name_as_timestamp() + L"_" + building.buildingName;
+                building.thisLogger->set_log_directory_Simulation();
+                building.thisLogger->log_file_name = TimestampString + L"_TransactionList.txt";
+                building.thisLogger->csv_file_name = TimestampString + L"_TransactionList.csv";
+
+				buildings->push_back(building);
+                thisBuilding = building;
+			}
+
+			// Check Elevator Exsists
+			simElevator thisElevator = getElevator(thisBuilding, ElevatorName);
+
+			if (thisElevator.elevatorName == L"")
+			{
+				simElevator elevator(BuildingName, ElevatorName);
+				thisElevator = elevator;
+				buildings->back().elevators->push_back(elevator);
+
+                thisElevator.this_elevator_algorithm->thisLogger.set_log_directory_Simulation();
+                latest_ev = &buildings->back().elevators->back();
+                
+                latest_ev->groundFloor = GroundFloor;
+                latest_ev->undergroundFloor = UndergroundFloor;
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->set_each_floor_altimeter(EachFloorAltimeter);
+                latest_ev->each_floor_altimeter = EachFloorAltimeter;
+
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->setIDLEPower(IdlePower);
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->setStandbyPower(StandbyPower);
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->setISOReferenceCycleEnergy(ISOReferenceCycleEnergy);
+                latest_ev->this_elevator_algorithm->getElevatorStatus()->set_this_elevator_energy_flag(IdlePower == 0 ? false : true);
+            }
+		}
+    }
+
+    return buildings;
 }
 
 void dt_simulation::ReadAndAddAllTransactions()
@@ -328,6 +454,18 @@ simBuilding dt_simulation::getBuilding(const std::wstring& buildingName)
 		}
 	}
     return simBuilding();
+}
+
+simElevator dt_simulation::getElevator(const simBuilding ThisBuilding, const std::wstring& buildingName)
+{
+	for (const auto& elevator : *ThisBuilding.elevators)
+	{
+		if (elevator.elevatorName == buildingName)
+		{
+			return elevator;
+        }
+    }
+    return simElevator(L"", L"");
 }
 
 void dt_simulation::AddTransactionOfThisElevator(simBuilding this_building, wifstream* file)
@@ -686,7 +824,7 @@ string dt_simulation::set_elevator_Status_JSON_STRING(simBuilding this_building,
     jsonObj["max_velocity"] = this_building.default_elevator_max_velocity;
 
     jsonObj["underground_floor"] = ThisElevator.undergroundFloor;
-	jsonObj["ground_floor"] = ThisElevator.abovegroundFloor;
+	jsonObj["ground_floor"] = ThisElevator.groundFloor;
 
     auto revised_altimeter = ThisElevator.each_floor_altimeter;
     double lowest_altimeter = abs(revised_altimeter[0]);
@@ -968,6 +1106,10 @@ void dt_simulation::calculateEnergyConsumption(simBuilding* thisBuilding, UE5Tra
         // Add to this vector to elevator vector
         this_elevator->energy_consumption_vector.push_back(energy_consumption);
     }
+    else
+    {
+        this_elevator->energy_consumption_vector.push_back({0,0,0});
+    }
 }
 
 void dt_simulation::giveAllBuildingTransactions() {
@@ -1000,7 +1142,6 @@ const int dt_simulation::setSimulationAlgorithm(simBuilding this_building)
 }
 
 void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
-    const auto this_building_transactions = this_building.transactions;
     const int algorithm_number = setSimulationAlgorithm(this_building);
 
     if (this_building.transactions->size() == 0) 
@@ -1008,7 +1149,12 @@ void dt_simulation::giveElevatorTransaction(simBuilding this_building) {
         return;
     }
 
-    for (auto& each_transaction : *this_building.transactions) {
+    for (transaction each_transaction : *this_building.transactions) {
+        if(each_transaction.destination_floors->size() == 0)
+        {
+            continue;
+        }
+
         const int timestamp_of_this_transaction = each_transaction.timestamp;
 
         // REALLOCATION ALL ELEVATOR POSITIONS TO timestamp_of_this_transaction
@@ -1592,6 +1738,18 @@ simElevator* dt_simulation::findNearestElevator(simElevator ThisElevator, vector
     }
 
     return return_class;
+}
+
+bool dt_simulation::bBuildingExist(const std::wstring& buildingName)
+{
+	for (const auto& building : *buildings)
+	{
+		if (building.buildingName == buildingName)
+		{
+			return true;
+		}
+	}
+    return false;
 }
 
 simElevator::simElevator(wstring building_name, wstring device_name)

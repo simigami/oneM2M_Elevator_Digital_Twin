@@ -70,61 +70,6 @@ void send_oneM2M::set_new_elevator_uri(wstring building_name)
 	uri_to_elevator.append(building_name);
 }
 
-void send_oneM2M::acp_create(int num, ...)
-{
-    wstring ACP_URL = this->uri_to_cse;
-    wstring rn = DEFAULT_ACP_NAME;
-
-    va_list args;
-    va_start(args, num);
-
-	if(num>=1)
-    {
-        for(int i=1; i<=num; i++)
-        {
-	        auto ret = va_arg(args, const wstring);
-	        ACP_URL += L"/";
-	        ACP_URL += ret;
-        }
-		va_end(args);
-    }
-
-    http_client client(utility::conversions::to_string_t(ACP_URL));
-	http_request request(methods::POST) ;
-
-    //std::cout << "Default ACP Create Under " << ACP_URL << std::endl;
-
-    json::value json_data;
-    json_data[U("m2m:acp")][U("rn")] = json::value::string(utility::conversions::to_string_t(rn));
-
-    json_data[U("m2m:acp")][U("pv")] = json::value::object();
-	json_data[U("m2m:acp")][U("pv")][U("acr")] =  json::value::array();
-
-    json_data[U("m2m:acp")][U("pvs")] = json::value::object();
-	json_data[U("m2m:acp")][U("pvs")][U("acr")] =  json::value::array();
-
-    // Create an HTTP request
-    request.headers().set_content_type(U("application/json; ty=1"));
-    request.headers().add(U("User-Agent"),U("cpprestsdk"));
-    request.headers().add(U("X-M2M-Origin"), utility::conversions::to_string_t(DEFAULT_ORIGINATOR_NAME));
-    request.headers().add(U("X-M2M-RI"), utility::conversions::to_string_t(rn));
-    request.headers().add(U("X-M2M-RVI"), utility::conversions::to_string_t(DEFAULT_RVI));
-
-
-    request.set_body(json_data);
-
-    auto response = client.request(request).get();
-
-    // Print the HTTP response
-    //std::wcout << L"HTTP Response:\n" << response.to_string() << std::endl;
-
-    if(400 <= response.status_code()  && response.status_code() < 500)
-    {
-	    std::wcout << L"HTTP Response 400 Range ERROR, RESPONSE IS : " << response.to_string() << std::endl;
-        exit(0);
-    }
-}
-
 void send_oneM2M::acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...)
 {
     int index = 0;

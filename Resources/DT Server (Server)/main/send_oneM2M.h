@@ -15,8 +15,6 @@ public:
 
     void grp_create(const Wparsed_struct& data);
 
-    void acp_create(int num, ...);
-
     void acp_create_one_ACP(vector<wstring>& ACP_NAMES, int num, ...);
 
 	void acp_update(vector<wstring> ACP_NAMES, int num, ...);
